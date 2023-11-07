@@ -11,7 +11,6 @@ import svydovets.core.annotation.Configuration;
 @Configuration
 @ComponentScan("com.bobocode.svydovets.service")
 public class BeanConfig {
-
     @Bean
     public TrimService printService() {
         return new TrimService();
