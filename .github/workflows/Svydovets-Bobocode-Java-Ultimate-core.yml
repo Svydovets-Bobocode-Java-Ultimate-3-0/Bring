@@ -23,10 +23,10 @@ jobs:
         run: mvn clean test
       - name: Build with Maven
         run: mvn clean install
-      - name: Prettify the Java Code
-        uses: lwerner-lshigh/prettier_action_java@v1.1.1
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3 # v2 minimum required
+      - uses: axel-op/googlejavaformat-action@v3
         with:
-          prettier_options: '--no-semi --write *.java'
-          branch: ${{ github.head_ref }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          args: "--skip-sorting-imports --replace"
