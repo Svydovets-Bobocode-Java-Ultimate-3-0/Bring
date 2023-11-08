@@ -22,9 +22,9 @@ jobs:
       - name: Run tests
         run: mvn clean test
       - name: Build with Maven
-        run: mvn clean install
-      - run: mvn --batch-mode --update-snapshots verify
-      - run: mkdir staging && cp target/*.jar staging
+        run: mvn --batch-mode --update-snapshots verify
+      - name: Create a new directory
+        run: mkdir staging && cp target/*.jar staging
         uses: actions/upload-artifact@v3
         with:
           name: Package
