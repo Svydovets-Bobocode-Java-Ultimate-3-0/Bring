@@ -1,5 +1,6 @@
 package com.bobocode.svydovets.service;
 
+import com.bobocode.svydovets.service.base.EditService;
 import svydovets.core.annotation.Autowired;
 
 /**
