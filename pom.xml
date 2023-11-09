@@ -26,7 +26,8 @@
         <repository>
             <id>github</id>
             <name>GitHub OWNER Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/JJJazl/Svydovets-Bobocode-Java-Ultimate-3-0</url>
+            <url>https://maven.pkg.github.com/JJJazl/Bring</url>
+<!--            <url>https://maven.pkg.github.com/JJJazl/Svydovets-Bobocode-Java-Ultimate-3-0/Bring</url>-->
         </repository>
     </distributionManagement>
 
