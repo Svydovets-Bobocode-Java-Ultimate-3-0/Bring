@@ -13,4 +13,12 @@ public class EditService {
     public String editMessage() {
         return String.format("***%s***", messageService.getMessage());
     }
+
+    public MessageService getMessageService() {
+        return messageService;
+    }
+
+    public void setMessageService(MessageService messageService) {
+        this.messageService = messageService;
+    }
 }
