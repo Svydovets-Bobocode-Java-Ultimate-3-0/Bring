@@ -5,10 +5,7 @@ import org.reflections.scanners.Scanners;
 import org.reflections.util.ConfigurationBuilder;
 import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Component;
-import svydovets.exception.BeanCreationException;
-import svydovets.exception.NoDefaultConstructor;
-import svydovets.exception.NoSuchBeanException;
-import svydovets.exception.NoUniqueBeanException;
+import svydovets.exception.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -113,14 +110,18 @@ public class DefaultApplicationContext implements ApplicationContext {
 
                 if (annotationPresent) {
                     Object autowireCandidate = getBean(field.getType());
-                    try {
-                        field.setAccessible(true);
-                        field.set(object, autowireCandidate);
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    }
+                    setDependency(object, field, autowireCandidate);
                 }
             }
+        }
+    }
+
+    private static void setDependency(Object object, Field field, Object autowireCandidate) {
+        try {
+            field.setAccessible(true);
+            field.set(object, autowireCandidate);
+        } catch (IllegalAccessException e) {
+            throw new AutowireBeanException(String.format("There is access to %s filed", field.getName()));
         }
     }
 
