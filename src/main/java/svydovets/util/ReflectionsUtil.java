@@ -1,5 +1,7 @@
 package svydovets.util;
 
+import svydovets.core.context.beanDefenition.BeanDefinition;
+import svydovets.core.context.beanDefenition.DefaultBeanDefinition;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 import svydovets.core.annotation.Component;
@@ -32,11 +34,14 @@ public class ReflectionsUtil {
                 .collect(Collectors.toSet());
     }
 
-
-
     private static boolean isComponentScanPresent(Class<?> classType) {
         return classType.isAnnotationPresent(Configuration.class)
                 && classType.isAnnotationPresent(ComponentScan.class);
     }
-
+  
+    private BeanDefinition createBeanDefinitionByBeanClass(Class<?> classType) {
+        var beanDefinitionBuilder = DefaultBeanDefinition.builder().beanClass(classType);
+        
+        return beanDefinitionBuilder.build();
+    }
 }
