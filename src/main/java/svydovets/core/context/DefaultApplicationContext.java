@@ -1,13 +1,10 @@
 package svydovets.core.context;
 
-import org.reflections.Reflections;
-import org.reflections.scanners.Scanners;
-import org.reflections.util.ConfigurationBuilder;
-import svydovets.core.annotation.Component;
 import svydovets.exception.BeanCreationException;
 import svydovets.exception.NoDefaultConstructor;
 import svydovets.exception.NoSuchBeanException;
 import svydovets.exception.NoUniqueBeanException;
+import svydovets.util.ReflectionsUtil;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -21,13 +18,7 @@ public class DefaultApplicationContext implements ApplicationContext {
     private final Map<String, Object> beanMap = new HashMap<>();
 
     public DefaultApplicationContext(String basePackage) {
-        // todo: Rewrite using 'Scanner' class
-        Reflections reflections = new Reflections(new ConfigurationBuilder()
-                .forPackages(basePackage)
-                .setScanners(Scanners.TypesAnnotated)
-        );
-        Set<Class<?>> beanTypes = reflections.getTypesAnnotatedWith(Component.class);
-        registerBeans(beanTypes);
+        registerBeans(ReflectionsUtil.findAllBeanByBasePackage(basePackage));
     }
 
     public DefaultApplicationContext(Class<?>... componentClasses) {
