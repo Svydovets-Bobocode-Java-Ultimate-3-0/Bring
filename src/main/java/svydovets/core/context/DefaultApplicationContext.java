@@ -2,12 +2,11 @@ package svydovets.core.context;
 
 
 import svydovets.core.annotation.Autowired;
-import svydovets.core.annotation.Component;
 import svydovets.exception.BeanCreationException;
 import svydovets.exception.NoDefaultConstructor;
 import svydovets.exception.NoSuchBeanException;
 import svydovets.exception.NoUniqueBeanException;
-import svydovets.exception.AutowireBeanException
+import svydovets.exception.AutowireBeanException;
 import svydovets.util.ReflectionsUtil;
 
 import java.lang.reflect.Constructor;
