@@ -1,12 +1,16 @@
 package svydovets.core.context;
 
+
+import svydovets.core.annotation.Autowired;
 import svydovets.exception.BeanCreationException;
 import svydovets.exception.NoDefaultConstructor;
 import svydovets.exception.NoSuchBeanException;
 import svydovets.exception.NoUniqueBeanException;
+import svydovets.exception.AutowireBeanException;
 import svydovets.util.ReflectionsUtil;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +23,7 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     public DefaultApplicationContext(String basePackage) {
         registerBeans(ReflectionsUtil.findAllBeanByBasePackage(basePackage));
+        populateProperties();
     }
 
     public DefaultApplicationContext(Class<?>... componentClasses) {
@@ -90,4 +95,30 @@ public class DefaultApplicationContext implements ApplicationContext {
                 .filter(entry -> requiredType.isAssignableFrom(entry.getValue().getClass()))
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> requiredType.cast(entry.getValue())));
     }
+
+    private void populateProperties(){
+        for (Map.Entry<String, Object> entry : beanMap.entrySet()) {
+            Object object = entry.getValue();
+            Field[] fields = object.getClass().getDeclaredFields();
+
+            for (Field field : fields) {
+                boolean annotationPresent = field.isAnnotationPresent(Autowired.class);
+
+                if (annotationPresent) {
+                    Object autowireCandidate = getBean(field.getType());
+                    setDependency(object, field, autowireCandidate);
+                }
+            }
+        }
+    }
+
+    private static void setDependency(Object object, Field field, Object autowireCandidate) {
+        try {
+            field.setAccessible(true);
+            field.set(object, autowireCandidate);
+        } catch (IllegalAccessException e) {
+            throw new AutowireBeanException(String.format("There is access to %s filed", field.getName()));
+        }
+    }
+
 }
