@@ -15,4 +15,11 @@ public class AutowireTest {
         EditService editService = context.getBean(EditService.class);
         assertThat(editService.getMessageService()).isNotNull();
     }
+
+    @Test
+    void shouldReturnNullIfFieldNotInjected(){
+        ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service.base");
+        EditService editService = context.getBean(EditService.class);
+        assertThat(editService.getCommonService()).isNull();
+    }
 }
