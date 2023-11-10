@@ -12,6 +12,7 @@ import svydovets.util.ReflectionsUtil;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -22,11 +23,13 @@ public class DefaultApplicationContext implements ApplicationContext {
     private final Map<String, Object> beanMap = new HashMap<>();
 
     public DefaultApplicationContext(String basePackage) {
-        registerBeans(ReflectionsUtil.findAllBeanByBasePackage(basePackage));
+        registerBeans(ReflectionsUtil.findAllBeansByBasePackage(basePackage));
         populateProperties();
     }
 
     public DefaultApplicationContext(Class<?>... componentClasses) {
+        Arrays.stream(componentClasses)
+            .forEach();
         // todo: Implement the logic of creating context with passed "config" class
         // todo: case 1:
         //  ApplicationContext context = new DefaultApplicationContext(MessageService.class, EditService.class) ->
