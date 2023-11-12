@@ -6,19 +6,43 @@ import java.util.List;
 
 public interface BeanDefinition {
 
+    String getBeanName();
+
+    void setBeanName(String beanName);
+
     Class<?> getBeanClass();
 
-    String getBeanClassName();
+    void setBeanClass(Class<?> beanClass);
 
-    List<Class<?>> getInjectionConstructorBeanClasses();
+    List<String> getInjectFieldCandidates();
 
-    void addInjectionConstructorBeanClass(Class<?> beanClass);
+    void setInjectFieldCandidates(List<String> injectFieldCandidates);
 
-    void setInjectionConstructorBeanClasses(List<Class<?>> injectionConstructorBeanClasses);
+    void setConstructorCandidates(List<Class<?>> constructorCandidates);
 
-    List<Class<?>> getInjectionAutowiredBeanClasses();
+    List<Class<?>> getConstructorCandidates();
 
-    void addInjectionAutowiredBeanClass(Class<?> beanClass);
+    boolean isBeanFromConfigClass();
 
-    void setInjectionAutowiredBeanClasses(List<Class<?>> injectionAutowiredBeanClasses);
+    void setBeanFromConfigClass(boolean beanFromConfigClass);
+
+    Method getInitMethodOfBeanFromConfigClass();
+
+    void setInitMethodOfBeanFromConfigClass(Method initMethodOfBeanFromConfigClass);
+
+    boolean isPrimary();
+
+    void setPrimary(boolean primary);
+
+    void setScope(String scope);
+
+    String getScope();
+
+    String getConfigClassName();
+
+    void setConfigClassName(String configClassName);
+
+    Constructor<?> getPrimaryConstructor();
+
+    void setPrimaryConstructor(Constructor<?> primaryConstructor);
 }

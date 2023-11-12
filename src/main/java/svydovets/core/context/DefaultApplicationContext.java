@@ -19,6 +19,8 @@ import static svydovets.util.BeanNameResolver.resolveBeanNameByBeanType;
 
 public class DefaultApplicationContext implements ApplicationContext {
     private final Map<String, Object> beanMap = new HashMap<>();
+    private final Map<String, BeanDefinition> beanDefinitionMap = new HashMap<>();
+    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
 
     public DefaultApplicationContext(String basePackage) {
         registerBeans(ReflectionsUtil.findAllBeanByBasePackage(basePackage));
