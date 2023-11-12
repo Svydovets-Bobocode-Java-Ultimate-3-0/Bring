@@ -2,11 +2,11 @@ package svydovets.core.context;
 
 import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Bean;
+import svydovets.core.annotation.PostConstruct;
 import svydovets.core.bpp.BeanPostProcessor;
 import svydovets.core.context.beanDefinition.BeanDefinition;
 import svydovets.core.context.beanDefinition.DefaultBeanDefinition;
 import svydovets.exception.*;
-import svydovets.util.BeanNameResolver;
 import svydovets.util.ReflectionsUtil;
 
 import java.lang.reflect.*;
@@ -99,8 +99,44 @@ public class DefaultApplicationContext implements ApplicationContext {
         return postProcessAfterInitialization(bean, beanName);
     }
 
+    /**
+     * Invokes methods that were annotated with @PostConstruct annotation.
+     */
+    private void invokePostConstructMethods() {
+        beanMap.values()
+                .forEach(this::postConstructInitialization);
+    }
+
+    /**
+     * Invokes the founded method with annotation @PostConstruct. If the class has more than one annotated method,
+     * the method will throw exception NoUniquePostConstructException.
+     * @param bean represents the initialized bean
+     * @throws InvalidInvokePostConstructMethodException throws this exception if something went wrong
+     */
     private void postConstructInitialization(Object bean) {
-        throw new UnsupportedOperationException();
+        Class<?> beanType = bean.getClass();
+        Method[] declaredMethods = beanType.getDeclaredMethods();
+        Predicate<Method> isAnnotatedMethod = method -> method.isAnnotationPresent(PostConstruct.class);
+
+        var filteredMethods = Arrays.stream(declaredMethods).filter(isAnnotatedMethod);
+
+        boolean isNotUniqueMethod = filteredMethods.count() > 1;
+
+        if(isNotUniqueMethod) {
+            throw new NoUniquePostConstructException("You cannot have more than one method that is annotated with @PostConstruct.");
+        }
+
+        Arrays.stream(declaredMethods)
+                .filter(isAnnotatedMethod)
+                .findFirst()
+                .ifPresent(method -> {
+                    try {
+                        method.setAccessible(true);
+                        method.invoke(bean);
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        throw new InvalidInvokePostConstructMethodException("Something went wrong. Please check the method that was annotated with @PostConstruct", e);
+                    }
+                });
     }
 
     private Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
@@ -299,46 +335,6 @@ public class DefaultApplicationContext implements ApplicationContext {
         } catch (IllegalAccessException e) {
             throw new AutowireBeanException(String.format("There is access to %s filed", fieldForInjection.getName()));
         }
-    }
-
-    /**
-     * Invokes methods that were annotated with @PostConstruct annotation.
-     */
-    private void invokePostConstructMethods() {
-        beanMap.values()
-                .forEach(bean -> invokePostConstructMethod(bean.getClass(), bean));
-    }
-
-    /**
-     * Invokes the founded method with annotation @PostConstruct. If the class has more than one annotated method,
-     * the method will throw exception NoUniquePostConstructException.
-     * @param beanType represents the bean type
-     * @param bean represents the initialized bean
-     * @throws InvalidInvokePostConstructMethodException throws this exception if something went wrong
-     */
-    private void invokePostConstructMethod(Class<?> beanType, Object bean) {
-        Method[] declaredMethods = beanType.getDeclaredMethods();
-        Predicate<Method> isAnnotatedMethod = method -> method.isAnnotationPresent(PostConstruct.class);
-
-        var filteredMethods = Arrays.stream(declaredMethods).filter(isAnnotatedMethod);
-
-        boolean isNotUniqueMethod = filteredMethods.count() > 1;
-
-        if(isNotUniqueMethod) {
-            throw new NoUniquePostConstructException("You cannot have more than one method that is annotated with @PostConstruct.");
-        }
-
-        Arrays.stream(declaredMethods)
-                .filter(isAnnotatedMethod)
-                .findFirst()
-                .ifPresent(method -> {
-                    try {
-                        method.setAccessible(true);
-                        method.invoke(bean);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new InvalidInvokePostConstructMethodException("Something went wrong. Please check the method that was annotated with @PostConstruct", e);
-                    }
-                });
     }
 
 }
