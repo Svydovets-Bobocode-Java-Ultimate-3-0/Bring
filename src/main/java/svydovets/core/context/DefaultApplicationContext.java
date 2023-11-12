@@ -2,20 +2,26 @@ package svydovets.core.context;
 
 
 import svydovets.core.annotation.Autowired;
+import svydovets.core.annotation.PostConstruct;
 import svydovets.exception.BeanCreationException;
 import svydovets.exception.NoDefaultConstructor;
 import svydovets.exception.NoSuchBeanException;
 import svydovets.exception.NoUniqueBeanException;
 import svydovets.exception.AutowireBeanException;
+import svydovets.exception.InvalidInvokePostConstructMethodException;
+import svydovets.exception.NoUniquePostConstructException;
 import svydovets.util.ReflectionsUtil;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.Set;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class DefaultApplicationContext implements ApplicationContext {
@@ -24,6 +30,7 @@ public class DefaultApplicationContext implements ApplicationContext {
     public DefaultApplicationContext(String basePackage) {
         registerBeans(ReflectionsUtil.findAllBeanByBasePackage(basePackage));
         populateProperties();
+        invokePostConstructMethods();
     }
 
     public DefaultApplicationContext(Class<?>... componentClasses) {
@@ -119,6 +126,47 @@ public class DefaultApplicationContext implements ApplicationContext {
         } catch (IllegalAccessException e) {
             throw new AutowireBeanException(String.format("There is access to %s filed", field.getName()));
         }
+    }
+
+
+    /**
+     * Invokes methods that were annotated with @PostConstruct annotation.
+     */
+    private void invokePostConstructMethods() {
+        beanMap.values()
+                .forEach(bean -> invokePostConstructMethod(bean.getClass(), bean));
+    }
+
+    /**
+     * Invokes the founded method with annotation @PostConstruct. If the class has more than one annotated method,
+     * the method will throw exception NoUniquePostConstructException.
+     * @param beanType represents the bean type
+     * @param bean represents the initialized bean
+     * @throws InvalidInvokePostConstructMethodException throws this exception if something went wrong
+     */
+    private void invokePostConstructMethod(Class<?> beanType, Object bean) {
+        Method[] declaredMethods = beanType.getDeclaredMethods();
+        Predicate<Method> isAnnotatedMethod = method -> method.isAnnotationPresent(PostConstruct.class);
+
+        var filteredMethods = Arrays.stream(declaredMethods).filter(isAnnotatedMethod);
+
+        boolean isNotUniqueMethod = filteredMethods.count() > 1;
+
+        if(isNotUniqueMethod) {
+            throw new NoUniquePostConstructException("You cannot have more than one method that is annotated with @PostConstruct.");
+        }
+
+        Arrays.stream(declaredMethods)
+                .filter(isAnnotatedMethod)
+                .findFirst()
+                .ifPresent(method -> {
+                    try {
+                        method.setAccessible(true);
+                        method.invoke(bean);
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        throw new InvalidInvokePostConstructMethodException("Something went wrong. Please check the method that was annotated with @PostConstruct", e);
+                    }
+                });
     }
 
 }
