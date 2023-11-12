@@ -5,7 +5,7 @@ import svydovets.core.annotation.Component;
 /**
  * A simple bean for "autowiring"
  */
-@Component
+@Component("messageService")
 public class MessageService {
     private String message;
 

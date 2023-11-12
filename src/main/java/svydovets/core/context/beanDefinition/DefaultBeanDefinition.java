@@ -1,4 +1,4 @@
-package svydovets.core.context.beanDefenition;
+package svydovets.core.context.beanDefinition;
 
 
 import lombok.AllArgsConstructor;
@@ -10,11 +10,6 @@ import lombok.Setter;
 import java.util.List;
 import java.util.Objects;
 
-@Builder
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class DefaultBeanDefinition implements BeanDefinition {
 
     private Class<?> beanClass;

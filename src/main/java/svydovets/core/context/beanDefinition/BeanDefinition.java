@@ -1,5 +1,7 @@
-package svydovets.core.context.beanDefenition;
+package svydovets.core.context.beanDefinition;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.List;
 
 public interface BeanDefinition {

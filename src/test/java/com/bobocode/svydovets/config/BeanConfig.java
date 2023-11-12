@@ -1,6 +1,7 @@
 package com.bobocode.svydovets.config;
 
 import com.bobocode.svydovets.service.TrimService;
+import com.bobocode.svydovets.service.base.MessageService;
 import svydovets.core.annotation.Bean;
 import svydovets.core.annotation.ComponentScan;
 import svydovets.core.annotation.Configuration;
@@ -11,8 +12,12 @@ import svydovets.core.annotation.Configuration;
 @Configuration
 @ComponentScan("com.bobocode.svydovets.service")
 public class BeanConfig {
-    @Bean
-    public TrimService printService() {
+    @Bean("trimServiceCustomName")
+    public TrimService trimService() {
         return new TrimService();
+    }
+    @Bean
+    public MessageService messageService() {
+        return new MessageService();
     }
 }
