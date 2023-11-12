@@ -6,7 +6,4 @@ public class NoUniquePostConstructException extends RuntimeException {
     super(message);
   }
 
-  public NoUniquePostConstructException(String message, Throwable cause) {
-    super(message, cause);
-  }
 }
