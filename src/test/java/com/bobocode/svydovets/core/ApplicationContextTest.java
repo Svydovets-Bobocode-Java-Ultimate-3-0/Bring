@@ -6,32 +6,79 @@ import com.bobocode.svydovets.service.PrimaryProductServiceImpl;
 import com.bobocode.svydovets.service.ProductService;
 import com.bobocode.svydovets.service.TrimService;
 import com.bobocode.svydovets.service.base.CollectionsHolderService;
+import com.bobocode.svydovets.service.base.CommonService;
 import com.bobocode.svydovets.service.base.EditService;
 import com.bobocode.svydovets.service.base.MessageService;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import svydovets.core.context.ApplicationContext;
 import svydovets.core.context.DefaultApplicationContext;
 import svydovets.exception.NoSuchBeanException;
 import svydovets.exception.NoUniqueBeanException;
+import svydovets.util.PackageScanner;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static org.mockito.Mockito.when;
 
+//  todo: It may be better to group the existing "services" in additional packages and check that all beans of
+//   specified "basePackage" are created
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ApplicationContextTest {
+    @Mock
+    private PackageScanner packageScanner;
+    private AutoCloseable closeable;
+
+    @BeforeEach
+    void setUp() {
+        closeable = MockitoAnnotations.openMocks(this);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        closeable.close();
+    }
 
     @Test
     void createApplicationContextFromBasePackage() {
         ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service.base");
+        assertThat(context).isNotNull();
+    }
+
+    @Test
+    void createApplicationContextFromConfigClass() {
+        ApplicationContext context = new DefaultApplicationContext(BeanConfig.class);
+        assertThat(context).isNotNull();
+    }
+
+    @Test
+    void applicationContextFromBasePackageCreatesAllRequiredBeans() {
+        String basePackage = "com.bobocode.svydovets.service.base";
+        ApplicationContext context = new DefaultApplicationContext(basePackage);
+
+        when(packageScanner.findAllBeanByBasePackage(basePackage))
+                .thenReturn(Set.of(CommonService.class, EditService.class, MessageService.class));
+
+        assertThat(context.getBean(CommonService.class)).isNotNull();
         assertThat(context.getBean(MessageService.class)).isNotNull();
         assertThat(context.getBean(EditService.class)).isNotNull();
-        // todo: It may be better to group the existing "services" in additional packages and check that all beans of
-        //  specified "basePackage" are created
+    }
+
+    @Test
+    void applicationContextFromConfigClassCreatesAllRequiredBeans() {
+        ApplicationContext context = new DefaultApplicationContext(BeanConfig.class);
+
+        when(packageScanner.findAllBeanByBaseClass(BeanConfig.class))
+                .thenReturn(Set.of(BeanConfig.class, TrimService.class, MessageService.class));
+
+        assertThat(context.getBean(BeanConfig.class)).isNotNull();
+        assertThat(context.getBean(TrimService.class)).isNotNull();
+        assertThat(context.getBean(MessageService.class)).isNotNull();
     }
 
 

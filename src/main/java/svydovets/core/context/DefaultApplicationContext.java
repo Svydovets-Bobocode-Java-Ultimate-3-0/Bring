@@ -3,11 +3,11 @@ package svydovets.core.context;
 import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Bean;
 import svydovets.core.bpp.BeanPostProcessor;
+import svydovets.core.context.beanDefinition.BeanAnnotationBeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinition;
-import svydovets.core.context.beanDefinition.DefaultBeanDefinition;
+import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
 import svydovets.exception.*;
-import svydovets.util.BeanNameResolver;
-import svydovets.util.ReflectionsUtil;
+import svydovets.util.PackageScanner;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -21,47 +21,76 @@ public class DefaultApplicationContext implements ApplicationContext {
     private final Map<String, Object> beanMap = new HashMap<>();
     private final Map<String, BeanDefinition> beanDefinitionMap = new HashMap<>();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
+    private final PackageScanner packageScanner = new PackageScanner();
 
     public DefaultApplicationContext(String basePackage) {
-        registerBeans(ReflectionsUtil.findAllBeanByBasePackage(basePackage));
-        populateProperties();
+        registerBeanDefinitionsForComponentClasses(packageScanner.findAllBeanByBasePackage(basePackage));
+        registerBeans();
     }
 
     public DefaultApplicationContext(Class<?> configClass) {
-        // todo 1): В цьому сеті зберігаються класи з аннотацією @Component (з проскановаго пакету @ComponentScan)
-        Set<Class<?>> beanClasses = ReflectionsUtil.findAllBeanByBaseClass(configClass);
-        //can be @Configuration in backage - should be recursive
-        // todo 2): Додаємо конфіг клас в загальний сет "beanClasses"
-        beanClasses.add(configClass);
-        // todo 3): Створюємо bean definition по загальному сету "beanClasses"
-        beanDefinitionMap.putAll(createBeanDefinitionMapBySetOfBeanClasses(beanClasses));
-        // todo 4): Опрацьовуємо всі методи конфіг класа з анотацією @Bean - створюємо їх bean definitions
-        beanDefinitionMap.putAll(createBeanDefinitionMapByConfigClass(configClass));
-
-        // todo 5): Починаємо створювати біни
-        // Clear map before first initialize ???
-        beanMap.clear();
-        var beans = beanDefinitionMap.entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, this::initWithBeanPostProcessor));
-        beanMap.putAll(beans);
-
+        if (!configClass.isAnnotationPresent(Configuration.class)) {
+            // todo: Think how to process this case
+            return;
+        }
+        Set<Class<?>> beanClasses = packageScanner.findAllBeanByBaseClass(configClass);
+        registerBeanDefinitionForConfigClass(configClass);
+        registerBeanDefinitionsForComponentClasses(beanClasses);
+        registerBeans();
     }
 
-    private Map<String, DefaultBeanDefinition> createBeanDefinitionMapBySetOfBeanClasses(Set<Class<?>> beanClasses) {
-        return beanClasses.stream()
-                .map(beanClass -> new DefaultBeanDefinition(beanClass, resolveBeanNameByBeanType(beanClass)))
+    private void registerBeanDefinitionForConfigClass(Class<?> configClass) {
+        beanDefinitionMap.putAll(createBeanDefinitionMapByConfigClass(configClass));
+    }
+
+    private void registerBeanDefinitionsForComponentClasses(Set<Class<?>> beanClasses) {
+        beanClasses.forEach(this::registerBeanDefinitionForComponentClass);
+    }
+
+    private void registerBeanDefinitionForComponentClass(Class<?> beanClass) {
+        BeanDefinition beanDefinition = createComponentBeanDefinitionByBeanClass(beanClass);
+        beanDefinitionMap.put(beanDefinition.getBeanName(), beanDefinition);
+    }
+
+    private BeanDefinition createComponentBeanDefinitionByBeanClass(Class<?> beanClass) {
+        ComponentAnnotationBeanDefinition beanDefinition = new ComponentAnnotationBeanDefinition(
+                resolveBeanNameByBeanType(beanClass),
+                beanClass
+        );
+        beanDefinition.setInitializationConstructor(findInitializationConstructor(beanClass));
+        beanDefinition.setAutowiredFieldNames(findAutowiredFieldNames(beanClass));
+        beanDefinition.setPrimary(beanClass.isAnnotationPresent(Primary.class));
+        // todo: Implement BR-20
+//        beanDefinition.setScope();
+        return beanDefinition;
+    }
+
+    private List<String> findAutowiredFieldNames(Class<?> beanClass) {
+        // todo: Implement task BR-15
+        throw new UnsupportedOperationException();
+    }
+
+    private Constructor<?> findInitializationConstructor(Class<?> beanClass) {
+        // todo: Implement task BR-16
+        throw new UnsupportedOperationException();
+    }
+
+    private Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
+        return Arrays.stream(configClass.getDeclaredMethods())
+                .filter(method -> method.isAnnotationPresent(Bean.class))
+                .map(this::createBeanDefinitionByBeanInitMethod)
                 .collect(Collectors.toMap(BeanDefinition::getBeanName, Function.identity()));
     }
 
     private BeanDefinition createBeanDefinitionByBeanInitMethod(Method beanInitMethod) {
-        BeanDefinition beanDefinition = new DefaultBeanDefinition();
-        beanDefinition.setBeanClass(beanInitMethod.getReturnType());
-        beanDefinition.setBeanName(resolveBeanNameByBeanInitMethod(beanInitMethod));
-        beanDefinition.setConfigClassName(resolveBeanNameByBeanType(beanInitMethod.getDeclaringClass()));
-        beanDefinition.setBeanFromConfigClass(true);
+        BeanAnnotationBeanDefinition beanDefinition = new BeanAnnotationBeanDefinition(
+                resolveBeanNameByBeanType(beanInitMethod.getReturnType()),
+                beanInitMethod.getDeclaringClass());
+        // todo: Implement BR-20
+//        beanDefinition.setScope();
+        beanDefinition.setPrimary(beanInitMethod.isAnnotationPresent(Primary.class));
         beanDefinition.setInitMethodOfBeanFromConfigClass(beanInitMethod);
-
+        beanDefinition.setConfigClassName(resolveBeanNameByBeanInitMethod(beanInitMethod));
         return beanDefinition;
     }
 
@@ -91,8 +120,7 @@ public class DefaultApplicationContext implements ApplicationContext {
         var beanName = entry.getKey();
         Object bean = createBeanFromBeanDefinition(beanName, entry.getValue());
         bean = postProcessBeforeInitialization(bean, beanName);
-        // todo: implement postConstructInitialization(bean) method for @PostConstruct annotation
-        //  (Можливо треба додати поле "Method postConstructMethod" в bean definition)
+
         postConstructInitialization(bean);
         return postProcessAfterInitialization(bean, beanName);
     }
@@ -109,22 +137,27 @@ public class DefaultApplicationContext implements ApplicationContext {
     }
 
 
-    private void registerBeans(Set<Class<?>> beanTypes) {
-        beanTypes.forEach(this::registerBean);
+    private void registerBeans() {
+        beanDefinitionMap.forEach(this::registerBean);
     }
 
     private Object createBean(Class<?> beanType) {
+        // todo: Implement BR-18
         Constructor<?> noArgsConstructor = getPreparedNoArgsConstructor(beanType);
         try {
-            return noArgsConstructor.newInstance();
+            Object bean = noArgsConstructor.newInstance();
+            populateProperties(bean);
+            return bean;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new BeanCreationException(String.format("Error creating bean of type %s", beanType.getSimpleName()), e);
         }
     }
 
-    private void registerBean(Class<?> beanType) {
-        Object bean = createBean(beanType);
-        String beanName = beanType.getSimpleName();
+    private void registerBean(String beanName, BeanDefinition beanDefinition) {
+        // todo: Implement BR-17
+        Object bean = createBean(beanDefinition.getBeanClass());
+        populateProperties(bean);
+        //
         beanMap.putIfAbsent(beanName, bean);
     }
 
@@ -166,23 +199,23 @@ public class DefaultApplicationContext implements ApplicationContext {
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> requiredType.cast(entry.getValue())));
     }
 
-    private void populateProperties() {
-        for (Map.Entry<String, Object> entry : beanMap.entrySet()) {
-            Object bean = entry.getValue();
-            Field[] fields = bean.getClass().getDeclaredFields();
+    private void populateProperties(Object bean) {
+        Field[] fields = bean.getClass().getDeclaredFields();
 
-            for (Field field : fields) {
-                boolean isAutowiredPresent = field.isAnnotationPresent(Autowired.class);
+        // todo: Implement BR-18 (Інжект через сетери має бути перед інжектом через поля)
+        for (Field field : fields) {
+            boolean isAutowiredPresent = field.isAnnotationPresent(Autowired.class);
 
-                if (isAutowiredPresent) {
-                    var fieldType = field.getType();
-                    if (Collection.class.isAssignableFrom(fieldType)) {
-                        injectCollectionOfBeans(bean, field, fieldType);
-                    } else if (Map.class.isAssignableFrom(fieldType)) {
-                        injectMapOfBeans(bean, field, fieldType);
-                    } else {
-                        injectBean(bean, field, fieldType);
-                    }
+            if (isAutowiredPresent) {
+
+                // todo: Implement BR-6
+                var dependencyFieldType = field.getType();
+                if (Collection.class.isAssignableFrom(dependencyFieldType)) {
+                    injectCollectionOfBeans(bean, field, dependencyFieldType);
+                } else if (Map.class.isAssignableFrom(dependencyFieldType)) {
+                    injectMapOfBeans(bean, field, dependencyFieldType);
+                } else {
+                    injectBean(bean, field, dependencyFieldType);
                 }
             }
         }
@@ -201,6 +234,7 @@ public class DefaultApplicationContext implements ApplicationContext {
             // Initialize map logic
             setDependency(bean, fieldForInjection, mapOfBeansToInject);
         } else {
+            // todo: Implement BR-6
             // todo: CREATE NEW MAP IMPLEMENTATION AND SET TO FIELD!
             setDependency(bean, fieldForInjection, mapOfBeansToInject);
         }
@@ -223,7 +257,7 @@ public class DefaultApplicationContext implements ApplicationContext {
         try {
             fieldForInjection.set(bean, createCollectionInstance(collectionType, collectionOfBeansToInject));
         } catch (IllegalAccessException e) {
-            // todo:
+            // todo: Implement BR-6
             throw new RuntimeException("");
         }
     }
@@ -234,7 +268,7 @@ public class DefaultApplicationContext implements ApplicationContext {
         } else if (collectionType == Set.class || collectionType == Collection.class) {
             return new LinkedHashSet<>(collectionOfBeansToInject);
         } else {
-            // todo:
+            // todo: Implement BR-6
             throw new UnsupportedOperationException("We do not support collection of type: " + collectionType.getName());
         }
     }
@@ -281,11 +315,11 @@ public class DefaultApplicationContext implements ApplicationContext {
             return Class.forName(autowireCandidateGenericType.getTypeName());
         } catch (ClassCastException e) {
             // Raw map processing
-            // todo:
+            // todo: Implement BR-6
             throw new RuntimeException();
         } catch (ClassNotFoundException e) {
             // Class.forName()
-            // todo:
+            // todo: Implement BR-6
             throw new RuntimeException();
         }
     }
