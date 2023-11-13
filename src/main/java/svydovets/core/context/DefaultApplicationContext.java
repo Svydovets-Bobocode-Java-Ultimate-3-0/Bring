@@ -118,9 +118,9 @@ public class DefaultApplicationContext implements ApplicationContext {
         Method[] declaredMethods = beanType.getDeclaredMethods();
         Predicate<Method> isAnnotatedMethod = method -> method.isAnnotationPresent(PostConstruct.class);
 
-        var filteredMethods = Arrays.stream(declaredMethods).filter(isAnnotatedMethod);
-
-        boolean isNotUniqueMethod = filteredMethods.count() > 1;
+        boolean isNotUniqueMethod = Arrays.stream(declaredMethods)
+                .filter(method -> method.isAnnotationPresent(PostConstruct.class))
+                .count() > 1;
 
         if(isNotUniqueMethod) {
             throw new NoUniquePostConstructException("You cannot have more than one method that is annotated with @PostConstruct.");
