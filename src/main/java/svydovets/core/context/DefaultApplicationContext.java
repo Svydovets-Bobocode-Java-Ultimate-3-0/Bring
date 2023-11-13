@@ -99,13 +99,6 @@ public class DefaultApplicationContext implements ApplicationContext {
         throw new UnsupportedOperationException();
     }
 
-    private Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
-        return Arrays.stream(configClass.getDeclaredMethods())
-                .filter(method -> method.isAnnotationPresent(Bean.class))
-                .map(this::createBeanDefinitionByBeanInitMethod)
-                .collect(Collectors.toMap(BeanDefinition::getBeanName, Function.identity()));
-    }
-
     private BeanDefinition createBeanDefinitionByBeanInitMethod(Method beanInitMethod) {
         BeanAnnotationBeanDefinition beanDefinition = new BeanAnnotationBeanDefinition(
                 resolveBeanNameByBeanType(beanInitMethod.getReturnType()),
