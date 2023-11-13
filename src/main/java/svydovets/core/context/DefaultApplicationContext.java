@@ -129,14 +129,16 @@ public class DefaultApplicationContext implements ApplicationContext {
         Arrays.stream(declaredMethods)
                 .filter(isAnnotatedMethod)
                 .findFirst()
-                .ifPresent(method -> {
-                    try {
-                        method.setAccessible(true);
-                        method.invoke(bean);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new InvalidInvokePostConstructMethodException("Something went wrong. Please check the method that was annotated with @PostConstruct", e);
-                    }
-                });
+                .ifPresent(method -> invokePostConstructMethod(bean, method));
+    }
+
+    private static void invokePostConstructMethod(Object bean, Method method) {
+        try {
+            method.setAccessible(true);
+            method.invoke(bean);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new InvalidInvokePostConstructMethodException("Something went wrong. Please check the method that was annotated with @PostConstruct", e);
+        }
     }
 
     private Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
