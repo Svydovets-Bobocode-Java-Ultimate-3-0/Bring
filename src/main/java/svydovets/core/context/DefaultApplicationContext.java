@@ -155,14 +155,6 @@ public class DefaultApplicationContext implements ApplicationContext {
         }
     }
 
-    private Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
-        return Arrays.stream(configClass.getDeclaredMethods())
-                .filter(method -> method.isAnnotationPresent(Bean.class))
-                .map(this::createBeanDefinitionByBeanInitMethod)
-                .collect(Collectors.toMap(BeanDefinition::getBeanName, Function.identity()));
-    }
-
-
     private void registerBeans() {
         beanDefinitionMap.forEach(this::registerBean);
     }
