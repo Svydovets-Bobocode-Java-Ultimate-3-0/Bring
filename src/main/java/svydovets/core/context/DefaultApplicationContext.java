@@ -128,7 +128,38 @@ public class DefaultApplicationContext implements ApplicationContext {
     }
 
     private void postConstructInitialization(Object bean) {
-        throw new UnsupportedOperationException();
+        Class<?> beanType = bean.getClass();
+        Method[] declaredMethods = beanType.getDeclaredMethods();
+        Predicate<Method> isAnnotatedMethod = method -> method.isAnnotationPresent(PostConstruct.class);
+
+        boolean isNotUniqueMethod = Arrays.stream(declaredMethods)
+                .filter(method -> method.isAnnotationPresent(PostConstruct.class))
+                .count() > 1;
+
+        if(isNotUniqueMethod) {
+            throw new NoUniquePostConstructException("You cannot have more than one method that is annotated with @PostConstruct.");
+        }
+
+        Arrays.stream(declaredMethods)
+                .filter(isAnnotatedMethod)
+                .findFirst()
+                .ifPresent(method -> invokePostConstructMethod(bean, method));
+    }
+
+    private static void invokePostConstructMethod(Object bean, Method method) {
+        try {
+            method.setAccessible(true);
+            method.invoke(bean);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new InvalidInvokePostConstructMethodException("Something went wrong. Please check the method that was annotated with @PostConstruct", e);
+        }
+    }
+
+    private Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
+        return Arrays.stream(configClass.getDeclaredMethods())
+                .filter(method -> method.isAnnotationPresent(Bean.class))
+                .map(this::createBeanDefinitionByBeanInitMethod)
+                .collect(Collectors.toMap(BeanDefinition::getBeanName, Function.identity()));
     }
 
 
