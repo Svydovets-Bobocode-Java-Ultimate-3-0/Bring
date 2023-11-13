@@ -2,10 +2,14 @@ package svydovets.util;
 
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
+import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Component;
 import svydovets.core.annotation.ComponentScan;
 import svydovets.core.annotation.Configuration;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -30,6 +34,15 @@ public class ReflectionsUtil {
                 .map(classType -> classType.getAnnotation(ComponentScan.class).value())
                 .flatMap(basePackage -> findAllBeanByBasePackage(basePackage).stream())
                 .collect(Collectors.toSet());
+    }
+
+    public static List<String> findAutowiredFieldNames(Class<?> beanClass) {
+        var fields = beanClass.getDeclaredFields();
+
+        return Arrays.stream(fields)
+                .filter(field -> field.isAnnotationPresent(Autowired.class))
+                .map(Field::getName)
+                .collect(Collectors.toList());
     }
 
     private static boolean isComponentScanPresent(Class<?> classType) {
