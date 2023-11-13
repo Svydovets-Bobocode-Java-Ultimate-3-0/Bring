@@ -1,7 +1,5 @@
 package svydovets.util;
 
-import svydovets.core.context.beanDefinition.BeanDefinition;
-import svydovets.core.context.beanDefinition.DefaultBeanDefinition;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 import svydovets.core.annotation.Component;
