@@ -2,6 +2,8 @@ package svydovets.core.context;
 
 import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Bean;
+import svydovets.core.annotation.Configuration;
+import svydovets.core.annotation.Primary;
 import svydovets.core.bpp.BeanPostProcessor;
 import svydovets.core.context.beanDefinition.BeanAnnotationBeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinition;
@@ -127,13 +129,6 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     private void postConstructInitialization(Object bean) {
         throw new UnsupportedOperationException();
-    }
-
-    private Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
-        return Arrays.stream(configClass.getDeclaredMethods())
-                .filter(method -> method.isAnnotationPresent(Bean.class))
-                .map(this::createBeanDefinitionByBeanInitMethod)
-                .collect(Collectors.toMap(BeanDefinition::getBeanName, Function.identity()));
     }
 
 
