@@ -251,7 +251,8 @@ public class DefaultApplicationContext implements ApplicationContext {
         return beansOfType.values()
                 .stream()
                 .filter(bean -> bean.getClass().isAnnotationPresent(Primary.class))
-                .findAny().orElseThrow(() ->
+                .findAny()
+                .orElseThrow(() ->
                         new NoUniqueBeanException(String.format("No unique bean found of type %s", requiredType.getName()))
                 );
   }
