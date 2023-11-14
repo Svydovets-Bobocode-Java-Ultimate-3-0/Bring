@@ -238,8 +238,6 @@ public class DefaultApplicationContext implements ApplicationContext {
     }
 
     private <T> T defineSpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
-        List<T> beans = new ArrayList<>(beansOfType.values());
-
         if(requiredType.isAnnotationPresent(Qualifier.class)) {
           var qualifier = requiredType.getDeclaredAnnotation(Qualifier.class);
 
@@ -250,16 +248,12 @@ public class DefaultApplicationContext implements ApplicationContext {
           }
         }
 
-        for(T bean : beans) {
-            Class<?> type = bean.getClass();
-
-            if(type.isAnnotationPresent(Primary.class)) {
-                return bean;
-            }
-        }
-
-        throw new NoUniqueBeanException(
-                String.format("No unique bean found of type %s", requiredType.getName()));
+        return beansOfType.values()
+                .stream()
+                .filter(bean -> bean.getClass().isAnnotationPresent(Primary.class))
+                .findAny().orElseThrow(() ->
+                        new NoUniqueBeanException(String.format("No unique bean found of type %s", requiredType.getName()))
+                );
   }
 
     @Override
