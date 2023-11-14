@@ -1,0 +1,50 @@
+name: Running default CI for Svydovets Bobocode Java Ultimate
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'zulu' # See 'Supported distributions' for available options
+#          distribution: 'temurin'
+          cache: maven
+
+      - name: Run tests
+        run: mvn clean test
+
+      - name: Build with Maven
+        run: mvn -DskipTests=true clean -B -U package -f pom.xml
+#        run: mvn --batch-mode --update-snapshots verify
+
+      - name: Create a new directory
+        run: mkdir staging && cp target/*.jar staging
+
+      - name: Upload package to GitHub artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Package
+          path: staging
+
+#      - name: Publish to GitHub Packages Apache Maven
+#        run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+#        env:
+#          GITHUB_TOKEN: ${{ github.token }}
+
+#      - name: maven-settings-xml-action
+#        uses: whelk-io/maven-settings-xml-action@v20
+#        with:
+#          repositories: '[{ "id": "some-repository", "url": "http://some.repository.url" }]'
+#          plugin_repositories: '[{ "id": "some-plugin-repository", "url": "http://some.plugin.repository.url" }]'
+#          servers: '[{ "id": "some-server", "username": "some.user", "password": "some.password" }]'
