@@ -97,11 +97,7 @@ public class DefaultApplicationContext implements ApplicationContext {
         beanDefinition.setInitializationConstructor(findInitializationConstructor(beanClass));
         beanDefinition.setAutowiredFieldNames(findAutowiredFieldNames(beanClass));
         beanDefinition.setPrimary(beanClass.isAnnotationPresent(Primary.class));
-
-        String scopeName = beanClass.isAnnotationPresent(Scope.class)
-                ? beanClass.getAnnotation(Scope.class).value()
-                : ApplicationContext.SCOPE_SINGLETON;
-        beanDefinition.setScope(scopeName);
+        beanDefinition.setScope(getScopeName(beanClass));
 
         return beanDefinition;
     }
@@ -119,14 +115,12 @@ public class DefaultApplicationContext implements ApplicationContext {
         BeanAnnotationBeanDefinition beanDefinition = new BeanAnnotationBeanDefinition(
                 resolveBeanNameByBeanType(beanInitMethod.getReturnType()),
                 beanInitMethod.getDeclaringClass());
-        String scopeName = beanInitMethod.isAnnotationPresent(Scope.class)
-                ? beanInitMethod.getAnnotation(Scope.class).value()
-                : ApplicationContext.SCOPE_SINGLETON;
 
-        beanDefinition.setScope(scopeName);
+        beanDefinition.setScope(getScopeName(beanInitMethod));
         beanDefinition.setPrimary(beanInitMethod.isAnnotationPresent(Primary.class));
         beanDefinition.setInitMethodOfBeanFromConfigClass(beanInitMethod);
         beanDefinition.setConfigClassName(resolveBeanNameByBeanInitMethod(beanInitMethod));
+
         return beanDefinition;
     }
 
@@ -408,5 +402,17 @@ public class DefaultApplicationContext implements ApplicationContext {
         } catch (IllegalAccessException e) {
             throw new AutowireBeanException(String.format("There is access to %s filed", fieldForInjection.getName()));
         }
+    }
+
+    private String getScopeName(Method beanInitMethod) {
+        return beanInitMethod.isAnnotationPresent(Scope.class)
+                ? beanInitMethod.getAnnotation(Scope.class).value()
+                : ApplicationContext.SCOPE_SINGLETON;
+    }
+
+    private String getScopeName(Class<?> beanClass) {
+        return beanClass.isAnnotationPresent(Scope.class)
+                ? beanClass.getAnnotation(Scope.class).value()
+                : ApplicationContext.SCOPE_SINGLETON;
     }
 }
