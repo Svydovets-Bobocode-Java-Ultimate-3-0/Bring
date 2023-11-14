@@ -218,34 +218,37 @@ public class DefaultApplicationContext implements ApplicationContext {
     public <T> T getBean(Class<T> requiredType) {
         Map<String, T> beansOfType = getBeansOfType(requiredType);
         if (beansOfType.size() > 1) {
-
-            List<T> beans = new ArrayList<>(beansOfType.values());
-
-            for(T bean : beans) {
-                Class<?> type = bean.getClass();
-
-                if(type.isAnnotationPresent(Primary.class)) {
-                    return bean;
-                }
-            }
-
-            if(requiredType.isAnnotationPresent(Qualifier.class)) {
-                var qualifier = requiredType.getDeclaredAnnotation(Qualifier.class);
-
-                String beanName = qualifier.value();
-
-                if(beansOfType.containsKey(beanName)) {
-                    return beansOfType.get(beanName);
-                }
-            }
-
-              throw new NoUniqueBeanException(
-                  String.format("No unique bean found of type %s", requiredType.getName()));
+            return defineSpecificBean(requiredType, beansOfType);
         }
         return beansOfType.values().stream().findFirst().orElseThrow(
                 () -> new NoSuchBeanException(String.format("No bean found of type %s", requiredType.getName()))
         );
     }
+
+    private <T> T defineSpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
+        List<T> beans = new ArrayList<>(beansOfType.values());
+
+        if(requiredType.isAnnotationPresent(Qualifier.class)) {
+          var qualifier = requiredType.getDeclaredAnnotation(Qualifier.class);
+
+          String beanName = qualifier.value();
+
+          if (beansOfType.containsKey(beanName)) {
+            return beansOfType.get(beanName);
+          }
+        }
+
+        for(T bean : beans) {
+            Class<?> type = bean.getClass();
+
+            if(type.isAnnotationPresent(Primary.class)) {
+                return bean;
+            }
+        }
+
+        throw new NoUniqueBeanException(
+                String.format("No unique bean found of type %s", requiredType.getName()));
+  }
 
     @Override
     public <T> T getBean(String name, Class<T> requiredType) {
