@@ -5,6 +5,7 @@ import svydovets.core.annotation.Bean;
 import svydovets.core.annotation.Configuration;
 import svydovets.core.annotation.PostConstruct;
 import svydovets.core.annotation.Primary;
+import svydovets.core.annotation.Qualifier;
 import svydovets.core.bpp.BeanPostProcessor;
 import svydovets.core.context.beanDefinition.BeanAnnotationBeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinition;
@@ -79,10 +80,10 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     private BeanDefinition createComponentBeanDefinitionByBeanClass(Class<?> beanClass) {
         ComponentAnnotationBeanDefinition beanDefinition = new ComponentAnnotationBeanDefinition(
-                resolveBeanNameByBeanType(beanClass),
+                beanClass.getSimpleName(),
                 beanClass
         );
-        beanDefinition.setInitializationConstructor(findInitializationConstructor(beanClass));
+        //beanDefinition.setInitializationConstructor(findInitializationConstructor(beanClass));
         beanDefinition.setAutowiredFieldNames(findAutowiredFieldNames(beanClass));
         beanDefinition.setPrimary(beanClass.isAnnotationPresent(Primary.class));
         // todo: Implement BR-20
@@ -217,7 +218,29 @@ public class DefaultApplicationContext implements ApplicationContext {
     public <T> T getBean(Class<T> requiredType) {
         Map<String, T> beansOfType = getBeansOfType(requiredType);
         if (beansOfType.size() > 1) {
-            throw new NoUniqueBeanException(String.format("No unique bean found of type %s", requiredType.getName()));
+
+            List<T> beans = new ArrayList<>(beansOfType.values());
+
+            for(T bean : beans) {
+                Class<?> type = bean.getClass();
+
+                if(type.isAnnotationPresent(Primary.class)) {
+                    return bean;
+                }
+            }
+
+            if(requiredType.isAnnotationPresent(Qualifier.class)) {
+                var qualifier = requiredType.getDeclaredAnnotation(Qualifier.class);
+
+                String beanName = qualifier.value();
+
+                if(beansOfType.containsKey(beanName)) {
+                    return beansOfType.get(beanName);
+                }
+            }
+
+              throw new NoUniqueBeanException(
+                  String.format("No unique bean found of type %s", requiredType.getName()));
         }
         return beansOfType.values().stream().findFirst().orElseThrow(
                 () -> new NoSuchBeanException(String.format("No bean found of type %s", requiredType.getName()))
