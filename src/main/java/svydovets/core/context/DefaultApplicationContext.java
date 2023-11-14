@@ -80,10 +80,10 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     private BeanDefinition createComponentBeanDefinitionByBeanClass(Class<?> beanClass) {
         ComponentAnnotationBeanDefinition beanDefinition = new ComponentAnnotationBeanDefinition(
-                beanClass.getSimpleName(),
+                resolveBeanNameByBeanType(beanClass),
                 beanClass
         );
-        //beanDefinition.setInitializationConstructor(findInitializationConstructor(beanClass));
+        beanDefinition.setInitializationConstructor(findInitializationConstructor(beanClass));
         beanDefinition.setAutowiredFieldNames(findAutowiredFieldNames(beanClass));
         beanDefinition.setPrimary(beanClass.isAnnotationPresent(Primary.class));
         // todo: Implement BR-20
