@@ -61,8 +61,8 @@ public class ApplicationContextTest {
         String basePackage = "com.bobocode.svydovets.service.base";
         ApplicationContext context = new DefaultApplicationContext(basePackage);
 
-        when(packageScanner.findAllBeanByBasePackage(basePackage))
-                .thenReturn(Set.of(CommonService.class, EditService.class, MessageService.class));
+//        when(packageScanner.findAllBeanByBasePackage(basePackage))
+//                .thenReturn(Set.of(CommonService.class, EditService.class, MessageService.class));
 
         assertThat(context.getBean(CommonService.class)).isNotNull();
         assertThat(context.getBean(MessageService.class)).isNotNull();
