@@ -46,8 +46,7 @@ public class BeanNameResolverTest {
 
     @Test
     @DisplayName("")
-    @SneakyThrows
-    public void testWithConfig1() {
+    public void testWithConfig1() throws NoSuchMethodException {
         Class<BeanConfig> configClass = BeanConfig.class;
         var messageServiceMethod = configClass.getDeclaredMethod("messageService");
         var beanName = messageServiceMethod.getAnnotation(Bean.class).value();
