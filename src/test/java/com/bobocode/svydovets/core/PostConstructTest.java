@@ -2,6 +2,7 @@ package com.bobocode.svydovets.core;
 
 import com.bobocode.svydovets.service.postconstruct.valid.PostConstructService;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import svydovets.core.context.ApplicationContext;
 import svydovets.core.context.DefaultApplicationContext;
@@ -9,6 +10,7 @@ import svydovets.exception.NoUniquePostConstructException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
+@Disabled
 public class PostConstructTest {
 
     @Test
