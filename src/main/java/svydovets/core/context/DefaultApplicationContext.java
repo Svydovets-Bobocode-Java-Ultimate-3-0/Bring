@@ -123,28 +123,28 @@ public class DefaultApplicationContext implements ApplicationContext {
         Object bean = createBeanFromBeanDefinition(beanName, entry.getValue());
         bean = postProcessBeforeInitialization(bean, beanName);
 
-        postConstructInitialization(bean);
+        //postConstructInitialization(bean);
         return postProcessAfterInitialization(bean, beanName);
     }
 
-    private void postConstructInitialization(Object bean) {
-        Class<?> beanType = bean.getClass();
-        Method[] declaredMethods = beanType.getDeclaredMethods();
-        Predicate<Method> isAnnotatedMethod = method -> method.isAnnotationPresent(PostConstruct.class);
-
-        boolean isNotUniqueMethod = Arrays.stream(declaredMethods)
-                .filter(method -> method.isAnnotationPresent(PostConstruct.class))
-                .count() > 1;
-
-        if(isNotUniqueMethod) {
-            throw new NoUniquePostConstructException("You cannot have more than one method that is annotated with @PostConstruct.");
-        }
-
-        Arrays.stream(declaredMethods)
-                .filter(isAnnotatedMethod)
-                .findFirst()
-                .ifPresent(method -> invokePostConstructMethod(bean, method));
-    }
+//    private void postConstructInitialization(Object bean) {
+//        Class<?> beanType = bean.getClass();
+//        Method[] declaredMethods = beanType.getDeclaredMethods();
+//        Predicate<Method> isAnnotatedMethod = method -> method.isAnnotationPresent(PostConstruct.class);
+//
+//        boolean isNotUniqueMethod = Arrays.stream(declaredMethods)
+//                .filter(method -> method.isAnnotationPresent(PostConstruct.class))
+//                .count() > 1;
+//
+//        if(isNotUniqueMethod) {
+//            throw new NoUniquePostConstructException("You cannot have more than one method that is annotated with @PostConstruct.");
+//        }
+//
+//        Arrays.stream(declaredMethods)
+//                .filter(isAnnotatedMethod)
+//                .findFirst()
+//                .ifPresent(method -> invokePostConstructMethod(bean, method));
+//    }
 
     private static void invokePostConstructMethod(Object bean, Method method) {
         try {
@@ -155,12 +155,12 @@ public class DefaultApplicationContext implements ApplicationContext {
         }
     }
 
-    private Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
-        return Arrays.stream(configClass.getDeclaredMethods())
-                .filter(method -> method.isAnnotationPresent(Bean.class))
-                .map(this::createBeanDefinitionByBeanInitMethod)
-                .collect(Collectors.toMap(BeanDefinition::getBeanName, Function.identity()));
-    }
+//    private Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
+//        return Arrays.stream(configClass.getDeclaredMethods())
+//                .filter(method -> method.isAnnotationPresent(Bean.class))
+//                .map(this::createBeanDefinitionByBeanInitMethod)
+//                .collect(Collectors.toMap(BeanDefinition::getBeanName, Function.identity()));
+//    }
 
 
     private void registerBeans() {
