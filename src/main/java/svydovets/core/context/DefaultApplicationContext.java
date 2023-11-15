@@ -312,8 +312,7 @@ public class DefaultApplicationContext implements ApplicationContext {
 
         return beansOfType.values().stream()
                 .findFirst()
-                .orElseThrow(() -> new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName()))
-                );
+                .orElseThrow(() -> new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName())));
     }
 
     private <T> T defineSpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
