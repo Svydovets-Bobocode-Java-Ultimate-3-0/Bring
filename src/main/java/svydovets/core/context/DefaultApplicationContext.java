@@ -41,9 +41,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static svydovets.util.BeanNameResolver.resolveBeanNameByBeanInitMethod;
-import static svydovets.util.BeanNameResolver.resolveBeanNameByBeanType;
-
 public class DefaultApplicationContext implements ApplicationContext {
 
     public static final String NO_BEAN_FOUND_OF_TYPE = "No bean found of type %s";
@@ -91,7 +88,7 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     private BeanDefinition createComponentBeanDefinitionByBeanClass(Class<?> beanClass) {
         ComponentAnnotationBeanDefinition beanDefinition = new ComponentAnnotationBeanDefinition(
-                resolveBeanNameByBeanType(beanClass),
+                BeanNameResolver.resolveBeanName(beanClass),
                 beanClass
         );
         beanDefinition.setInitializationConstructor(findInitializationConstructor(beanClass));
@@ -113,14 +110,12 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     private BeanDefinition createBeanDefinitionByBeanInitMethod(Method beanInitMethod) {
         BeanAnnotationBeanDefinition beanDefinition = new BeanAnnotationBeanDefinition(
-                resolveBeanNameByBeanType(beanInitMethod.getReturnType()),
-                beanInitMethod.getDeclaringClass());
-
+            BeanNameResolver.resolveBeanName(beanInitMethod),
+            beanInitMethod.getReturnType());
         beanDefinition.setScope(getScopeName(beanInitMethod));
         beanDefinition.setPrimary(beanInitMethod.isAnnotationPresent(Primary.class));
         beanDefinition.setInitMethodOfBeanFromConfigClass(beanInitMethod);
-        beanDefinition.setConfigClassName(resolveBeanNameByBeanInitMethod(beanInitMethod));
-
+        beanDefinition.setConfigClassName(BeanNameResolver.resolveBeanName(beanInitMethod.getDeclaringClass()));
         return beanDefinition;
     }
 
@@ -219,7 +214,7 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     @Override
     public <T> T getBean(Class<T> requiredType) {
-        String beanName = BeanNameResolver.resolveBeanNameByBeanType(requiredType);
+        String beanName = BeanNameResolver.resolveBeanName(requiredType);
         Optional<T> prototypeBean = checkAndCreatePrototypeBean(beanName, requiredType);
         if (prototypeBean.isPresent()) {
             return prototypeBean.get();

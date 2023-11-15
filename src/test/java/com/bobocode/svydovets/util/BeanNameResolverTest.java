@@ -7,8 +7,6 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import svydovets.core.annotation.Bean;
 import svydovets.core.annotation.Component;
-import svydovets.core.context.ApplicationContext;
-import svydovets.core.context.DefaultApplicationContext;
 import svydovets.util.BeanNameResolver;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -21,25 +19,25 @@ public class BeanNameResolverTest {
     @DisplayName("")
     public void test() {
         String beanName = MessageService.class.getAnnotation(Component.class).value();
-        assertThat(beanName).isEqualTo(BeanNameResolver.resolveBeanNameByBeanType(MessageService.class));
+        assertThat(beanName).isEqualTo(BeanNameResolver.resolveBeanName(MessageService.class));
     }
 
     @Test
     @DisplayName("")
     public void test1() {
-        String beanName = CommonService.class.getSimpleName();
-        assertThat(beanName).isEqualTo(BeanNameResolver.resolveBeanNameByBeanType(CommonService.class));
+        String beanName = "commonService";
+        assertThat(beanName).isEqualTo(BeanNameResolver.resolveBeanName(CommonService.class));
     }
 
     // todo: HOW TO HANDLE CHECKED EXCEPTION IN TEST METHODS??????????????????
     @Test
     @DisplayName("")
     @SneakyThrows
-    public void testWithConfig() throws NoSuchMethodException {
+    public void testWithConfig() {
         Class<BeanConfig> configClass = BeanConfig.class;
         var trimServiceMethod = configClass.getDeclaredMethod("trimService");
         var beanName = trimServiceMethod.getAnnotation(Bean.class).value();
-        assertThat(beanName).isEqualTo(BeanNameResolver.resolveBeanNameByBeanInitMethod(trimServiceMethod));
+        assertThat(beanName).isEqualTo(BeanNameResolver.resolveBeanName(trimServiceMethod));
     }
 
     @Test
@@ -47,8 +45,8 @@ public class BeanNameResolverTest {
     public void testWithConfig1() throws NoSuchMethodException {
         Class<BeanConfig> configClass = BeanConfig.class;
         var messageServiceMethod = configClass.getDeclaredMethod("messageService");
-        var beanName = messageServiceMethod.getAnnotation(Bean.class).value();
-        assertThat(beanName).isEqualTo(BeanNameResolver.resolveBeanNameByBeanInitMethod(messageServiceMethod));
+        var beanName = messageServiceMethod.getName();
+        assertThat(beanName).isEqualTo(BeanNameResolver.resolveBeanName(messageServiceMethod));
 
     }
 }
