@@ -16,6 +16,7 @@ public abstract class AbstractBeanDefinition implements BeanDefinition {
     }
 
     public AbstractBeanDefinition() {
+        //empty constructor
     }
 
     @Override

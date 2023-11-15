@@ -3,30 +3,56 @@ package svydovets.core.context;
 import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Bean;
 import svydovets.core.annotation.Configuration;
+import svydovets.core.annotation.PostConstruct;
 import svydovets.core.annotation.Primary;
+import svydovets.core.annotation.Qualifier;
+import svydovets.core.annotation.Scope;
 import svydovets.core.bpp.BeanPostProcessor;
 import svydovets.core.context.beanDefinition.BeanAnnotationBeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinition;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
-import svydovets.exception.*;
+import svydovets.exception.AutowireBeanException;
+import svydovets.exception.BeanCreationException;
+import svydovets.exception.InvalidInvokePostConstructMethodException;
+import svydovets.exception.NoDefaultConstructor;
+import svydovets.exception.NoSuchBeanException;
+import svydovets.exception.NoUniqueBeanException;
+import svydovets.exception.NoUniquePostConstructException;
+import svydovets.util.BeanNameResolver;
 import svydovets.util.PackageScanner;
+import svydovets.util.ReflectionsUtil;
 
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static svydovets.util.BeanNameResolver.resolveBeanNameByBeanInitMethod;
-import static svydovets.util.BeanNameResolver.resolveBeanNameByBeanType;
-
 public class DefaultApplicationContext implements ApplicationContext {
+
+    public static final String NO_BEAN_FOUND_OF_TYPE = "No bean found of type %s";
+
     private final Map<String, Object> beanMap = new HashMap<>();
     private final Map<String, BeanDefinition> beanDefinitionMap = new HashMap<>();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final PackageScanner packageScanner = new PackageScanner();
 
     public DefaultApplicationContext(String basePackage) {
-        //registerBeanDefinitionsForComponentClasses(packageScanner.findAllBeanByBasePackage(basePackage));
+        registerBeanDefinitionsForComponentClasses(packageScanner.findAllBeanByBasePackage(basePackage));
         registerBeans();
     }
 
@@ -45,6 +71,13 @@ public class DefaultApplicationContext implements ApplicationContext {
         beanDefinitionMap.putAll(createBeanDefinitionMapByConfigClass(configClass));
     }
 
+    private Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
+        return Arrays.stream(configClass.getDeclaredMethods())
+                .filter(method -> method.isAnnotationPresent(Bean.class))
+                .map(this::createBeanDefinitionByBeanInitMethod)
+                .collect(Collectors.toMap(BeanDefinition::getBeanName, Function.identity()));
+    }
+
     private void registerBeanDefinitionsForComponentClasses(Set<Class<?>> beanClasses) {
         beanClasses.forEach(this::registerBeanDefinitionForComponentClass);
     }
@@ -56,20 +89,19 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     private BeanDefinition createComponentBeanDefinitionByBeanClass(Class<?> beanClass) {
         ComponentAnnotationBeanDefinition beanDefinition = new ComponentAnnotationBeanDefinition(
-                resolveBeanNameByBeanType(beanClass),
+                BeanNameResolver.resolveBeanName(beanClass),
                 beanClass
         );
         beanDefinition.setInitializationConstructor(findInitializationConstructor(beanClass));
         beanDefinition.setAutowiredFieldNames(findAutowiredFieldNames(beanClass));
         beanDefinition.setPrimary(beanClass.isAnnotationPresent(Primary.class));
-        // todo: Implement BR-20
-//        beanDefinition.setScope();
+        beanDefinition.setScope(getScopeName(beanClass));
+
         return beanDefinition;
     }
 
     private List<String> findAutowiredFieldNames(Class<?> beanClass) {
-        // todo: Implement task BR-15
-        throw new UnsupportedOperationException();
+        return ReflectionsUtil.findAutowiredFieldNames(beanClass);
     }
 
     private Constructor<?> findInitializationConstructor(Class<?> beanClass) {
@@ -77,22 +109,14 @@ public class DefaultApplicationContext implements ApplicationContext {
         throw new UnsupportedOperationException();
     }
 
-    private Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
-        return Arrays.stream(configClass.getDeclaredMethods())
-                .filter(method -> method.isAnnotationPresent(Bean.class))
-                .map(this::createBeanDefinitionByBeanInitMethod)
-                .collect(Collectors.toMap(BeanDefinition::getBeanName, Function.identity()));
-    }
-
     private BeanDefinition createBeanDefinitionByBeanInitMethod(Method beanInitMethod) {
         BeanAnnotationBeanDefinition beanDefinition = new BeanAnnotationBeanDefinition(
-                resolveBeanNameByBeanType(beanInitMethod.getReturnType()),
-                beanInitMethod.getDeclaringClass());
-        // todo: Implement BR-20
-//        beanDefinition.setScope();
+            BeanNameResolver.resolveBeanName(beanInitMethod),
+            beanInitMethod.getReturnType());
+        beanDefinition.setScope(getScopeName(beanInitMethod));
         beanDefinition.setPrimary(beanInitMethod.isAnnotationPresent(Primary.class));
         beanDefinition.setInitMethodOfBeanFromConfigClass(beanInitMethod);
-        beanDefinition.setConfigClassName(resolveBeanNameByBeanInitMethod(beanInitMethod));
+        beanDefinition.setConfigClassName(BeanNameResolver.resolveBeanName(beanInitMethod.getDeclaringClass()));
         return beanDefinition;
     }
 
@@ -123,28 +147,28 @@ public class DefaultApplicationContext implements ApplicationContext {
         Object bean = createBeanFromBeanDefinition(beanName, entry.getValue());
         bean = postProcessBeforeInitialization(bean, beanName);
 
-        //postConstructInitialization(bean);
+        postConstructInitialization(bean);
         return postProcessAfterInitialization(bean, beanName);
     }
 
-//    private void postConstructInitialization(Object bean) {
-//        Class<?> beanType = bean.getClass();
-//        Method[] declaredMethods = beanType.getDeclaredMethods();
-//        Predicate<Method> isAnnotatedMethod = method -> method.isAnnotationPresent(PostConstruct.class);
-//
-//        boolean isNotUniqueMethod = Arrays.stream(declaredMethods)
-//                .filter(method -> method.isAnnotationPresent(PostConstruct.class))
-//                .count() > 1;
-//
-//        if(isNotUniqueMethod) {
-//            throw new NoUniquePostConstructException("You cannot have more than one method that is annotated with @PostConstruct.");
-//        }
-//
-//        Arrays.stream(declaredMethods)
-//                .filter(isAnnotatedMethod)
-//                .findFirst()
-//                .ifPresent(method -> invokePostConstructMethod(bean, method));
-//    }
+    private void postConstructInitialization(Object bean) {
+        Class<?> beanType = bean.getClass();
+        Method[] declaredMethods = beanType.getDeclaredMethods();
+        Predicate<Method> isAnnotatedMethod = method -> method.isAnnotationPresent(PostConstruct.class);
+
+        boolean isNotUniqueMethod = Arrays.stream(declaredMethods)
+                .filter(method -> method.isAnnotationPresent(PostConstruct.class))
+                .count() > 1;
+
+        if(isNotUniqueMethod) {
+            throw new NoUniquePostConstructException("You cannot have more than one method that is annotated with @PostConstruct.");
+        }
+
+        Arrays.stream(declaredMethods)
+                .filter(isAnnotatedMethod)
+                .findFirst()
+                .ifPresent(method -> invokePostConstructMethod(bean, method));
+    }
 
     private static void invokePostConstructMethod(Object bean, Method method) {
         try {
@@ -154,14 +178,6 @@ public class DefaultApplicationContext implements ApplicationContext {
             throw new InvalidInvokePostConstructMethodException("Something went wrong. Please check the method that was annotated with @PostConstruct", e);
         }
     }
-
-//    private Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
-//        return Arrays.stream(configClass.getDeclaredMethods())
-//                .filter(method -> method.isAnnotationPresent(Bean.class))
-//                .map(this::createBeanDefinitionByBeanInitMethod)
-//                .collect(Collectors.toMap(BeanDefinition::getBeanName, Function.identity()));
-//    }
-
 
     private void registerBeans() {
         beanDefinitionMap.forEach(this::registerBean);
@@ -197,24 +213,55 @@ public class DefaultApplicationContext implements ApplicationContext {
         }
     }
 
-
     @Override
     public <T> T getBean(Class<T> requiredType) {
+        String beanName = BeanNameResolver.resolveBeanName(requiredType);
+        Optional<T> prototypeBean = checkAndCreatePrototypeBean(beanName, requiredType);
+        if (prototypeBean.isPresent()) {
+            return prototypeBean.get();
+        }
+
         Map<String, T> beansOfType = getBeansOfType(requiredType);
         if (beansOfType.size() > 1) {
-            throw new NoUniqueBeanException(String.format("No unique bean found of type %s", requiredType.getName()));
+            return defineSpecificBean(requiredType, beansOfType);
         }
-        return beansOfType.values().stream().findFirst().orElseThrow(
-                () -> new NoSuchBeanException(String.format("No bean found of type %s", requiredType.getName()))
+
+        return beansOfType.values().stream()
+                .findFirst()
+                .orElseThrow(() -> new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName()))
         );
     }
 
+    private <T> T defineSpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
+        if(requiredType.isAnnotationPresent(Qualifier.class)) {
+          var qualifier = requiredType.getDeclaredAnnotation(Qualifier.class);
+
+          String beanName = qualifier.value();
+
+          if (beansOfType.containsKey(beanName)) {
+            return beansOfType.get(beanName);
+          }
+        }
+
+        return beansOfType.values()
+                .stream()
+                .filter(bean -> bean.getClass().isAnnotationPresent(Primary.class))
+                .findAny()
+                .orElseThrow(() ->
+                        new NoUniqueBeanException(String.format("No unique bean found of type %s", requiredType.getName()))
+                );
+  }
+
     @Override
     public <T> T getBean(String name, Class<T> requiredType) {
+        Optional<T> prototypeBean = checkAndCreatePrototypeBean(name, requiredType);
+        if (prototypeBean.isPresent()) {
+            return prototypeBean.get();
+        }
+
         Optional<Object> bean = Optional.ofNullable(beanMap.get(name));
-        return requiredType.cast(bean.orElseThrow(
-                () -> new NoSuchBeanException(String.format("No bean found of type %s", requiredType.getName())))
-        );
+        return requiredType.cast(bean.orElseThrow(()
+                -> new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName()))));
     }
 
     @Override
@@ -223,6 +270,20 @@ public class DefaultApplicationContext implements ApplicationContext {
                 .stream()
                 .filter(entry -> requiredType.isAssignableFrom(entry.getValue().getClass()))
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> requiredType.cast(entry.getValue())));
+    }
+
+    private <T> Optional<T> checkAndCreatePrototypeBean(String name, Class<T> requiredType) {
+        Optional<BeanDefinition> beanDefinitionOptional = Optional.ofNullable(beanDefinitionMap.get(name));
+        if (beanDefinitionOptional.isEmpty()) {
+            throw new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName()));
+        }
+
+        BeanDefinition beanDefinition = beanDefinitionOptional.get();
+        if (beanDefinition.getScope().equals(ApplicationContext.SCOPE_PROTOTYPE)) {
+            return Optional.of(requiredType.cast(createBean(requiredType)));
+        }
+
+        return Optional.empty();
     }
 
     private void populateProperties(Object bean) {
@@ -357,5 +418,17 @@ public class DefaultApplicationContext implements ApplicationContext {
         } catch (IllegalAccessException e) {
             throw new AutowireBeanException(String.format("There is access to %s filed", fieldForInjection.getName()));
         }
+    }
+
+    private String getScopeName(Method beanInitMethod) {
+        return beanInitMethod.isAnnotationPresent(Scope.class)
+                ? beanInitMethod.getAnnotation(Scope.class).value()
+                : ApplicationContext.SCOPE_SINGLETON;
+    }
+
+    private String getScopeName(Class<?> beanClass) {
+        return beanClass.isAnnotationPresent(Scope.class)
+                ? beanClass.getAnnotation(Scope.class).value()
+                : ApplicationContext.SCOPE_SINGLETON;
     }
 }
