@@ -2,7 +2,6 @@ package svydovets.core.context;
 
 import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Bean;
-import svydovets.core.annotation.Configuration;
 import svydovets.core.annotation.PostConstruct;
 import svydovets.core.annotation.Primary;
 import svydovets.core.annotation.Qualifier;
@@ -45,6 +44,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static svydovets.util.BeanNameResolver.resolveBeanName;
+
 public class DefaultApplicationContext implements ApplicationContext {
     public static final String NO_BEAN_FOUND_OF_TYPE = "No bean found of type %s";
 
@@ -54,7 +55,7 @@ public class DefaultApplicationContext implements ApplicationContext {
     private final PackageScanner packageScanner = new PackageScanner();
 
     public DefaultApplicationContext(String basePackage) {
-        registerBeanDefinitionsForComponentClasses(packageScanner.findAllBeanByBasePackage(basePackage));
+        registerBeanDefinitionsForComponentClasses(packageScanner.findComponentsByBasePackage(basePackage));
         registerBeans();
     }
 
@@ -86,12 +87,12 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     private void registerBeanDefinitionForComponentClass(Class<?> beanClass) {
         BeanDefinition beanDefinition = createComponentBeanDefinitionByBeanClass(beanClass);
-        beanDefinitionMap.put(resolveBeanNameByBeanType(beanClass), beanDefinition);
+        beanDefinitionMap.put(resolveBeanName(beanClass), beanDefinition);
     }
 
     private BeanDefinition createComponentBeanDefinitionByBeanClass(Class<?> beanClass) {
         ComponentAnnotationBeanDefinition beanDefinition = new ComponentAnnotationBeanDefinition(
-                BeanNameResolver.resolveBeanName(beanClass),
+                resolveBeanName(beanClass),
                 beanClass
         );
         beanDefinition.setInitializationConstructor(findInitializationConstructor(beanClass));
@@ -133,15 +134,13 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     private BeanDefinition createBeanDefinitionByBeanInitMethod(Method beanInitMethod) {
         BeanAnnotationBeanDefinition beanDefinition = new BeanAnnotationBeanDefinition(
-                resolveBeanNameByBeanInitMethod(beanInitMethod),
+                resolveBeanName(beanInitMethod),
                 beanInitMethod.getReturnType()
         );
         beanDefinition.setScope(getScopeName(beanInitMethod));
         beanDefinition.setPrimary(beanInitMethod.isAnnotationPresent(Primary.class));
         beanDefinition.setInitMethodOfBeanFromConfigClass(beanInitMethod);
-        beanDefinition.setConfigClassName(BeanNameResolver.resolveBeanName(beanInitMethod.getDeclaringClass()));
-
-        beanDefinition.setConfigClassName(resolveBeanNameByBeanType(beanInitMethod.getDeclaringClass()));
+        beanDefinition.setConfigClassName(resolveBeanName(beanInitMethod.getDeclaringClass()));
         return beanDefinition;
     }
 
@@ -236,7 +235,7 @@ public class DefaultApplicationContext implements ApplicationContext {
         Object[] args = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
-            BeanDefinition parameterBeanDefinition = beanDefinitionMap.get(resolveBeanNameByBeanType(parameter.getType()));
+            BeanDefinition parameterBeanDefinition = beanDefinitionMap.get(resolveBeanName(parameter.getType()));
             Object parameterDependency = beanMap.get(parameterBeanDefinition.getBeanName());
             if (parameterDependency == null) {
                 createBean(parameterBeanDefinition);
@@ -300,7 +299,7 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     @Override
     public <T> T getBean(Class<T> requiredType) {
-        String beanName = BeanNameResolver.resolveBeanName(requiredType);
+        String beanName = resolveBeanName(requiredType);
         Optional<T> prototypeBean = checkAndCreatePrototypeBean(beanName, requiredType);
         if (prototypeBean.isPresent()) {
             return prototypeBean.get();
@@ -406,7 +405,7 @@ public class DefaultApplicationContext implements ApplicationContext {
         try {
             return getBean(beanType);
         } catch (NoSuchBeanException e) {
-            return Optional.ofNullable(beanDefinitionMap.get(resolveBeanNameByBeanType(beanType)))
+            return Optional.ofNullable(beanDefinitionMap.get(resolveBeanName(beanType)))
                     .map(this::createBean)
                     .orElseThrow(() -> new NoSuchBeanDefinitionException(
                             String.format("No bean definition found for type '%s'", beanType.getName()))
