@@ -49,12 +49,13 @@ public class PackageScanner {
         return reflections.getTypesAnnotatedWith(Component.class);
     }
 
-    public Set<Class<?>> findAllBeanByBaseClass(Class<?> classType) {
-        return Optional.of(classType)
-                .filter(this::isComponentScanPresent)
-                .map(clazz -> clazz.getAnnotation(ComponentScan.class).value())
-                .map(this::findComponentByBasePackage)
-                .orElseGet(HashSet::new);
+    public Set<Class<?>> findAllBeanByBaseClass(Class<?>... classType) {
+//        return Optional.of(classType)
+//                .filter(this::isComponentScanPresent)
+//                .map(clazz -> clazz.getAnnotation(ComponentScan.class).value())
+//                .map(this::findComponentByBasePackage)
+//                .orElseGet(HashSet::new);
+        return Set.of();
     }
 
     private boolean isComponentScanPresent(Class<?> classType) {

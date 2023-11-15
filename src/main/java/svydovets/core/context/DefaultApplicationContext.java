@@ -2,7 +2,6 @@ package svydovets.core.context;
 
 import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Bean;
-import svydovets.core.annotation.Configuration;
 import svydovets.core.annotation.PostConstruct;
 import svydovets.core.annotation.Primary;
 import svydovets.core.annotation.Scope;
@@ -12,6 +11,7 @@ import svydovets.core.context.beanDefinition.BeanDefinition;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
 import svydovets.exception.AutowireBeanException;
 import svydovets.exception.BeanCreationException;
+import svydovets.exception.BeanDefinitionCreateException;
 import svydovets.exception.InvalidInvokePostConstructMethodException;
 import svydovets.exception.NoDefaultConstructor;
 import svydovets.exception.NoSuchBeanException;
@@ -25,13 +25,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,11 +46,10 @@ import static svydovets.util.BeanNameResolver.resolveBeanNameByBeanInitMethod;
 import static svydovets.util.BeanNameResolver.resolveBeanNameByBeanType;
 
 public class DefaultApplicationContext implements ApplicationContext {
-
     public static final String NO_BEAN_FOUND_OF_TYPE = "No bean found of type %s";
 
-    private final Map<String, Object> beanMap = new HashMap<>();
-    private final Map<String, BeanDefinition> beanDefinitionMap = new HashMap<>();
+    private final Map<String, Object> beanMap = new LinkedHashMap<>();
+    private final Map<String, BeanDefinition> beanDefinitionMap = new LinkedHashMap<>();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final PackageScanner packageScanner = new PackageScanner();
 
@@ -58,19 +58,19 @@ public class DefaultApplicationContext implements ApplicationContext {
         registerBeans();
     }
 
-    public DefaultApplicationContext(Class<?> configClass) {
-        if (!configClass.isAnnotationPresent(Configuration.class)) {
-            // todo: Think how to process this case
-            return;
-        }
-        Set<Class<?>> beanClasses = packageScanner.findAllBeanByBaseClass(configClass);
-        registerBeanDefinitionForConfigClass(configClass);
+    public DefaultApplicationContext(Class<?>... configClasses) {
+        Set<Class<?>> beanClasses = packageScanner.findAllBeanByBaseClass(configClasses);
+        registerBeanDefinitionForConfigClasses(configClasses);
         registerBeanDefinitionsForComponentClasses(beanClasses);
         registerBeans();
     }
 
-    private void registerBeanDefinitionForConfigClass(Class<?> configClass) {
-        beanDefinitionMap.putAll(createBeanDefinitionMapByConfigClass(configClass));
+    private void registerBeanDefinitionForConfigClasses(Class<?>... configClasses) {
+        // Create bean definition for config class and then for inner beans
+        for (Class<?> configClass : configClasses) {
+            registerBeanDefinitionForComponentClass(configClass);
+            beanDefinitionMap.putAll(createBeanDefinitionMapByConfigClass(configClass));
+        }
     }
 
     private Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
@@ -86,7 +86,7 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     private void registerBeanDefinitionForComponentClass(Class<?> beanClass) {
         BeanDefinition beanDefinition = createComponentBeanDefinitionByBeanClass(beanClass);
-        beanDefinitionMap.put(beanDefinition.getBeanName(), beanDefinition);
+        beanDefinitionMap.put(resolveBeanNameByBeanType(beanClass), beanDefinition);
     }
 
     private BeanDefinition createComponentBeanDefinitionByBeanClass(Class<?> beanClass) {
@@ -107,25 +107,42 @@ public class DefaultApplicationContext implements ApplicationContext {
     }
 
     private Constructor<?> findInitializationConstructor(Class<?> beanClass) {
-        // todo: Implement task BR-16
-        throw new UnsupportedOperationException();
+        var constructors = Arrays.stream(beanClass.getDeclaredConstructors())
+                .filter(constructor -> constructor.isAnnotationPresent(Autowired.class))
+                .toList();
+        if (constructors.isEmpty()) {
+            return getPreparedNoArgsConstructor(beanClass);
+        }
+        if (constructors.size() == 1) {
+            return Optional.of(constructors.get(0))
+                    .map(this::prepareConstructor)
+                    .orElseThrow();
+        }
+        throw new BeanDefinitionCreateException(String.format(
+                "Error creating bean definition for bean '%s': Invalid autowire-marked constructor: %s. Found constructor with 'required' Autowired annotation already: %s",
+                beanClass.getName(),
+                constructors.get(1).getName(),
+                constructors.get(0).getName())
+        );
+    }
+
+    private Constructor<?> prepareConstructor(Constructor<?> constructor) {
+        constructor.setAccessible(true);
+        return constructor;
     }
 
     private BeanDefinition createBeanDefinitionByBeanInitMethod(Method beanInitMethod) {
         BeanAnnotationBeanDefinition beanDefinition = new BeanAnnotationBeanDefinition(
-                resolveBeanNameByBeanType(beanInitMethod.getReturnType()),
-                beanInitMethod.getDeclaringClass());
-
+                resolveBeanNameByBeanInitMethod(beanInitMethod),
+                beanInitMethod.getReturnType()
+        );
         beanDefinition.setScope(getScopeName(beanInitMethod));
         beanDefinition.setPrimary(beanInitMethod.isAnnotationPresent(Primary.class));
         beanDefinition.setInitMethodOfBeanFromConfigClass(beanInitMethod);
         beanDefinition.setConfigClassName(resolveBeanNameByBeanInitMethod(beanInitMethod));
 
+        beanDefinition.setConfigClassName(resolveBeanNameByBeanType(beanInitMethod.getDeclaringClass()));
         return beanDefinition;
-    }
-
-    private Object createBeanFromBeanDefinition(String beanName, BeanDefinition beanDefinition) {
-        throw new UnsupportedOperationException();
     }
 
     private Object postProcessBeforeInitialization(Object bean, String beanName) {
@@ -146,11 +163,8 @@ public class DefaultApplicationContext implements ApplicationContext {
         return beanProcess;
     }
 
-    private Object initWithBeanPostProcessor(Map.Entry<String, BeanDefinition> entry) {
-        var beanName = entry.getKey();
-        Object bean = createBeanFromBeanDefinition(beanName, entry.getValue());
+    private Object initWithBeanPostProcessor(String beanName, Object bean) {
         bean = postProcessBeforeInitialization(bean, beanName);
-
         postConstructInitialization(bean);
         return postProcessAfterInitialization(bean, beanName);
     }
@@ -164,7 +178,7 @@ public class DefaultApplicationContext implements ApplicationContext {
                 .filter(method -> method.isAnnotationPresent(PostConstruct.class))
                 .count() > 1;
 
-        if(isNotUniqueMethod) {
+        if (isNotUniqueMethod) {
             throw new NoUniquePostConstructException("You cannot have more than one method that is annotated with @PostConstruct.");
         }
 
@@ -187,31 +201,83 @@ public class DefaultApplicationContext implements ApplicationContext {
         beanDefinitionMap.forEach(this::registerBean);
     }
 
-    private Object createBean(Class<?> beanType) {
-        // todo: Implement BR-18
-        Constructor<?> noArgsConstructor = getPreparedNoArgsConstructor(beanType);
+    private Object createBean(BeanDefinition beanDefinition) {
         try {
-            Object bean = noArgsConstructor.newInstance();
-            populateProperties(bean);
-            return bean;
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            throw new BeanCreationException(String.format("Error creating bean of type %s", beanType.getSimpleName()), e);
+            if (beanDefinition instanceof ComponentAnnotationBeanDefinition componentBeanDefinition) {
+                return createComponent(componentBeanDefinition);
+            } else {
+                return createInnerBeanOfConfigClass((BeanAnnotationBeanDefinition) beanDefinition);
+            }
+        } catch (Exception e) {
+            throw new BeanCreationException(String.format("Error creating bean of type %s", beanDefinition.getBeanClass()), e);
         }
     }
 
+    private Object createInnerBeanOfConfigClass(BeanAnnotationBeanDefinition beanDefinition) throws InvocationTargetException, IllegalAccessException {
+        var configClassName = beanDefinition.getConfigClassName();
+        var configClassBeanDefinition = beanDefinitionMap.get(configClassName);
+        var configClass = beanMap.get(configClassBeanDefinition.getBeanName());
+        if (configClass == null) {
+            configClass = createBean(configClassBeanDefinition);
+        }
+        var initMethod = beanDefinition.getInitMethodOfBeanFromConfigClass();
+        Parameter[] parameters = initMethod.getParameters();
+        Object[] args = retrieveBeanInitMethodArguments(parameters);
+
+        return prepareMethod(initMethod).invoke(configClass, args);
+    }
+
+    private Object[] retrieveBeanInitMethodArguments(Parameter[] parameters) {
+        Object[] args = new Object[parameters.length];
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
+            BeanDefinition parameterBeanDefinition = beanDefinitionMap.get(resolveBeanNameByBeanType(parameter.getType()));
+            Object parameterDependency = beanMap.get(parameterBeanDefinition.getBeanName());
+            if (parameterDependency == null) {
+                createBean(parameterBeanDefinition);
+            }
+            args[i] = parameterDependency;
+        }
+        return args;
+    }
+
+    private Object createComponent(ComponentAnnotationBeanDefinition beanDefinition) throws InvocationTargetException, InstantiationException, IllegalAccessException {
+        Constructor<?> initializationConstructor = prepareConstructor(beanDefinition.getInitializationConstructor());
+        Class<?>[] autowireCandidateTypes = initializationConstructor.getParameterTypes();
+        Object[] autowireCandidates = retrieveAutowireCandidates(autowireCandidateTypes);
+        return initializationConstructor.newInstance(autowireCandidates);
+    }
+
+    private Object[] retrieveAutowireCandidates(Class<?>[] autowiredCandidateTypes) {
+        Object[] autowireCandidates = new Object[autowiredCandidateTypes.length];
+        for (int i = 0; i < autowiredCandidateTypes.length; i++) {
+            Class<?> autowireCandidateType = autowiredCandidateTypes[i];
+            BeanDefinition autowireCandidateBeanDefinition = beanDefinitionMap.get(resolveBeanNameByBeanType(autowireCandidateType));
+            Object autowireCandidate = beanMap.get(autowireCandidateBeanDefinition.getBeanName());
+            if (autowireCandidate == null) {
+                autowireCandidate = createBean(autowireCandidateBeanDefinition);
+            }
+            autowireCandidates[i] = autowireCandidate;
+        }
+        return autowireCandidates;
+    }
+
+    private Method prepareMethod(Method method) {
+        method.setAccessible(true);
+        return method;
+    }
+
     private void registerBean(String beanName, BeanDefinition beanDefinition) {
-        // todo: Implement BR-17
-        Object bean = createBean(beanDefinition.getBeanClass());
+        Object bean = createBean(beanDefinition);
         populateProperties(bean);
-        //
+        bean = initWithBeanPostProcessor(beanName, bean);
         beanMap.putIfAbsent(beanName, bean);
     }
 
     private Constructor<?> getPreparedNoArgsConstructor(Class<?> beanType) {
         try {
             Constructor<?> constructor = beanType.getDeclaredConstructor();
-            constructor.setAccessible(true);
-            return constructor;
+            return prepareConstructor(constructor);
         } catch (NoSuchMethodException e) {
             throw new NoDefaultConstructor(String.format("No default constructor found of type %s", beanType.getName()));
         }
@@ -233,7 +299,7 @@ public class DefaultApplicationContext implements ApplicationContext {
         return beansOfType.values().stream()
                 .findFirst()
                 .orElseThrow(() -> new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName()))
-        );
+                );
     }
 
     @Override
@@ -264,40 +330,43 @@ public class DefaultApplicationContext implements ApplicationContext {
 
         BeanDefinition beanDefinition = beanDefinitionOptional.get();
         if (beanDefinition.getScope().equals(ApplicationContext.SCOPE_PROTOTYPE)) {
-            return Optional.of(requiredType.cast(createBean(requiredType)));
+            return Optional.of(requiredType.cast(createBean(beanDefinition)));
         }
 
         return Optional.empty();
     }
 
     private void populateProperties(Object bean) {
-        Field[] fields = bean.getClass().getDeclaredFields();
-
-        // todo: Implement BR-18 (Інжект через сетери має бути перед інжектом через поля)
-        for (Field field : fields) {
-            boolean isAutowiredPresent = field.isAnnotationPresent(Autowired.class);
+        Field[] beanFields = bean.getClass().getDeclaredFields();
+        for (Field beanField : beanFields) {
+            boolean isAutowiredPresent = beanField.isAnnotationPresent(Autowired.class);
 
             if (isAutowiredPresent) {
-
-                // todo: Implement BR-6
-                var dependencyFieldType = field.getType();
-                if (Collection.class.isAssignableFrom(dependencyFieldType)) {
-                    injectCollectionOfBeans(bean, field, dependencyFieldType);
-                } else if (Map.class.isAssignableFrom(dependencyFieldType)) {
-                    injectMapOfBeans(bean, field, dependencyFieldType);
-                } else {
-                    injectBean(bean, field, dependencyFieldType);
+                var autowireCandidateType = beanField.getType();
+                try {
+                    injectBean(bean, beanField, autowireCandidateType);
+                } catch (NoSuchBeanException e) {
+                    if (Collection.class.isAssignableFrom(autowireCandidateType)) {
+                        injectCollectionOfBeans(bean, beanField);
+                    } else if (Map.class.isAssignableFrom(autowireCandidateType)) {
+                        injectMapOfBeans(bean, beanField);
+                    } else {
+                        throw e;
+                    }
                 }
             }
         }
     }
 
-    private void injectBean(Object bean, Field fieldForInjection, Class<?> autowireCandidateBeanType) {
-        Object autowireCandidate = getBean(autowireCandidateBeanType);
+    private void injectBean(Object bean, Field fieldForInjection, Class<?> autowireCandidateType) {
+        Object autowireCandidate = getBean(autowireCandidateType);
+        if (autowireCandidate == null) {
+            throw new NoSuchBeanException(String.format("No bean found of type %s", autowireCandidateType.getName()));
+        }
         setDependency(bean, fieldForInjection, autowireCandidate);
     }
 
-    private void injectMapOfBeans(Object bean, Field fieldForInjection, Class<?> mapType) {
+    private void injectMapOfBeans(Object bean, Field fieldForInjection) {
         Class<?> autowireCandidateType = retrieveAutowireCandidateType(fieldForInjection);
         var mapOfBeansForInjection = retrieveFieldValue(bean, fieldForInjection);
         var mapOfBeansToInject = getBeansOfType(autowireCandidateType);
@@ -312,35 +381,39 @@ public class DefaultApplicationContext implements ApplicationContext {
     }
 
     @SuppressWarnings("unchecked")
-    private void injectCollectionOfBeans(Object bean, Field fieldForInjection, Class<?> collectionType) {
+    private void injectCollectionOfBeans(Object bean, Field fieldForInjection) {
         Class<?> autowireCandidateType = retrieveAutowireCandidateType(fieldForInjection);
         Object collectionOfBeansForInjection = retrieveFieldValue(bean, fieldForInjection);
         Collection<?> collectionOfBeansToInject = getBeansOfType(autowireCandidateType).values();
         if (collectionOfBeansForInjection == null) {
-            injectCollectionField(bean, fieldForInjection, collectionType, collectionOfBeansToInject);
+            injectCollectionField(bean, fieldForInjection, collectionOfBeansToInject);
         } else {
             // Already created via "new" by user
             ((Collection) collectionOfBeansForInjection).addAll(collectionOfBeansToInject);
         }
     }
 
-    private void injectCollectionField(Object bean, Field fieldForInjection, Class<?> collectionType, Collection<?> collectionOfBeansToInject) {
+    @SuppressWarnings("unchecked")
+    private void injectCollectionField(Object bean, Field fieldForInjection, Collection<?> collectionOfBeansToInject) {
         try {
-            fieldForInjection.set(bean, createCollectionInstance(collectionType, collectionOfBeansToInject));
+            Collection<?> collectionOfBeans = createCollectionInstance(fieldForInjection.getType());
+            collectionOfBeans.addAll((Collection) collectionOfBeansToInject);
+            fieldForInjection.set(bean, collectionOfBeans);
         } catch (IllegalAccessException e) {
-            // todo: Implement BR-6
             throw new RuntimeException("");
         }
     }
 
-    private Collection<?> createCollectionInstance(Class<?> collectionType, Collection<?> collectionOfBeansToInject) {
+    private Collection<?> createCollectionInstance(Class<?> collectionType) {
         if (collectionType == List.class) {
-            return new ArrayList<>(collectionOfBeansToInject);
+            return new ArrayList<>();
         } else if (collectionType == Set.class || collectionType == Collection.class) {
-            return new LinkedHashSet<>(collectionOfBeansToInject);
+            return new LinkedHashSet<>();
         } else {
-            // todo: Implement BR-6
-            throw new UnsupportedOperationException("We do not support collection of type: " + collectionType.getName());
+            throw new BeanCreationException(String.format(
+                    "We don't support dependency injection into collection of type: %s",
+                    collectionType.getName())
+            );
         }
     }
 
@@ -353,45 +426,58 @@ public class DefaultApplicationContext implements ApplicationContext {
         }
     }
 
-    private Type resolveAutowireCandidateGenericType(Type[] genericTypes) {
+    private Type resolveAutowireCandidateGenericType(Field fieldForInjection) {
+        Type autowireCandidateGenericType = fieldForInjection.getGenericType();
+        if (!(autowireCandidateGenericType instanceof ParameterizedType autowireCandidateParameterizedType)) {
+            // Raw map processing
+            throw new BeanCreationException(String.format(
+                    "Don't use raw types for collections. Raw type founded for field %s of %s class",
+                    fieldForInjection.getName(),
+                    fieldForInjection.getDeclaringClass())
+            );
+        }
+        Type[] genericTypes = autowireCandidateParameterizedType.getActualTypeArguments();
         // If we got Type[] it is mean that we have at least 1 generic type (even ?),
         // otherwise exception will be thrown above (while casting to "ParameterizedType")
         int size = genericTypes.length;
         if (size == 1) {
             Type singleGenericType = genericTypes[0];
             if (singleGenericType instanceof WildcardType) {
-                throw new UnsupportedOperationException("We do not processing wildcard generics!");
+                throw new BeanCreationException(String.format(
+                        "Don't use wildcard for collections. Wildcard found for bean of type %s",
+                        autowireCandidateParameterizedType.getOwnerType())
+                );
             }
-
             return singleGenericType;
         } else if (size == 2) {
-            Type keyGenericType = genericTypes[0];
-            if (!keyGenericType.getTypeName().equals(String.class.getName())) {
-                throw new UnsupportedOperationException("We processing Map only with String key type");
+            Type mapKeyGenericType = genericTypes[0];
+            if (!mapKeyGenericType.getTypeName().equals(String.class.getName())) {
+                throw new BeanCreationException("We processing Map only with String key type");
             }
             return genericTypes[1];
         } else {
-            throw new UnsupportedOperationException("What a fuck is it?");
+            throw new UnsupportedOperationException(String.format(
+                    "Field %s in %s required a bean of type '%s' that could not be found",
+                    fieldForInjection.getName(),
+                    fieldForInjection.getDeclaringClass().getName(),
+                    fieldForInjection.getType())
+            );
         }
     }
 
     private Class<?> retrieveAutowireCandidateType(Field fieldForInjection) {
         // May cause ClassCastException: class java.lang.Class cannot be cast to class java.lang.reflect.ParameterizedType
         // The reason is raw generic type. For example, Set set = new HashSet() => field.getGenericType() == Set.class
-        try {
-            ParameterizedType parameterizedType = (ParameterizedType) fieldForInjection.getGenericType();
-            var keyValueGenericTypes = parameterizedType.getActualTypeArguments();
-            Type autowireCandidateGenericType = resolveAutowireCandidateGenericType(keyValueGenericTypes);
 
+        try {
+            Type autowireCandidateGenericType = resolveAutowireCandidateGenericType(fieldForInjection);
             return Class.forName(autowireCandidateGenericType.getTypeName());
-        } catch (ClassCastException e) {
-            // Raw map processing
-            // todo: Implement BR-6
-            throw new RuntimeException();
         } catch (ClassNotFoundException e) {
-            // Class.forName()
-            // todo: Implement BR-6
-            throw new RuntimeException();
+            // Exception thrown by "Class.forName()"
+            throw new BeanCreationException(String.format(
+                    "Error creating bean of class %s. Please make sure the class is present in the classpath",
+                    fieldForInjection.getDeclaringClass().getName())
+            );
         }
     }
 

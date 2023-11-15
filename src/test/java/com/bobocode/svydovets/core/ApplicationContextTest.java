@@ -85,7 +85,10 @@ public class ApplicationContextTest {
 
     @Test
     void getBeanThrowNoSuchBeanException() {
-        ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service.base");
+        String basePackage = "com.bobocode.svydovets.service.base";
+        ApplicationContext context = new DefaultApplicationContext(basePackage);
+        when(packageScanner.findAllBeanByBasePackage(basePackage))
+                .thenReturn(Set.of(CommonService.class, EditService.class, MessageService.class));
         assertThatExceptionOfType(NoSuchBeanException.class)
                 .isThrownBy(() -> context.getBean(TrimService.class))
                 .withMessage(String.format("No bean found of type %s", TrimService.class.getName()));
@@ -93,7 +96,10 @@ public class ApplicationContextTest {
 
     @Test
     void getBeanThrowNoUniqueBeanException() {
-        ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service");
+        String basePackage = "com.bobocode.svydovets.service";
+        ApplicationContext context = new DefaultApplicationContext(basePackage);
+        when(packageScanner.findAllBeanByBasePackage(basePackage))
+                .thenReturn(Set.of(PrimaryProductServiceImpl.class, NonPrimaryProductServiceImpl.class));
         assertThatExceptionOfType(NoUniqueBeanException.class)
                 .isThrownBy(() -> context.getBean(ProductService.class))
                 .withMessage(String.format("No unique bean found of type %s", ProductService.class.getName()));
