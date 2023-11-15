@@ -5,6 +5,7 @@ import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 import svydovets.core.annotation.*;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -40,14 +41,7 @@ public class ReflectionsUtil {
 
         return Arrays.stream(fields)
                 .filter(field -> field.isAnnotationPresent(Autowired.class))
-                .map(field -> {
-                    if(field.isAnnotationPresent(Qualifier.class)) {
-                        Qualifier qualifier = field.getAnnotation(Qualifier.class);
-                        return qualifier.value();
-                    }
-
-                    return field.getName();
-                })
+                .map(Field::getName)
                 .collect(Collectors.toList());
     }
 

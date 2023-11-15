@@ -26,16 +26,6 @@ public class ReflectionUtilTest {
         assertThat(fieldNames.get(1)).isEqualTo("commonService");
     }
 
-    @Test
-    public void findAutowiredFieldNamesThatWereMarkedQualifier() {
-        List<String> fieldNames = ReflectionsUtil.findAutowiredFieldNames(PersonQualifierService.class);
-
-        assertThat(fieldNames.size()).isEqualTo(2);
-
-        assertThat(fieldNames.get(0)).isEqualTo("customEditService");
-        assertThat(fieldNames.get(1)).isEqualTo("qualifierCommonService");
-    }
-
     @Component
     static class PersonService {
 
@@ -48,16 +38,4 @@ public class ReflectionUtilTest {
         private MessageService messageService;
     }
 
-    @Component
-    static class PersonQualifierService {
-
-        @Autowired
-        @Qualifier("customEditService")
-        private EditService editService;
-
-        @Autowired
-        @Qualifier("qualifierCommonService")
-        private CommonService commonService;
-
-    }
 }
