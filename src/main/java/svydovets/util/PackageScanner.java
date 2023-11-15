@@ -1,8 +1,6 @@
 package svydovets.util;
 
 import org.reflections.Reflections;
-import org.reflections.scanners.Scanners;
-import org.reflections.util.ConfigurationBuilder;
 import svydovets.core.annotation.Component;
 import svydovets.core.annotation.ComponentScan;
 import svydovets.core.annotation.Configuration;
@@ -12,7 +10,7 @@ import java.util.Set;
 
 public class PackageScanner {
 
-    private Set<Class<?>> findComponentsByBasePackage(String basePackage) {
+    public Set<Class<?>> findComponentsByBasePackage(String basePackage) {
         Reflections reflections = new Reflections((Object) basePackage);
         return reflections.getTypesAnnotatedWith(Component.class);
     }
