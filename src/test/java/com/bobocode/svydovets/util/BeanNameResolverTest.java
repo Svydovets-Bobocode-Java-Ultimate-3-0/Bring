@@ -1,6 +1,6 @@
 package com.bobocode.svydovets.util;
 
-import com.bobocode.svydovets.config.BeanConfig;
+import com.bobocode.svydovets.config.BeanConfigBase;
 import com.bobocode.svydovets.service.base.CommonService;
 import com.bobocode.svydovets.service.base.MessageService;
 import lombok.SneakyThrows;
@@ -32,9 +32,8 @@ public class BeanNameResolverTest {
     // todo: HOW TO HANDLE CHECKED EXCEPTION IN TEST METHODS??????????????????
     @Test
     @DisplayName("")
-    @SneakyThrows
-    public void testWithConfig() {
-        Class<BeanConfig> configClass = BeanConfig.class;
+    public void testWithConfig() throws NoSuchMethodException {
+        Class<BeanConfigBase> configClass = BeanConfigBase.class;
         var trimServiceMethod = configClass.getDeclaredMethod("trimService");
         var beanName = trimServiceMethod.getAnnotation(Bean.class).value();
         assertThat(beanName).isEqualTo(BeanNameResolver.resolveBeanName(trimServiceMethod));
@@ -43,7 +42,7 @@ public class BeanNameResolverTest {
     @Test
     @DisplayName("")
     public void testWithConfig1() throws NoSuchMethodException {
-        Class<BeanConfig> configClass = BeanConfig.class;
+        Class<BeanConfigBase> configClass = BeanConfigBase.class;
         var messageServiceMethod = configClass.getDeclaredMethod("messageService");
         var beanName = messageServiceMethod.getName();
         assertThat(beanName).isEqualTo(BeanNameResolver.resolveBeanName(messageServiceMethod));

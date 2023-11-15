@@ -52,7 +52,7 @@ public class DefaultApplicationContext implements ApplicationContext {
     private final PackageScanner packageScanner = new PackageScanner();
 
     public DefaultApplicationContext(String basePackage) {
-        registerBeanDefinitionsForComponentClasses(packageScanner.findAllBeanByBasePackage(basePackage));
+        registerBeanDefinitionsForComponentClasses(packageScanner.findComponentsByBasePackage(basePackage));
         registerBeans();
     }
 
