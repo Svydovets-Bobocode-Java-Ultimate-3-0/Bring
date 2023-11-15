@@ -32,8 +32,7 @@ public class BeanNameResolverTest {
     // todo: HOW TO HANDLE CHECKED EXCEPTION IN TEST METHODS??????????????????
     @Test
     @DisplayName("")
-    @SneakyThrows
-    public void testWithConfig() {
+    public void testWithConfig() throws NoSuchMethodException {
         Class<BeanConfigBase> configClass = BeanConfigBase.class;
         var trimServiceMethod = configClass.getDeclaredMethod("trimService");
         var beanName = trimServiceMethod.getAnnotation(Bean.class).value();
