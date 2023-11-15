@@ -3,12 +3,9 @@ package com.bobocode.svydovets.util;
 import com.bobocode.svydovets.config.BeanConfig;
 import com.bobocode.svydovets.service.base.CommonService;
 import com.bobocode.svydovets.service.base.MessageService;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import svydovets.core.annotation.Bean;
 import svydovets.core.annotation.Component;
-import svydovets.core.context.ApplicationContext;
-import svydovets.core.context.DefaultApplicationContext;
 import svydovets.util.BeanNameResolver;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -31,10 +28,8 @@ public class BeanNameResolverTest {
         assertThat(beanName).isEqualTo(BeanNameResolver.resolveBeanNameByBeanType(CommonService.class));
     }
 
-    // todo: HOW TO HANDLE CHECKED EXCEPTION IN TEST METHODS??????????????????
     @Test
     @DisplayName("")
-    @SneakyThrows
     public void testWithConfig() throws NoSuchMethodException {
         Class<BeanConfig> configClass = BeanConfig.class;
         var trimServiceMethod = configClass.getDeclaredMethod("trimService");

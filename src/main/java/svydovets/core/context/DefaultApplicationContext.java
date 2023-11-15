@@ -14,6 +14,7 @@ import svydovets.exception.BeanCreationException;
 import svydovets.exception.BeanDefinitionCreateException;
 import svydovets.exception.InvalidInvokePostConstructMethodException;
 import svydovets.exception.NoDefaultConstructor;
+import svydovets.exception.NoSuchBeanDefinitionException;
 import svydovets.exception.NoSuchBeanException;
 import svydovets.exception.NoUniqueBeanException;
 import svydovets.exception.NoUniquePostConstructException;
@@ -199,6 +200,9 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     private void registerBeans() {
         beanDefinitionMap.forEach(this::registerBean);
+        // todo: Autowire properties
+//        beanMap.forEach();
+        beanMap.forEach(this::initializeBeanAfterRegistering);
     }
 
     private Object createBean(BeanDefinition beanDefinition) {
@@ -209,7 +213,9 @@ public class DefaultApplicationContext implements ApplicationContext {
                 return createInnerBeanOfConfigClass((BeanAnnotationBeanDefinition) beanDefinition);
             }
         } catch (Exception e) {
-            throw new BeanCreationException(String.format("Error creating bean of type %s", beanDefinition.getBeanClass()), e);
+            throw new BeanCreationException(
+                    String.format("Error creating bean of type '%s'", beanDefinition.getBeanClass().getName()), e
+            );
         }
     }
 
@@ -252,12 +258,18 @@ public class DefaultApplicationContext implements ApplicationContext {
         Object[] autowireCandidates = new Object[autowiredCandidateTypes.length];
         for (int i = 0; i < autowiredCandidateTypes.length; i++) {
             Class<?> autowireCandidateType = autowiredCandidateTypes[i];
-            BeanDefinition autowireCandidateBeanDefinition = beanDefinitionMap.get(resolveBeanNameByBeanType(autowireCandidateType));
-            Object autowireCandidate = beanMap.get(autowireCandidateBeanDefinition.getBeanName());
-            if (autowireCandidate == null) {
-                autowireCandidate = createBean(autowireCandidateBeanDefinition);
-            }
-            autowireCandidates[i] = autowireCandidate;
+            // todo: Check if bean definition is null
+            // todo: Need to reuse method "getBean()" with verifying on "Qualifier"
+//            BeanDefinition autowireCandidateBeanDefinition = Optional.ofNullable(beanDefinitionMap.get(resolveBeanNameByBeanType(autowireCandidateType)))
+//                    .orElseThrow(() -> new NoSuchBeanDefinitionException(
+//                            String.format("No bean definition found for type '%s'", autowireCandidateType.getName()))
+//                    );
+            autowireCandidates[i] = createBeanIfNotPresent(autowireCandidateType);
+//            Object autowireCandidate = beanMap.get(autowireCandidateBeanDefinition.getBeanName());
+//            if (autowireCandidate == null) {
+//                autowireCandidate = createBean(autowireCandidateBeanDefinition);
+//            }
+//            autowireCandidates[i] = autowireCandidate;
         }
         return autowireCandidates;
     }
@@ -268,12 +280,16 @@ public class DefaultApplicationContext implements ApplicationContext {
     }
 
     private void registerBean(String beanName, BeanDefinition beanDefinition) {
-        Object bean = createBean(beanDefinition);
-        populateProperties(bean);
-        bean = initWithBeanPostProcessor(beanName, bean);
-        beanMap.putIfAbsent(beanName, bean);
+        if (beanDefinition.getScope().equals(SCOPE_SINGLETON)) {
+            Object bean = createBean(beanDefinition);
+            beanMap.putIfAbsent(beanName, bean);
+        }
     }
 
+    private void initializeBeanAfterRegistering(String beanName, Object bean) {
+        populateProperties(bean);
+        beanMap.putIfAbsent(beanName, initWithBeanPostProcessor(beanName, bean));
+    }
     private Constructor<?> getPreparedNoArgsConstructor(Class<?> beanType) {
         try {
             Constructor<?> constructor = beanType.getDeclaredConstructor();
@@ -345,7 +361,7 @@ public class DefaultApplicationContext implements ApplicationContext {
                 var autowireCandidateType = beanField.getType();
                 try {
                     injectBean(bean, beanField, autowireCandidateType);
-                } catch (NoSuchBeanException e) {
+                } catch (NoSuchBeanException | NoSuchBeanDefinitionException e) {
                     if (Collection.class.isAssignableFrom(autowireCandidateType)) {
                         injectCollectionOfBeans(bean, beanField);
                     } else if (Map.class.isAssignableFrom(autowireCandidateType)) {
@@ -360,10 +376,23 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     private void injectBean(Object bean, Field fieldForInjection, Class<?> autowireCandidateType) {
         Object autowireCandidate = getBean(autowireCandidateType);
-        if (autowireCandidate == null) {
-            throw new NoSuchBeanException(String.format("No bean found of type %s", autowireCandidateType.getName()));
-        }
+//        Object autowireCandidate = createBeanIfNotPresent(autowireCandidateType);
+//        if (autowireCandidate == null) {
+//            throw new NoSuchBeanException(String.format("No bean found of type %s", autowireCandidateType.getName()));
+//        }
         setDependency(bean, fieldForInjection, autowireCandidate);
+    }
+
+    private Object createBeanIfNotPresent(Class<?> beanType) {
+        try {
+            return getBean(beanType);
+        } catch (NoSuchBeanException e) {
+            return Optional.ofNullable(beanDefinitionMap.get(resolveBeanNameByBeanType(beanType)))
+                    .map(this::createBean)
+                    .orElseThrow(() -> new NoSuchBeanDefinitionException(
+                            String.format("No bean definition found for type '%s'", beanType.getName()))
+                    );
+        }
     }
 
     private void injectMapOfBeans(Object bean, Field fieldForInjection) {

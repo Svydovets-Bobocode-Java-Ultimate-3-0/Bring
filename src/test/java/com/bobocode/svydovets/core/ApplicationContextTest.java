@@ -9,7 +9,13 @@ import com.bobocode.svydovets.service.base.CollectionsHolderService;
 import com.bobocode.svydovets.service.base.CommonService;
 import com.bobocode.svydovets.service.base.EditService;
 import com.bobocode.svydovets.service.base.MessageService;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import svydovets.core.context.ApplicationContext;
@@ -46,18 +52,23 @@ public class ApplicationContextTest {
     }
 
     @Test
+    @Order(1)
     void createApplicationContextFromBasePackage() {
         ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service.base");
         assertThat(context).isNotNull();
     }
 
     @Test
+    @Order(2)
+
     void createApplicationContextFromConfigClass() {
         ApplicationContext context = new DefaultApplicationContext(BeanConfig.class);
         assertThat(context).isNotNull();
     }
 
     @Test
+    @Order(3)
+
     void applicationContextFromBasePackageCreatesAllRequiredBeans() {
         String basePackage = "com.bobocode.svydovets.service.base";
         ApplicationContext context = new DefaultApplicationContext(basePackage);
@@ -71,6 +82,8 @@ public class ApplicationContextTest {
     }
 
     @Test
+    @Order(4)
+
     void applicationContextFromConfigClassCreatesAllRequiredBeans() {
         ApplicationContext context = new DefaultApplicationContext(BeanConfig.class);
 
@@ -84,6 +97,8 @@ public class ApplicationContextTest {
 
 
     @Test
+    @Order(5)
+
     void getBeanThrowNoSuchBeanException() {
         String basePackage = "com.bobocode.svydovets.service.base";
         ApplicationContext context = new DefaultApplicationContext(basePackage);
@@ -95,6 +110,8 @@ public class ApplicationContextTest {
     }
 
     @Test
+    @Order(6)
+
     void getBeanThrowNoUniqueBeanException() {
         String basePackage = "com.bobocode.svydovets.service";
         ApplicationContext context = new DefaultApplicationContext(basePackage);
@@ -106,6 +123,8 @@ public class ApplicationContextTest {
     }
 
     @Test
+    @Order(7)
+
     void injectBeansToTheList() {
         ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service");
 
@@ -124,6 +143,8 @@ public class ApplicationContextTest {
     }
 
     @Test
+    @Order(8)
+
     void injectBeansToTheSet() {
         ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service");
 
