@@ -5,6 +5,7 @@ import svydovets.core.annotation.Bean;
 import svydovets.core.annotation.Configuration;
 import svydovets.core.annotation.PostConstruct;
 import svydovets.core.annotation.Primary;
+import svydovets.core.annotation.Qualifier;
 import svydovets.core.annotation.Scope;
 import svydovets.core.bpp.BeanPostProcessor;
 import svydovets.core.context.beanDefinition.BeanAnnotationBeanDefinition;
@@ -222,7 +223,7 @@ public class DefaultApplicationContext implements ApplicationContext {
 
         Map<String, T> beansOfType = getBeansOfType(requiredType);
         if (beansOfType.size() > 1) {
-            throw new NoUniqueBeanException(String.format("No unique bean found of type %s", requiredType.getName()));
+            return defineSpecificBean(requiredType, beansOfType);
         }
 
         return beansOfType.values().stream()
@@ -230,6 +231,26 @@ public class DefaultApplicationContext implements ApplicationContext {
                 .orElseThrow(() -> new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName()))
         );
     }
+
+    private <T> T defineSpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
+        if(requiredType.isAnnotationPresent(Qualifier.class)) {
+          var qualifier = requiredType.getDeclaredAnnotation(Qualifier.class);
+
+          String beanName = qualifier.value();
+
+          if (beansOfType.containsKey(beanName)) {
+            return beansOfType.get(beanName);
+          }
+        }
+
+        return beansOfType.values()
+                .stream()
+                .filter(bean -> bean.getClass().isAnnotationPresent(Primary.class))
+                .findAny()
+                .orElseThrow(() ->
+                        new NoUniqueBeanException(String.format("No unique bean found of type %s", requiredType.getName()))
+                );
+  }
 
     @Override
     public <T> T getBean(String name, Class<T> requiredType) {
