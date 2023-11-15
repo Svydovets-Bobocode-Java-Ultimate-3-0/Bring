@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Component;
+import svydovets.core.annotation.Qualifier;
 import svydovets.util.ReflectionsUtil;
 
 import java.util.List;
@@ -36,4 +37,5 @@ public class ReflectionUtilTest {
 
         private MessageService messageService;
     }
+
 }

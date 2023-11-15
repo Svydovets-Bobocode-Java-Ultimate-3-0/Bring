@@ -1,6 +1,6 @@
 package com.bobocode.svydovets.core;
 
-import com.bobocode.svydovets.config.BeanConfig;
+import com.bobocode.svydovets.config.BeanConfigBase;
 import com.bobocode.svydovets.service.NonPrimaryProductServiceImpl;
 import com.bobocode.svydovets.service.PrimaryProductServiceImpl;
 import com.bobocode.svydovets.service.ProductService;
@@ -62,7 +62,7 @@ public class ApplicationContextTest {
     @Order(2)
 
     void createApplicationContextFromConfigClass() {
-        ApplicationContext context = new DefaultApplicationContext(BeanConfig.class);
+        ApplicationContext context = new DefaultApplicationContext(BeanConfigBase.class);
         assertThat(context).isNotNull();
     }
 
@@ -73,8 +73,8 @@ public class ApplicationContextTest {
         String basePackage = "com.bobocode.svydovets.service.base";
         ApplicationContext context = new DefaultApplicationContext(basePackage);
 
-        when(packageScanner.findAllBeanByBasePackage(basePackage))
-                .thenReturn(Set.of(CommonService.class, EditService.class, MessageService.class));
+//        when(packageScanner.findAllBeanByBasePackage(basePackage))
+//                .thenReturn(Set.of(CommonService.class, EditService.class, MessageService.class));
 
         assertThat(context.getBean(CommonService.class)).isNotNull();
         assertThat(context.getBean(MessageService.class)).isNotNull();
@@ -85,12 +85,12 @@ public class ApplicationContextTest {
     @Order(4)
 
     void applicationContextFromConfigClassCreatesAllRequiredBeans() {
-        ApplicationContext context = new DefaultApplicationContext(BeanConfig.class);
+        ApplicationContext context = new DefaultApplicationContext(BeanConfigBase.class);
 
-        when(packageScanner.findAllBeanByBaseClass(BeanConfig.class))
-                .thenReturn(Set.of(BeanConfig.class, TrimService.class, MessageService.class));
+        when(packageScanner.findAllBeanByBaseClass(BeanConfigBase.class))
+                .thenReturn(Set.of(BeanConfigBase.class, TrimService.class, MessageService.class));
 
-        assertThat(context.getBean(BeanConfig.class)).isNotNull();
+        assertThat(context.getBean(BeanConfigBase.class)).isNotNull();
         assertThat(context.getBean(TrimService.class)).isNotNull();
         assertThat(context.getBean(MessageService.class)).isNotNull();
     }

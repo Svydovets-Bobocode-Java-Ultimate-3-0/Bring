@@ -2,8 +2,10 @@ package svydovets.core.context;
 
 import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Bean;
+import svydovets.core.annotation.Configuration;
 import svydovets.core.annotation.PostConstruct;
 import svydovets.core.annotation.Primary;
+import svydovets.core.annotation.Qualifier;
 import svydovets.core.annotation.Scope;
 import svydovets.core.bpp.BeanPostProcessor;
 import svydovets.core.context.beanDefinition.BeanAnnotationBeanDefinition;
@@ -42,9 +44,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static svydovets.util.BeanNameResolver.resolveBeanNameByBeanInitMethod;
-import static svydovets.util.BeanNameResolver.resolveBeanNameByBeanType;
 
 public class DefaultApplicationContext implements ApplicationContext {
     public static final String NO_BEAN_FOUND_OF_TYPE = "No bean found of type %s";
@@ -92,7 +91,7 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     private BeanDefinition createComponentBeanDefinitionByBeanClass(Class<?> beanClass) {
         ComponentAnnotationBeanDefinition beanDefinition = new ComponentAnnotationBeanDefinition(
-                resolveBeanNameByBeanType(beanClass),
+                BeanNameResolver.resolveBeanName(beanClass),
                 beanClass
         );
         beanDefinition.setInitializationConstructor(findInitializationConstructor(beanClass));
@@ -140,7 +139,7 @@ public class DefaultApplicationContext implements ApplicationContext {
         beanDefinition.setScope(getScopeName(beanInitMethod));
         beanDefinition.setPrimary(beanInitMethod.isAnnotationPresent(Primary.class));
         beanDefinition.setInitMethodOfBeanFromConfigClass(beanInitMethod);
-        beanDefinition.setConfigClassName(resolveBeanNameByBeanInitMethod(beanInitMethod));
+        beanDefinition.setConfigClassName(BeanNameResolver.resolveBeanName(beanInitMethod.getDeclaringClass()));
 
         beanDefinition.setConfigClassName(resolveBeanNameByBeanType(beanInitMethod.getDeclaringClass()));
         return beanDefinition;
@@ -301,7 +300,7 @@ public class DefaultApplicationContext implements ApplicationContext {
 
     @Override
     public <T> T getBean(Class<T> requiredType) {
-        String beanName = BeanNameResolver.resolveBeanNameByBeanType(requiredType);
+        String beanName = BeanNameResolver.resolveBeanName(requiredType);
         Optional<T> prototypeBean = checkAndCreatePrototypeBean(beanName, requiredType);
         if (prototypeBean.isPresent()) {
             return prototypeBean.get();
@@ -309,7 +308,7 @@ public class DefaultApplicationContext implements ApplicationContext {
 
         Map<String, T> beansOfType = getBeansOfType(requiredType);
         if (beansOfType.size() > 1) {
-            throw new NoUniqueBeanException(String.format("No unique bean found of type %s", requiredType.getName()));
+            return defineSpecificBean(requiredType, beansOfType);
         }
 
         return beansOfType.values().stream()
@@ -317,6 +316,26 @@ public class DefaultApplicationContext implements ApplicationContext {
                 .orElseThrow(() -> new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName()))
                 );
     }
+
+    private <T> T defineSpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
+        if(requiredType.isAnnotationPresent(Qualifier.class)) {
+          var qualifier = requiredType.getDeclaredAnnotation(Qualifier.class);
+
+          String beanName = qualifier.value();
+
+          if (beansOfType.containsKey(beanName)) {
+            return beansOfType.get(beanName);
+          }
+        }
+
+        return beansOfType.values()
+                .stream()
+                .filter(bean -> bean.getClass().isAnnotationPresent(Primary.class))
+                .findAny()
+                .orElseThrow(() ->
+                        new NoUniqueBeanException(String.format("No unique bean found of type %s", requiredType.getName()))
+                );
+  }
 
     @Override
     public <T> T getBean(String name, Class<T> requiredType) {
