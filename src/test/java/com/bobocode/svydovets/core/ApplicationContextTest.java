@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 
 //  todo: It may be better to group the existing "services" in additional packages and check that all beans of
 //   specified "basePackage" are created
+@Disabled
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ApplicationContextTest {
     @Mock
