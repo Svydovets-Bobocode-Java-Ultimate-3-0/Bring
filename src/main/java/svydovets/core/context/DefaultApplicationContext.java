@@ -10,6 +10,8 @@ import svydovets.core.bpp.BeanPostProcessor;
 import svydovets.core.context.beanDefinition.BeanAnnotationBeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinition;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
+import svydovets.core.context.injector.InjectorConfig;
+import svydovets.core.context.injector.InjectorExecutor;
 import svydovets.exception.AutowireBeanException;
 import svydovets.exception.BeanCreationException;
 import svydovets.exception.BeanDefinitionCreateException;
@@ -19,7 +21,6 @@ import svydovets.exception.NoSuchBeanDefinitionException;
 import svydovets.exception.NoSuchBeanException;
 import svydovets.exception.NoUniqueBeanException;
 import svydovets.exception.NoUniquePostConstructException;
-import svydovets.util.BeanNameResolver;
 import svydovets.util.PackageScanner;
 import svydovets.util.ReflectionsUtil;
 
@@ -375,29 +376,16 @@ public class DefaultApplicationContext implements ApplicationContext {
             boolean isAutowiredPresent = beanField.isAnnotationPresent(Autowired.class);
 
             if (isAutowiredPresent) {
-                var autowireCandidateType = beanField.getType();
-                try {
-                    injectBean(bean, beanField, autowireCandidateType);
-                } catch (NoSuchBeanException | NoSuchBeanDefinitionException e) {
-                    if (Collection.class.isAssignableFrom(autowireCandidateType)) {
-                        injectCollectionOfBeans(bean, beanField);
-                    } else if (Map.class.isAssignableFrom(autowireCandidateType)) {
-                        injectMapOfBeans(bean, beanField);
-                    } else {
-                        throw e;
-                    }
-                }
+                InjectorConfig injectorConfig = InjectorConfig.builder()
+                        .withBean(bean)
+                        .withBeanField(beanField)
+                        .withBeanReceiver(this::getBean)
+                        .withBeanOfTypeReceiver(this::getBeansOfType)
+                        .build();
+
+                InjectorExecutor.execute(injectorConfig);
             }
         }
-    }
-
-    private void injectBean(Object bean, Field fieldForInjection, Class<?> autowireCandidateType) {
-        Object autowireCandidate = getBean(autowireCandidateType);
-//        Object autowireCandidate = createBeanIfNotPresent(autowireCandidateType);
-//        if (autowireCandidate == null) {
-//            throw new NoSuchBeanException(String.format("No bean found of type %s", autowireCandidateType.getName()));
-//        }
-        setDependency(bean, fieldForInjection, autowireCandidate);
     }
 
     private Object createBeanIfNotPresent(Class<?> beanType) {
@@ -409,130 +397,6 @@ public class DefaultApplicationContext implements ApplicationContext {
                     .orElseThrow(() -> new NoSuchBeanDefinitionException(
                             String.format("No bean definition found for type '%s'", beanType.getName()))
                     );
-        }
-    }
-
-    private void injectMapOfBeans(Object bean, Field fieldForInjection) {
-        Class<?> autowireCandidateType = retrieveAutowireCandidateType(fieldForInjection);
-        var mapOfBeansForInjection = retrieveFieldValue(bean, fieldForInjection);
-        var mapOfBeansToInject = getBeansOfType(autowireCandidateType);
-        if (mapOfBeansForInjection == null) {
-            // Initialize map logic
-            setDependency(bean, fieldForInjection, mapOfBeansToInject);
-        } else {
-            // todo: Implement BR-6
-            // todo: CREATE NEW MAP IMPLEMENTATION AND SET TO FIELD!
-            setDependency(bean, fieldForInjection, mapOfBeansToInject);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private void injectCollectionOfBeans(Object bean, Field fieldForInjection) {
-        Class<?> autowireCandidateType = retrieveAutowireCandidateType(fieldForInjection);
-        Object collectionOfBeansForInjection = retrieveFieldValue(bean, fieldForInjection);
-        Collection<?> collectionOfBeansToInject = getBeansOfType(autowireCandidateType).values();
-        if (collectionOfBeansForInjection == null) {
-            injectCollectionField(bean, fieldForInjection, collectionOfBeansToInject);
-        } else {
-            // Already created via "new" by user
-            ((Collection) collectionOfBeansForInjection).addAll(collectionOfBeansToInject);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private void injectCollectionField(Object bean, Field fieldForInjection, Collection<?> collectionOfBeansToInject) {
-        try {
-            Collection<?> collectionOfBeans = createCollectionInstance(fieldForInjection.getType());
-            collectionOfBeans.addAll((Collection) collectionOfBeansToInject);
-            fieldForInjection.set(bean, collectionOfBeans);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException("");
-        }
-    }
-
-    private Collection<?> createCollectionInstance(Class<?> collectionType) {
-        if (collectionType == List.class) {
-            return new ArrayList<>();
-        } else if (collectionType == Set.class || collectionType == Collection.class) {
-            return new LinkedHashSet<>();
-        } else {
-            throw new BeanCreationException(String.format(
-                    "We don't support dependency injection into collection of type: %s",
-                    collectionType.getName())
-            );
-        }
-    }
-
-    private Object retrieveFieldValue(Object targetBean, Field field) {
-        try {
-            field.setAccessible(true);
-            return field.get(targetBean);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException();
-        }
-    }
-
-    private Type resolveAutowireCandidateGenericType(Field fieldForInjection) {
-        Type autowireCandidateGenericType = fieldForInjection.getGenericType();
-        if (!(autowireCandidateGenericType instanceof ParameterizedType autowireCandidateParameterizedType)) {
-            // Raw map processing
-            throw new BeanCreationException(String.format(
-                    "Don't use raw types for collections. Raw type founded for field %s of %s class",
-                    fieldForInjection.getName(),
-                    fieldForInjection.getDeclaringClass())
-            );
-        }
-        Type[] genericTypes = autowireCandidateParameterizedType.getActualTypeArguments();
-        // If we got Type[] it is mean that we have at least 1 generic type (even ?),
-        // otherwise exception will be thrown above (while casting to "ParameterizedType")
-        int size = genericTypes.length;
-        if (size == 1) {
-            Type singleGenericType = genericTypes[0];
-            if (singleGenericType instanceof WildcardType) {
-                throw new BeanCreationException(String.format(
-                        "Don't use wildcard for collections. Wildcard found for bean of type %s",
-                        autowireCandidateParameterizedType.getOwnerType())
-                );
-            }
-            return singleGenericType;
-        } else if (size == 2) {
-            Type mapKeyGenericType = genericTypes[0];
-            if (!mapKeyGenericType.getTypeName().equals(String.class.getName())) {
-                throw new BeanCreationException("We processing Map only with String key type");
-            }
-            return genericTypes[1];
-        } else {
-            throw new UnsupportedOperationException(String.format(
-                    "Field %s in %s required a bean of type '%s' that could not be found",
-                    fieldForInjection.getName(),
-                    fieldForInjection.getDeclaringClass().getName(),
-                    fieldForInjection.getType())
-            );
-        }
-    }
-
-    private Class<?> retrieveAutowireCandidateType(Field fieldForInjection) {
-        // May cause ClassCastException: class java.lang.Class cannot be cast to class java.lang.reflect.ParameterizedType
-        // The reason is raw generic type. For example, Set set = new HashSet() => field.getGenericType() == Set.class
-
-        try {
-            Type autowireCandidateGenericType = resolveAutowireCandidateGenericType(fieldForInjection);
-            return Class.forName(autowireCandidateGenericType.getTypeName());
-        } catch (ClassNotFoundException e) {
-            // Exception thrown by "Class.forName()"
-            throw new BeanCreationException(String.format(
-                    "Error creating bean of class %s. Please make sure the class is present in the classpath",
-                    fieldForInjection.getDeclaringClass().getName())
-            );
-        }
-    }
-
-    private void setDependency(Object bean, Field fieldForInjection, Object autowireCandidate) {
-        try {
-            fieldForInjection.setAccessible(true);
-            fieldForInjection.set(bean, autowireCandidate);
-        } catch (IllegalAccessException e) {
-            throw new AutowireBeanException(String.format("There is access to %s filed", fieldForInjection.getName()));
         }
     }
 
