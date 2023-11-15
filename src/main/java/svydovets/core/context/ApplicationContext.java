@@ -4,9 +4,9 @@ import java.util.Map;
 
 public interface ApplicationContext {
 
-    public static final String SCOPE_SINGLETON = "singleton";
+    String SCOPE_SINGLETON = "singleton";
 
-    public static final String SCOPE_PROTOTYPE = "prototype";
+    String SCOPE_PROTOTYPE = "prototype";
 
     <T> T getBean(Class<T> requiredType);
 

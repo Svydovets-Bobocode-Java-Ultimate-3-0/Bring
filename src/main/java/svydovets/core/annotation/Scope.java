@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD}) //todo: ???
+@Target({ElementType.TYPE, ElementType.METHOD})
 public @interface Scope {
     String value() default ApplicationContext.SCOPE_SINGLETON;
 }

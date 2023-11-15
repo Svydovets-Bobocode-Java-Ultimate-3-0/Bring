@@ -1,6 +1,6 @@
 package com.bobocode.svydovets.service.base;
 
-import com.bobocode.svydovets.service.ProductService;
+import com.bobocode.svydovets.service.qualifier.ProductService;
 import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Component;
 

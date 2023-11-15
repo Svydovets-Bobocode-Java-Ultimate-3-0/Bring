@@ -1,15 +1,21 @@
 package com.bobocode.svydovets.core;
 
 import com.bobocode.svydovets.config.BeanConfigBase;
-import com.bobocode.svydovets.service.NonPrimaryProductServiceImpl;
-import com.bobocode.svydovets.service.PrimaryProductServiceImpl;
-import com.bobocode.svydovets.service.ProductService;
+import com.bobocode.svydovets.service.qualifier.NonPrimaryProductServiceImpl;
+import com.bobocode.svydovets.service.qualifier.PrimaryProductServiceImpl;
+import com.bobocode.svydovets.service.qualifier.ProductService;
 import com.bobocode.svydovets.service.TrimService;
 import com.bobocode.svydovets.service.base.CollectionsHolderService;
 import com.bobocode.svydovets.service.base.CommonService;
 import com.bobocode.svydovets.service.base.EditService;
 import com.bobocode.svydovets.service.base.MessageService;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import svydovets.core.context.ApplicationContext;
@@ -46,18 +52,21 @@ public class ApplicationContextTest {
     }
 
     @Test
+    @Order(1)
     void createApplicationContextFromBasePackage() {
         ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service.base");
         assertThat(context).isNotNull();
     }
 
     @Test
+    @Order(2)
     void createApplicationContextFromConfigClass() {
         ApplicationContext context = new DefaultApplicationContext(BeanConfigBase.class);
         assertThat(context).isNotNull();
     }
 
     @Test
+    @Order(3)
     void applicationContextFromBasePackageCreatesAllRequiredBeans() {
         String basePackage = "com.bobocode.svydovets.service.base";
         ApplicationContext context = new DefaultApplicationContext(basePackage);
@@ -71,6 +80,7 @@ public class ApplicationContextTest {
     }
 
     @Test
+    @Order(4)
     void applicationContextFromConfigClassCreatesAllRequiredBeans() {
         ApplicationContext context = new DefaultApplicationContext(BeanConfigBase.class);
 
@@ -84,24 +94,33 @@ public class ApplicationContextTest {
 
 
     @Test
+    @Order(5)
     void getBeanThrowNoSuchBeanException() {
-        ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service.base");
+        String basePackage = "com.bobocode.svydovets.service.base";
+        ApplicationContext context = new DefaultApplicationContext(basePackage);
+        when(packageScanner.findComponentsByBasePackage(basePackage))
+                .thenReturn(Set.of(CommonService.class, EditService.class, MessageService.class));
         assertThatExceptionOfType(NoSuchBeanException.class)
                 .isThrownBy(() -> context.getBean(TrimService.class))
                 .withMessage(String.format("No bean found of type %s", TrimService.class.getName()));
     }
 
     @Test
+    @Order(6)
     void getBeanThrowNoUniqueBeanException() {
-        ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service");
+        String basePackage = "com.bobocode.svydovets.service";
+        ApplicationContext context = new DefaultApplicationContext(basePackage);
+        when(packageScanner.findComponentsByBasePackage(basePackage))
+                .thenReturn(Set.of(PrimaryProductServiceImpl.class, NonPrimaryProductServiceImpl.class));
         assertThatExceptionOfType(NoUniqueBeanException.class)
                 .isThrownBy(() -> context.getBean(ProductService.class))
                 .withMessage(String.format("No unique bean found of type %s", ProductService.class.getName()));
     }
 
     @Test
+    @Order(7)
     void injectBeansToTheList() {
-        ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service");
+        ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service.base");
 
         CollectionsHolderService.ListHolderService listHolderService = context.getBean(CollectionsHolderService.ListHolderService.class);
         var productServiceList = listHolderService.getProductServiceList();
@@ -118,8 +137,9 @@ public class ApplicationContextTest {
     }
 
     @Test
+    @Order(8)
     void injectBeansToTheSet() {
-        ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service");
+        ApplicationContext context = new DefaultApplicationContext("com.bobocode.svydovets.service.base");
 
         CollectionsHolderService.SetHolderService setHolderService = context.getBean(CollectionsHolderService.SetHolderService.class);
         var productServiceList = setHolderService.getProductServiceSet();

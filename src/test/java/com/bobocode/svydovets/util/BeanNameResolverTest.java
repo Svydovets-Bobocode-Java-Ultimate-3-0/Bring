@@ -3,7 +3,6 @@ package com.bobocode.svydovets.util;
 import com.bobocode.svydovets.config.BeanConfigBase;
 import com.bobocode.svydovets.service.base.CommonService;
 import com.bobocode.svydovets.service.base.MessageService;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.*;
 import svydovets.core.annotation.Bean;
 import svydovets.core.annotation.Component;
@@ -29,7 +28,6 @@ public class BeanNameResolverTest {
         assertThat(beanName).isEqualTo(BeanNameResolver.resolveBeanName(CommonService.class));
     }
 
-    // todo: HOW TO HANDLE CHECKED EXCEPTION IN TEST METHODS??????????????????
     @Test
     @DisplayName("")
     public void testWithConfig() throws NoSuchMethodException {
