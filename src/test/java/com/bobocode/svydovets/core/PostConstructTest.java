@@ -10,7 +10,6 @@ import svydovets.exception.NoUniquePostConstructException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
-@Disabled
 public class PostConstructTest {
 
     @Test

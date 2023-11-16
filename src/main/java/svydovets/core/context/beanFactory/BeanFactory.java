@@ -26,13 +26,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -258,6 +252,45 @@ public class BeanFactory {
     }
 
     private void populateProperties(Object bean) {
+        doSetterInjection(bean);
+        doFieldInjection(bean);
+    }
+
+    private void doSetterInjection(Object bean) {
+        Method[] declaredMethods = bean.getClass().getDeclaredMethods();
+        for (Method method : declaredMethods) {
+            if (isSetterMethodWithAutowiredAnnotation(method)) {
+                Object injectBean = getBeanForSetterMethod(method);
+                invokeSetterMethod(method, bean, injectBean);
+            }
+        }
+    }
+
+    private Object getBeanForSetterMethod(Method method) {
+        Class<?> parameterType = Arrays.stream(method.getParameterTypes()).findFirst().orElseThrow();
+        return getBean(parameterType);
+    }
+    private boolean isSetterMethodWithAutowiredAnnotation(Method method) {
+        if(method.getName().startsWith("set")){
+            Class<?> parameterType = Arrays.stream(method.getParameterTypes()).findFirst().orElseThrow(NoSuchElementException::new);
+            return method.getName().startsWith("set".concat(parameterType.getSimpleName()))
+                    && "void".equals(method.getReturnType().getSimpleName())
+                    && method.isAnnotationPresent(Autowired.class)
+                    && method.getParameterCount() == 1;
+        }
+        return false;
+    }
+
+    private static void invokeSetterMethod(Method method, Object targetBean, Object injectBean) {
+        try {
+            method.setAccessible(true);
+            method.invoke(targetBean, injectBean);
+        } catch (IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void doFieldInjection(Object bean) {
         Field[] beanFields = bean.getClass().getDeclaredFields();
         for (Field beanField : beanFields) {
             boolean isAutowiredPresent = beanField.isAnnotationPresent(Autowired.class);

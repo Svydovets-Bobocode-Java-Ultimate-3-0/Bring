@@ -32,7 +32,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.mockito.Mockito.when;
 
-@Disabled
+
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ApplicationContextTest {
     @Mock
