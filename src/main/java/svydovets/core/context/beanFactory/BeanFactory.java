@@ -280,7 +280,7 @@ public class BeanFactory {
             }
 
         } catch (IllegalAccessException | InvocationTargetException e){
-            throw new AutowireBeanException(String.format("There is access to method"));
+            throw new AutowireBeanException("There is no access to method");
         }
     }
 
