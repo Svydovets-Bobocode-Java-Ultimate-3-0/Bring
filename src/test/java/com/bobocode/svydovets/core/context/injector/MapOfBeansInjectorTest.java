@@ -22,10 +22,18 @@ class MapOfBeansInjectorTest {
   private MapOfBeansInjector mapOfBeansInjector;
   private ProductService productService;
 
+  private InjectorConfig.Builder builder;
+
   @BeforeEach
   void setUp() {
     mapOfBeansInjector = new MapOfBeansInjector();
     productService = new PrimaryProductServiceImpl();
+    builder =
+        InjectorConfig.builder()
+            .withBeanReceiver((classType) -> productService)
+            .withBeanOfTypeReceiver(
+                (beanType) ->
+                    Map.of(productService.getClass().getSimpleName(), List.of(productService)));
   }
 
   @Test
@@ -34,20 +42,13 @@ class MapOfBeansInjectorTest {
 
     Field field = mapHolderService.getClass().getDeclaredFields()[0];
 
-    InjectorConfig injectorConfig =
-        InjectorConfig.builder()
-            .withBean(mapHolderService)
-            .withBeanField(field)
-            .withBeanReceiver((classType) -> productService)
-            .withBeanOfTypeReceiver(
-                (beanType) ->
-                    Map.of(productService.getClass().getSimpleName(), List.of(productService)))
-            .build();
+    InjectorConfig injectorConfig = builder.withBean(mapHolderService).withBeanField(field).build();
 
     mapOfBeansInjector.inject(injectorConfig);
 
     assertThat(mapHolderService.getProductServiceMap()).isNotNull();
-    assertThat(mapHolderService.getProductServiceMap().containsKey("PrimaryProductServiceImpl")).isTrue();
+    assertThat(mapHolderService.getProductServiceMap().containsKey("PrimaryProductServiceImpl"))
+        .isTrue();
   }
 
   @Test
@@ -57,17 +58,10 @@ class MapOfBeansInjectorTest {
     Field field = incorrectMapHolderService.getClass().getDeclaredFields()[0];
 
     InjectorConfig injectorConfig =
-            InjectorConfig.builder()
-                    .withBean(incorrectMapHolderService)
-                    .withBeanField(field)
-                    .withBeanReceiver((classType) -> productService)
-                    .withBeanOfTypeReceiver(
-                            (beanType) ->
-                                    Map.of(productService.getClass().getSimpleName(), List.of(productService)))
-                    .build();
+        builder.withBean(incorrectMapHolderService).withBeanField(field).build();
 
     assertThatExceptionOfType(BeanCreationException.class)
-            .isThrownBy(() -> mapOfBeansInjector.inject(injectorConfig))
-            .withMessage("We processing Map only with String key type");
+        .isThrownBy(() -> mapOfBeansInjector.inject(injectorConfig))
+        .withMessage("We processing Map only with String key type");
   }
 }
