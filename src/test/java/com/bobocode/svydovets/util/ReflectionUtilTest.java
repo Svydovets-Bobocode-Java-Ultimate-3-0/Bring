@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static svydovets.util.ReflectionsUtil.NO_DEFAULT_CONSTRUCTOR_FOUND_OF_TYPE;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ReflectionUtilTest {
@@ -43,7 +44,9 @@ public class ReflectionUtilTest {
 
     @Test
     public void notFoundPreparedNoArgsConstructorWithNoDefaultConstructorThrowTest() {
-        assertThrows(NoDefaultConstructor.class, () -> ReflectionsUtil.getPreparedNoArgsConstructor(UserService.class));
+        var exception = assertThrows(NoDefaultConstructor.class,
+                () -> ReflectionsUtil.getPreparedNoArgsConstructor(UserService.class));
+        assertEquals(String.format(NO_DEFAULT_CONSTRUCTOR_FOUND_OF_TYPE, UserService.class.getName()), exception.getMessage());
     }
 
     @Component
