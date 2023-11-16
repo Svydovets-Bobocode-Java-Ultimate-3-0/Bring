@@ -24,6 +24,7 @@ import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static svydovets.core.context.ApplicationContext.SCOPE_SINGLETON;
 import static svydovets.util.BeanNameResolver.resolveBeanName;
@@ -253,27 +254,33 @@ public class BeanFactory {
 
     private void doSetterInjection(Object bean) {
         Method[] declaredMethods = bean.getClass().getDeclaredMethods();
-        for (Method method : declaredMethods) {
-            if (method.isAnnotationPresent(Autowired.class)) {
-                Class<?>[] parameterTypes = method.getParameterTypes();
-                Object[] injectBeans = getBeanForSetterMethod(parameterTypes);
-                invokeSetterMethod(method, bean, injectBeans);
-            }
-        }
-    }
 
-    private Object[] getBeanForSetterMethod(Class<?>[] parameterTypes) {
-        return Arrays.stream(parameterTypes)
-                .map(this::getBean)
+        List<Method> targetMethod = Arrays.stream(declaredMethods)
+                .filter(method -> method.isAnnotationPresent(Autowired.class))
+                .toList();
+
+        Object[] injectBeans = targetMethod.stream()
+                .map(Method::getParameterTypes)
+                .flatMap(this::getBeanForSetterMethod)
                 .toArray();
+
+        invokeSetterMethod(targetMethod, bean, injectBeans);
     }
 
-    private static void invokeSetterMethod(Method method, Object targetBean, Object[] injectBeans) {
+    private Stream<Object> getBeanForSetterMethod(Class<?>[] parameterTypes) {
+        return Arrays.stream(parameterTypes)
+                .map(this::getBean);
+    }
+
+    private static void invokeSetterMethod(List<Method> methods, Object targetBean, Object[] injectBeans) {
         try {
-            method.setAccessible(true);
-            method.invoke(targetBean, injectBeans);
+            for (Method method : methods) {
+                method.setAccessible(true);
+                method.invoke(targetBean, injectBeans);
+            }
+
         } catch (IllegalAccessException | InvocationTargetException e){
-            throw new AutowireBeanException(String.format("There is access to %s method", method.getName()));
+            throw new AutowireBeanException(String.format("There is access to method"));
         }
     }
 
