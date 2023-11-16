@@ -11,7 +11,6 @@ import svydovets.util.BeanNameResolver;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@Disabled
 public class BeanNameResolverTest {
 
     @Test

@@ -13,12 +13,7 @@ import svydovets.core.context.beanDefinition.BeanDefinitionFactory;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
 import svydovets.core.context.injector.InjectorConfig;
 import svydovets.core.context.injector.InjectorExecutor;
-import svydovets.exception.BeanCreationException;
-import svydovets.exception.InvalidInvokePostConstructMethodException;
-import svydovets.exception.NoSuchBeanDefinitionException;
-import svydovets.exception.NoSuchBeanException;
-import svydovets.exception.NoUniqueBeanException;
-import svydovets.exception.NoUniquePostConstructException;
+import svydovets.exception.*;
 import svydovets.util.PackageScanner;
 
 import java.lang.reflect.Constructor;
@@ -26,15 +21,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static svydovets.core.context.ApplicationContext.SCOPE_SINGLETON;
 import static svydovets.util.BeanNameResolver.resolveBeanName;
@@ -258,6 +248,43 @@ public class BeanFactory {
     }
 
     private void populateProperties(Object bean) {
+        doSetterInjection(bean);
+        doFieldInjection(bean);
+    }
+
+    private void doSetterInjection(Object bean) {
+        Method[] declaredMethods = bean.getClass().getDeclaredMethods();
+
+        List<Method> targetMethod = Arrays.stream(declaredMethods)
+                .filter(method -> method.isAnnotationPresent(Autowired.class))
+                .toList();
+
+        Object[] injectBeans = targetMethod.stream()
+                .map(Method::getParameterTypes)
+                .flatMap(this::getBeanForSetterMethod)
+                .toArray();
+
+        invokeSetterMethod(targetMethod, bean, injectBeans);
+    }
+
+    private Stream<Object> getBeanForSetterMethod(Class<?>[] parameterTypes) {
+        return Arrays.stream(parameterTypes)
+                .map(this::getBean);
+    }
+
+    private static void invokeSetterMethod(List<Method> methods, Object targetBean, Object[] injectBeans) {
+        try {
+            for (Method method : methods) {
+                method.setAccessible(true);
+                method.invoke(targetBean, injectBeans);
+            }
+
+        } catch (IllegalAccessException | InvocationTargetException e){
+            throw new AutowireBeanException("There is no access to method");
+        }
+    }
+
+    private void doFieldInjection(Object bean) {
         Field[] beanFields = bean.getClass().getDeclaredFields();
         for (Field beanField : beanFields) {
             boolean isAutowiredPresent = beanField.isAnnotationPresent(Autowired.class);
