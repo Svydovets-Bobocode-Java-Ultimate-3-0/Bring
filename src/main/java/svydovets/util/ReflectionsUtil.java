@@ -3,38 +3,22 @@ package svydovets.util;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
-import svydovets.core.annotation.*;
+import svydovets.core.annotation.Autowired;
+import svydovets.core.annotation.ComponentScan;
+import svydovets.core.annotation.Configuration;
+import svydovets.exception.NoDefaultConstructor;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.reflections.scanners.Scanners.SubTypes;
 
 public class ReflectionsUtil {
-
-    public static Set<Class<?>> findAllBeanByBasePackage(final String basePackage) {
-        Reflections reflections = new Reflections(basePackage, Scanners.TypesAnnotated);
-
-        return reflections.getTypesAnnotatedWith(Component.class);
-    }
-
-    public static Set<Class<?>> findAllBeanByBaseClass(Class<?> classType) {
-        Reflections reflections = new Reflections(classType, Scanners.TypesAnnotated);
-
-        return reflections.getTypesAnnotatedWith(Component.class);
-    }
-
-    public static Set<Class<?>> findAllBeanFromComponentScan(Class<?>... classTypes) {
-        return Stream.of(classTypes)
-                .filter(ReflectionsUtil::isComponentScanPresent)
-                .map(classType -> classType.getAnnotation(ComponentScan.class).value())
-                .flatMap(basePackage -> findAllBeanByBasePackage(basePackage).stream())
-                .collect(Collectors.toSet());
-    }
 
     public static List<String> findAutowiredFieldNames(Class<?> beanClass) {
         var fields = beanClass.getDeclaredFields();
@@ -43,6 +27,25 @@ public class ReflectionsUtil {
                 .filter(field -> field.isAnnotationPresent(Autowired.class))
                 .map(Field::getName)
                 .collect(Collectors.toList());
+    }
+
+    public static Constructor<?> getPreparedNoArgsConstructor(Class<?> beanType) {
+        try {
+            Constructor<?> constructor = beanType.getDeclaredConstructor();
+            return prepareConstructor(constructor);
+        } catch (NoSuchMethodException e) {
+            throw new NoDefaultConstructor(String.format("No default constructor found of type %s", beanType.getName()));
+        }
+    }
+
+    public static Constructor<?> prepareConstructor(Constructor<?> constructor) {
+        constructor.setAccessible(true);
+        return constructor;
+    }
+
+    public static Method prepareMethod(Method method) {
+        method.setAccessible(true);
+        return method;
     }
 
     /**

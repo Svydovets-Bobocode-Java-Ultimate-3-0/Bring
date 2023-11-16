@@ -15,11 +15,11 @@ public class PackageScanner {
         return reflections.getTypesAnnotatedWith(Component.class);
     }
 
-    public Set<Class<?>> findAllBeanByBaseClass(Class<?>... classTypes) {
+    public Set<Class<?>> findAllBeanCandidatesByBaseClass(Class<?>... classTypes) {
         Set<Class<?>> beanClasses = new HashSet<>();
 
         for (Class<?> beanClass : classTypes) {
-            if (!beanClass.isAnnotationPresent(Configuration.class) && beanClass.isAnnotationPresent(Component.class)) {
+            if (beanClass.isAnnotationPresent(Configuration.class) || beanClass.isAnnotationPresent(Component.class)) {
                 beanClasses.add(beanClass);
             }
             ComponentScan componentScan = beanClass.getAnnotation(ComponentScan.class);
