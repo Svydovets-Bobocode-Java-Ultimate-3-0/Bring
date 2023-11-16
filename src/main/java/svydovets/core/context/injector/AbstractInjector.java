@@ -15,7 +15,7 @@ public abstract class AbstractInjector implements Injector {
             fieldForInjection.setAccessible(true);
             fieldForInjection.set(bean, autowireCandidate);
         } catch (IllegalAccessException e) {
-            throw new AutowireBeanException(String.format("There is access to %s filed", fieldForInjection.getName()));
+            throw new AutowireBeanException(String.format("There is access to %s field", fieldForInjection.getName()));
         }
     }
 

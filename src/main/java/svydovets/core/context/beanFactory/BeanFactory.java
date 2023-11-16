@@ -13,12 +13,7 @@ import svydovets.core.context.beanDefinition.BeanDefinitionFactory;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
 import svydovets.core.context.injector.InjectorConfig;
 import svydovets.core.context.injector.InjectorExecutor;
-import svydovets.exception.BeanCreationException;
-import svydovets.exception.InvalidInvokePostConstructMethodException;
-import svydovets.exception.NoSuchBeanDefinitionException;
-import svydovets.exception.NoSuchBeanException;
-import svydovets.exception.NoUniqueBeanException;
-import svydovets.exception.NoUniquePostConstructException;
+import svydovets.exception.*;
 import svydovets.util.PackageScanner;
 
 import java.lang.reflect.Constructor;
@@ -259,34 +254,26 @@ public class BeanFactory {
     private void doSetterInjection(Object bean) {
         Method[] declaredMethods = bean.getClass().getDeclaredMethods();
         for (Method method : declaredMethods) {
-            if (isSetterMethodWithAutowiredAnnotation(method)) {
-                Object injectBean = getBeanForSetterMethod(method);
-                invokeSetterMethod(method, bean, injectBean);
+            if (method.isAnnotationPresent(Autowired.class)) {
+                Class<?>[] parameterTypes = method.getParameterTypes();
+                Object[] injectBeans = getBeanForSetterMethod(parameterTypes);
+                invokeSetterMethod(method, bean, injectBeans);
             }
         }
     }
 
-    private Object getBeanForSetterMethod(Method method) {
-        Class<?> parameterType = Arrays.stream(method.getParameterTypes()).findFirst().orElseThrow();
-        return getBean(parameterType);
-    }
-    private boolean isSetterMethodWithAutowiredAnnotation(Method method) {
-        if(method.getName().startsWith("set")){
-            Class<?> parameterType = Arrays.stream(method.getParameterTypes()).findFirst().orElseThrow(NoSuchElementException::new);
-            return method.getName().startsWith("set".concat(parameterType.getSimpleName()))
-                    && "void".equals(method.getReturnType().getSimpleName())
-                    && method.isAnnotationPresent(Autowired.class)
-                    && method.getParameterCount() == 1;
-        }
-        return false;
+    private Object[] getBeanForSetterMethod(Class<?>[] parameterTypes) {
+        return Arrays.stream(parameterTypes)
+                .map(this::getBean)
+                .toArray();
     }
 
-    private static void invokeSetterMethod(Method method, Object targetBean, Object injectBean) {
+    private static void invokeSetterMethod(Method method, Object targetBean, Object[] injectBeans) {
         try {
             method.setAccessible(true);
-            method.invoke(targetBean, injectBean);
+            method.invoke(targetBean, injectBeans);
         } catch (IllegalAccessException | InvocationTargetException e){
-            e.printStackTrace();
+            throw new AutowireBeanException(String.format("There is access to %s method", method.getName()));
         }
     }
 

@@ -7,23 +7,34 @@ import svydovets.core.annotation.Component;
 public class OrderService {
 
     private MessageService messageService;
-    public CommonService commonService;
+    private CommonService commonService;
+    private NullService nullService;
+
+
+    @Autowired
+    public void setMessageService(MessageService messageService, CommonService commonService) {
+        this.messageService = messageService;
+        this.commonService = commonService;
+    }
+
+    //should not have @Autowired for test purpose
+    public void setNullService(NullService nullService) {
+        this.nullService = nullService;
+    }
+
+
+    public NullService getNullService() {
+        return nullService;
+    }
+
+
+    public CommonService getCommonService() {
+        return commonService;
+    }
 
     public MessageService getMessageService() {
         return messageService;
     }
 
-    @Autowired
-    public void setMessageService(MessageService messageService) {
-        this.messageService = messageService;
-    }
 
-    //should not hold @Autowired for test purpose
-    public void setCommonService(CommonService commonService) {
-        this.commonService = commonService;
-    }
-
-    public CommonService getCommonService() {
-        return commonService;
-    }
 }

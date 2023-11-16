@@ -28,6 +28,7 @@ public class AutowireTest {
         ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.service.base");
         OrderService orderService = context.getBean(OrderService.class);
         assertThat(orderService.getMessageService()).isNotNull();
+        assertThat(orderService.getCommonService()).isNotNull();
     }
 
 
@@ -35,7 +36,7 @@ public class AutowireTest {
     void shouldBeNullWhenFieldIsInjectedViaSetter(){
         ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.service.base");
         OrderService orderService = context.getBean(OrderService.class);
-        assertThat(orderService.getCommonService()).isNull();
+        assertThat(orderService.getNullService()).isNull();
     }
 
 }
