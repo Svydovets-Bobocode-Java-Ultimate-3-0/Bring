@@ -5,5 +5,5 @@ import svydovets.core.annotation.Configuration;
 
 @Configuration
 @ComponentScan("com.bobocode.svydovets.source.beansForTestScan")
-public class BeanConfigForPackageScanner {
+public class PackageScannerBeansConfig {
 }

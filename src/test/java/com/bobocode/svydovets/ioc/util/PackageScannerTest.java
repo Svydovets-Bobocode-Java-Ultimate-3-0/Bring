@@ -5,9 +5,9 @@ import com.bobocode.svydovets.source.base.MessageService;
 import com.bobocode.svydovets.source.base.NullService;
 import com.bobocode.svydovets.source.beansForTestScan.SomeBean;
 import com.bobocode.svydovets.source.beansForTestScan.SomeBeanSecond;
-import com.bobocode.svydovets.source.config.BeanConfigBase;
-import com.bobocode.svydovets.source.config.BeanConfigForPackageScanner;
-import com.bobocode.svydovets.source.config.BeanConfigPostConstruct;
+import com.bobocode.svydovets.source.config.BasePackageBeansConfig;
+import com.bobocode.svydovets.source.config.PackageScannerBeansConfig;
+import com.bobocode.svydovets.source.config.PostConstructBeansConfig;
 import com.bobocode.svydovets.source.postconstruct.invalid.DuplicatePostConstructService;
 import com.bobocode.svydovets.source.postconstruct.valid.PostConstructService;
 import com.bobocode.svydovets.source.withoutAnnotation.NonAnnotatedClass;
@@ -26,8 +26,8 @@ public class PackageScannerTest {
     private final PackageScanner packageScanner = new PackageScanner();
 
     private final Set<Class<?>> beansScannedClassesWithoutConfigs = Set.of(
-            BeanConfigBase.class,
-            BeanConfigPostConstruct.class,
+            BasePackageBeansConfig.class,
+            PostConstructBeansConfig.class,
             // From BeanConfigBase
             CommonService.class,
             MessageService.class,
@@ -38,7 +38,7 @@ public class PackageScannerTest {
     );
 
     private final Set<Class<?>> beansScannedByConfigClass = Set.of(
-            BeanConfigBase.class,
+            BasePackageBeansConfig.class,
             // From BeanConfigBase
             CommonService.class,
             MessageService.class,
@@ -46,7 +46,7 @@ public class PackageScannerTest {
     );
 
     private final Set<Class<?>> beansScannedByConfigAndOtherClasses = Set.of(
-            BeanConfigBase.class,
+            BasePackageBeansConfig.class,
             CommonService.class,
             MessageService.class,
             NullService.class,
@@ -54,7 +54,7 @@ public class PackageScannerTest {
             PostConstructService.class
     );
     private final Set<Class<?>> beansScannedClasses2 = Set.of(
-            BeanConfigForPackageScanner.class,
+            PackageScannerBeansConfig.class,
             SomeBean.class,
             SomeBeanSecond.class
     );
@@ -63,8 +63,8 @@ public class PackageScannerTest {
     @Test
     void testScanAllBeansByConfigClass() {
         Set<Class<?>> result = packageScanner.findAllBeanCandidatesByBaseClass(
-                BeanConfigBase.class,
-                BeanConfigPostConstruct.class
+                BasePackageBeansConfig.class,
+                PostConstructBeansConfig.class
         );
 
         assertThat(result.size()).isEqualTo(beansScannedClassesWithoutConfigs.size());
@@ -73,7 +73,7 @@ public class PackageScannerTest {
 
     @Test
     void testFindAllBeanByBaseClass() {
-        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByBaseClass(BeanConfigBase.class);
+        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByBaseClass(BasePackageBeansConfig.class);
 
         assertThat(result.size()).isEqualTo(beansScannedByConfigClass.size());
         assertThat(result).isEqualTo(beansScannedByConfigClass);
@@ -81,7 +81,7 @@ public class PackageScannerTest {
 
     @Test
     void testFindAllBeanByBaseClassOuterPackage() {
-        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByBaseClass(BeanConfigForPackageScanner.class);
+        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByBaseClass(PackageScannerBeansConfig.class);
 
         assertThat(result.size()).isEqualTo(beansScannedClasses2.size());
         assertThat(result).isEqualTo(beansScannedClasses2);
@@ -97,7 +97,7 @@ public class PackageScannerTest {
     @Test
     void shouldFindAllBeanFromBeanConfigBaseClassWithAdditionalSpecifiedComponents() {
         Set<Class<?>> result = packageScanner.findAllBeanCandidatesByBaseClass(
-                BeanConfigBase.class,
+                BasePackageBeansConfig.class,
                 SomeBean.class,
                 PostConstructService.class,
                 NonAnnotatedClassFirst.class

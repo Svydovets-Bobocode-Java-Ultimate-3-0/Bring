@@ -1,20 +1,20 @@
 package com.bobocode.svydovets.source.autowire.method;
 
-import com.bobocode.svydovets.source.autowire.field.EditService;
+import com.bobocode.svydovets.source.base.CommonService;
 import svydovets.core.annotation.Autowired;
 
 /**
  * Class for testing "autowiring" logic via setter. Creates as bean in the {@link BeanConfig} class
  */
 public class TrimService {
-    private EditService editService;
+    private CommonService commonService;
 
-    public String trimMessage() {
-        return editService.editMessage().trim();
+    public CommonService getCommonService() {
+        return commonService;
     }
 
     @Autowired
-    public void setEditService(EditService editService) {
-        this.editService = editService;
+    public void setCommonService(CommonService commonService) {
+        this.commonService = commonService;
     }
 }

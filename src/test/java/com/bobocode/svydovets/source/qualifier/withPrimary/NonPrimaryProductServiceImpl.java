@@ -1,4 +1,4 @@
-package com.bobocode.svydovets.source.qualifier;
+package com.bobocode.svydovets.source.qualifier.withPrimary;
 
 import svydovets.core.annotation.Component;
 

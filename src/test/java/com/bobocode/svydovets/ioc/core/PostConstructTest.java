@@ -13,7 +13,7 @@ public class PostConstructTest {
 
     @Test
     void shouldInvokeThePostConstructMethodAfterBeanInitialization() {
-        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.service.postconstruct.valid");
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.postconstruct.valid");
         PostConstructService postConstructService = context.getBean(PostConstructService.class);
         Assertions.assertThat(postConstructService.getName()).isEqualTo("post-construct-service");
     }
@@ -21,7 +21,7 @@ public class PostConstructTest {
     @Test
     void shouldThrowExceptionWhenServiceHasTwoPostConstructAnnotations() {
         assertThatExceptionOfType(NoUniquePostConstructException.class)
-                .isThrownBy(() -> new AnnotationConfigApplicationContext("com.bobocode.svydovets.service.postconstruct.invalid"))
+                .isThrownBy(() -> new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.postconstruct.invalid"))
                 .withMessage("You cannot have more than one method that is annotated with @PostConstruct.");
     }
 

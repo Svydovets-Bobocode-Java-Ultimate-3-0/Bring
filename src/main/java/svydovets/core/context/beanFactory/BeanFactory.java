@@ -179,6 +179,10 @@ public class BeanFactory {
 
 
     public <T> T getBean(Class<T> requiredType) {
+        // todo: Викликати метод "getBeansOfType"
+        // todo: Якщо size > 1 - знайти бін з "Qualifier" або "Primary" анотацією
+        // todo: Якщо size == 1 - повернути бін
+        // todo: кщо size == 0 - перевірити скоуп
         String beanName = resolveBeanName(requiredType);
         Optional<T> prototypeBean = checkAndCreatePrototypeBean(beanName, requiredType);
         if (prototypeBean.isPresent()) {
