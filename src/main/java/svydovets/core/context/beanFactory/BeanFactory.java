@@ -237,6 +237,10 @@ public class BeanFactory {
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> requiredType.cast(entry.getValue())));
     }
 
+    public Map<String, Object> getContext() {
+        return beanMap;
+    }
+
     private <T> Optional<T> checkAndCreatePrototypeBean(String name, Class<T> requiredType) {
         Optional<BeanDefinition> beanDefinitionOptional = Optional.ofNullable(beanDefinitionFactory.getBeanDefinitionByBeanName(name));
         if (beanDefinitionOptional.isEmpty()) {
