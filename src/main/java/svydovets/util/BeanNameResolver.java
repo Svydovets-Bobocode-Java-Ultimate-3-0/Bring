@@ -34,6 +34,7 @@ public class BeanNameResolver {
                 beanValue;
         }
         //throw exception if not bean annotated
+        // todo: Add test to this case
         throw new RuntimeException();
     }
 
