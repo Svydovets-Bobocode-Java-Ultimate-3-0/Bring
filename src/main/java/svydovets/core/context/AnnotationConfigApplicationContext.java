@@ -31,7 +31,7 @@ public class AnnotationConfigApplicationContext implements ApplicationContext {
     }
 
     @Override
-    public Map<String, Object> getContext() {
-        return beanFactory.getContext();
+    public Map<String, Object> getBeans() {
+        return beanFactory.getBeans();
     }
 }

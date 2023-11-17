@@ -237,7 +237,7 @@ public class BeanFactory {
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> requiredType.cast(entry.getValue())));
     }
 
-    public Map<String, Object> getContext() {
+    public Map<String, Object> getBeans() {
         return beanMap;
     }
 

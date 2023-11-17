@@ -14,5 +14,5 @@ public interface ApplicationContext {
 
     <T> Map<String, T> getBeansOfType(Class<T> requiredType);
 
-    Map<String, Object> getContext();
+    Map<String, Object> getBeans();
 }
