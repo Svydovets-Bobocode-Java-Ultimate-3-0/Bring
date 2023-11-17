@@ -29,7 +29,6 @@ public class CollectionsHolderService {
     public static class SetHolderService {
         @Autowired
         private Set<ProductService> productServiceSet;
-//        private Set<?> productServiceSet;
 
         public Set<ProductService> getProductServiceSet() {
             return productServiceSet;
@@ -38,21 +37,6 @@ public class CollectionsHolderService {
         public void setProductServiceSet(Set<ProductService> productServiceSet) {
             this.productServiceSet = productServiceSet;
         }
-
-//        public Set getProductServiceSet() {
-//            return productServiceSet;
-//        }
-//
-//        public void setProductServiceSet(Set productServiceSet) {
-//            this.productServiceSet = productServiceSet;
-//        }
-//        public Set<?> getProductServiceSet() {
-//            return productServiceSet;
-//        }
-//
-//        public void setProductServiceSet(Set<?> productServiceSet) {
-//            this.productServiceSet = productServiceSet;
-//        }
     }
 
     @Component
