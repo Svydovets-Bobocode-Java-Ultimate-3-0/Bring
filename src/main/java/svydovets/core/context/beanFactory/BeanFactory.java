@@ -1,6 +1,5 @@
 package svydovets.core.context.beanFactory;
 
-import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.PostConstruct;
 import svydovets.core.annotation.Primary;
 import svydovets.core.annotation.Qualifier;
@@ -11,13 +10,12 @@ import svydovets.core.context.beanDefinition.BeanAnnotationBeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinitionFactory;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
-import svydovets.core.context.injector.InjectorConfig;
-import svydovets.core.context.injector.InjectorExecutor;
+import svydovets.core.context.beanFactory.command.CommandFactory;
+import svydovets.core.context.beanFactory.command.CommandFactoryEnum;
 import svydovets.exception.*;
 import svydovets.util.PackageScanner;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -34,9 +32,17 @@ import static svydovets.util.ReflectionsUtil.prepareMethod;
 public class BeanFactory {
     public static final String NO_BEAN_FOUND_OF_TYPE = "No bean found of type %s";
     private final Map<String, Object> beanMap = new LinkedHashMap<>();
-    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>(List.of(new AutowiredAnnotationBeanPostProcessor(new CommandBeanFactoryExecutor(this))));
+    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final PackageScanner packageScanner = new PackageScanner();
     private final BeanDefinitionFactory beanDefinitionFactory = new BeanDefinitionFactory();
+
+    private CommandFactory commandFactory = new CommandFactory();
+
+    public BeanFactory() {
+        commandFactory.registryCommand(CommandFactoryEnum.FC_GET_BEAN, this::getBean);
+        commandFactory.registryCommand(CommandFactoryEnum.FC_GET_BEANS_OF_TYPE, this::getBeansOfType);
+        beanPostProcessors.add(new AutowiredAnnotationBeanPostProcessor(commandFactory));
+    }
 
     public void registerBeans(String basePackage) {
         Set<Class<?>> beanClasses = packageScanner.findComponentsByBasePackage(basePackage);  //TODO why dont search Components + Configurations ? (like below)

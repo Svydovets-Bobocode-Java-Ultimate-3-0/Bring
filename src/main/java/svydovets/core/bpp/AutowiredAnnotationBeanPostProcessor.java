@@ -1,7 +1,8 @@
 package svydovets.core.bpp;
 
 import svydovets.core.annotation.Autowired;
-import svydovets.core.context.beanFactory.CommandBeanFactory;
+import svydovets.core.context.beanFactory.command.CommandFactory;
+import svydovets.core.context.beanFactory.command.CommandFactoryEnum;
 import svydovets.core.context.injector.InjectorConfig;
 import svydovets.core.context.injector.InjectorExecutor;
 import svydovets.exception.AutowireBeanException;
@@ -11,18 +12,19 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 // todo: Maybe it is better to add new annotation @BeanPostProcessor
 public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
 
-    private CommandBeanFactory commandBeanPostProcessor;
+    private CommandFactory commandFactory;
 
     public AutowiredAnnotationBeanPostProcessor() {
     }
 
-    public AutowiredAnnotationBeanPostProcessor(CommandBeanFactory commandBeanPostProcessor) {
-        this.commandBeanPostProcessor = commandBeanPostProcessor;
+    public AutowiredAnnotationBeanPostProcessor(CommandFactory commandFactory) {
+        this.commandFactory = commandFactory;
     }
 
     @Override
@@ -65,10 +67,9 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
                 InjectorConfig injectorConfig = InjectorConfig.builder()
                         .withBean(bean)
                         .withBeanField(beanField)
-                        .withBeanReceiver(commandBeanPostProcessor.getBeanCommand())
-                        .withBeanOfTypeReceiver(commandBeanPostProcessor.getBeansOfTypeCommand())
+                        .withBeanReceiver(clazz -> commandFactory.execute(CommandFactoryEnum.FC_GET_BEAN).apply(clazz))
+                        .withBeanOfTypeReceiver(clazz -> (Map<String, ?>) commandFactory.execute(CommandFactoryEnum.FC_GET_BEANS_OF_TYPE).apply(clazz))
                         .build();
-
                 InjectorExecutor.execute(injectorConfig);
             }
         }
@@ -88,7 +89,7 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
 
     private Stream<Object> getBeanForSetterMethod(Class<?>[] parameterTypes) {
         return Arrays.stream(parameterTypes)
-                .map(commandBeanPostProcessor.getBeanCommand());
+                .map(clazz -> commandFactory.execute(CommandFactoryEnum.FC_GET_BEAN).apply(clazz));
     }
 
 }
