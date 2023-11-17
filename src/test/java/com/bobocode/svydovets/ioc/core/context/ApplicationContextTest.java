@@ -1,12 +1,11 @@
 package com.bobocode.svydovets.ioc.core.context;
 
-import com.bobocode.svydovets.source.base.NullService;
-import com.bobocode.svydovets.source.config.BasePackageBeansConfig;
 import com.bobocode.svydovets.source.autowire.method.TrimService;
 import com.bobocode.svydovets.source.base.CommonService;
 import com.bobocode.svydovets.source.base.MessageService;
+import com.bobocode.svydovets.source.base.NullService;
+import com.bobocode.svydovets.source.config.BasePackageBeansConfig;
 import com.bobocode.svydovets.source.config.QualifierPackageBeansConfig;
-import com.bobocode.svydovets.source.qualifier.withPrimary.ProductService;
 import com.bobocode.svydovets.source.qualifier.withoutPrimary.PaymentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
@@ -86,6 +85,35 @@ public class ApplicationContextTest {
                 .withMessage(String.format("No unique bean found of type %s", PaymentService.class.getName()));
     }
 
+    @Test
+    @Order(7)
+    void shouldThrowNoSuchBeanExceptionWhenBeanIsNotPresentByName() {
+        ApplicationContext context = new AnnotationConfigApplicationContext(BasePackageBeansConfig.class);
+        assertThatExceptionOfType(NoSuchBeanException.class)
+                .isThrownBy(() -> context.getBean("superMessageService", MessageService.class))
+                .withMessage(String.format("No bean found of type %s", MessageService.class.getName()));
+    }
+
+    @Test
+    @Order(8)
+    void shouldThrowNoSuchBeanExceptionWhenBeanIsPresentByNameButDifferentClassType() {
+        ApplicationContext context = new AnnotationConfigApplicationContext(BasePackageBeansConfig.class);
+        assertThatExceptionOfType(ClassCastException.class)
+                .isThrownBy(() -> context.getBean("messageService", CommonService.class))
+                .withMessage(String.format(
+                        "Cannot cast %s to %s",
+                        MessageService.class.getName(),
+                        CommonService.class.getName())
+                );
+    }
+
+    @Test
+    @Order(9)
+    void shouldReturnBeanByNameAndClassType() {
+        ApplicationContext context = new AnnotationConfigApplicationContext(BasePackageBeansConfig.class);
+        MessageService messageService = context.getBean("messageService", MessageService.class);
+        assertThat(messageService).isNotNull();
+    }
     // todo: 1) Add tests for "getBean(String name, Class<T> requiredType)" method
     // todo: 2) Add tests for "getBeansOfType(Class<T> requiredType)" method
     // todo: 3) Add tests for "getPreparedNoArgsConstructor()" method.
