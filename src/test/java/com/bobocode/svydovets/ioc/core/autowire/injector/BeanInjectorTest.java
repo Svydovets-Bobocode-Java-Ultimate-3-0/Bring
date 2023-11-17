@@ -1,12 +1,13 @@
-package com.bobocode.svydovets.core.context.injector;
+package com.bobocode.svydovets.ioc.core.autowire.injector;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 
-import com.bobocode.svydovets.service.base.EditService;
-import com.bobocode.svydovets.service.base.MessageService;
 import java.lang.reflect.Field;
+
+import com.bobocode.svydovets.source.autowire.field.EditService;
+import com.bobocode.svydovets.source.base.MessageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

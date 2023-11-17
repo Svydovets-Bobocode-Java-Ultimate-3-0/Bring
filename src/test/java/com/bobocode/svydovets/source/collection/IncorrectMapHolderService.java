@@ -1,6 +1,6 @@
-package com.bobocode.svydovets.service.collection;
+package com.bobocode.svydovets.source.collection;
 
-import com.bobocode.svydovets.service.qualifier.ProductService;
+import com.bobocode.svydovets.source.qualifier.withPrimary.ProductService;
 import svydovets.core.annotation.Autowired;
 
 import java.util.Map;

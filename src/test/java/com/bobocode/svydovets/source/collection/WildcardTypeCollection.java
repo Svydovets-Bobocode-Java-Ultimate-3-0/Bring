@@ -1,4 +1,4 @@
-package com.bobocode.svydovets.service.collection;
+package com.bobocode.svydovets.source.collection;
 
 import svydovets.core.annotation.Autowired;
 
