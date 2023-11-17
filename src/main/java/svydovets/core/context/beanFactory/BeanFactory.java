@@ -33,6 +33,7 @@ import static svydovets.util.ReflectionsUtil.prepareMethod;
 
 public class BeanFactory {
     public static final String NO_BEAN_FOUND_OF_TYPE = "No bean found of type %s";
+    public static final String NO_UNIQUE_BEAN_FOUND_OF_TYPE = "No unique bean found of type %s";
     private final Map<String, Object> beanMap = new LinkedHashMap<>();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>(List.of(new AutowiredAnnotationBeanPostProcessor()));
     private final PackageScanner packageScanner = new PackageScanner();
@@ -179,18 +180,14 @@ public class BeanFactory {
 
 
     public <T> T getBean(Class<T> requiredType) {
-        // todo: Викликати метод "getBeansOfType"
-        // todo: Якщо size > 1 - знайти бін з "Qualifier" або "Primary" анотацією
-        // todo: Якщо size == 1 - повернути бін
-        // todo: кщо size == 0 - перевірити скоуп
-        String beanName = resolveBeanName(requiredType);
-        Optional<T> prototypeBean = checkAndCreatePrototypeBean(beanName, requiredType);
-        if (prototypeBean.isPresent()) {
-            return prototypeBean.get();
-        }
-
         Map<String, T> beansOfType = getBeansOfType(requiredType);
-        if (beansOfType.size() > 1) {
+        if (beansOfType.isEmpty()) {
+            String beanName = resolveBeanName(requiredType);
+            Optional<T> prototypeBean = checkAndCreatePrototypeBean(beanName, requiredType);
+            if (prototypeBean.isPresent()) {
+                return prototypeBean.get();
+            }
+        } else if (beansOfType.size() > 1) {
             return defineSpecificBean(requiredType, beansOfType);
         }
 
@@ -215,19 +212,16 @@ public class BeanFactory {
                 .filter(bean -> bean.getClass().isAnnotationPresent(Primary.class))
                 .findAny()
                 .orElseThrow(() ->
-                        new NoUniqueBeanException(String.format("No unique bean found of type %s", requiredType.getName()))
+                        new NoUniqueBeanException(String.format(NO_UNIQUE_BEAN_FOUND_OF_TYPE, requiredType.getName()))
                 );
     }
 
     public <T> T getBean(String name, Class<T> requiredType) {
-        Optional<T> prototypeBean = checkAndCreatePrototypeBean(name, requiredType);
-        if (prototypeBean.isPresent()) {
-            return prototypeBean.get();
-        }
-
         Optional<Object> bean = Optional.ofNullable(beanMap.get(name));
-        return requiredType.cast(bean.orElseThrow(()
+        Object beanObject = bean.orElse(checkAndCreatePrototypeBean(name, requiredType).orElseThrow(()
                 -> new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName()))));
+
+        return requiredType.cast(beanObject);
     }
 
     public <T> Map<String, T> getBeansOfType(Class<T> requiredType) {
@@ -238,7 +232,8 @@ public class BeanFactory {
     }
 
     private <T> Optional<T> checkAndCreatePrototypeBean(String name, Class<T> requiredType) {
-        Optional<BeanDefinition> beanDefinitionOptional = Optional.ofNullable(beanDefinitionFactory.getBeanDefinitionByBeanName(name));
+        Optional<BeanDefinition> beanDefinitionOptional = Optional
+                .ofNullable(beanDefinitionFactory.getBeanDefinitionByBeanName(name));
         if (beanDefinitionOptional.isEmpty()) {
             throw new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName()));
         }
