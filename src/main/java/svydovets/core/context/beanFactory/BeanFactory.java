@@ -34,12 +34,12 @@ import static svydovets.util.ReflectionsUtil.prepareMethod;
 public class BeanFactory {
     public static final String NO_BEAN_FOUND_OF_TYPE = "No bean found of type %s";
     private final Map<String, Object> beanMap = new LinkedHashMap<>();
-    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>(List.of(new AutowiredAnnotationBeanPostProcessor()));
+    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>(List.of(new AutowiredAnnotationBeanPostProcessor(new CommandBeanFactoryExecutor(this))));
     private final PackageScanner packageScanner = new PackageScanner();
     private final BeanDefinitionFactory beanDefinitionFactory = new BeanDefinitionFactory();
 
     public void registerBeans(String basePackage) {
-        Set<Class<?>> beanClasses = packageScanner.findComponentsByBasePackage(basePackage);
+        Set<Class<?>> beanClasses = packageScanner.findComponentsByBasePackage(basePackage);  //TODO why dont search Components + Configurations ? (like below)
         doRegisterBeans(beanClasses);
     }
 
@@ -173,7 +173,6 @@ public class BeanFactory {
     }
 
     private void initializeBeanAfterRegistering(String beanName, Object bean) {
-        populateProperties(bean);
         beanMap.putIfAbsent(beanName, initWithBeanPostProcessor(beanName, bean));
     }
 
@@ -247,26 +246,6 @@ public class BeanFactory {
         return Optional.empty();
     }
 
-    private void populateProperties(Object bean) {
-        doSetterInjection(bean);
-        doFieldInjection(bean);
-    }
-
-    private void doSetterInjection(Object bean) {
-        Method[] declaredMethods = bean.getClass().getDeclaredMethods();
-
-        List<Method> targetMethod = Arrays.stream(declaredMethods)
-                .filter(method -> method.isAnnotationPresent(Autowired.class))
-                .toList();
-
-        Object[] injectBeans = targetMethod.stream()
-                .map(Method::getParameterTypes)
-                .flatMap(this::getBeanForSetterMethod)
-                .toArray();
-
-        invokeSetterMethod(targetMethod, bean, injectBeans);
-    }
-
     private Stream<Object> getBeanForSetterMethod(Class<?>[] parameterTypes) {
         return Arrays.stream(parameterTypes)
                 .map(this::getBean);
@@ -281,24 +260,6 @@ public class BeanFactory {
 
         } catch (IllegalAccessException | InvocationTargetException e){
             throw new AutowireBeanException("There is no access to method");
-        }
-    }
-
-    private void doFieldInjection(Object bean) {
-        Field[] beanFields = bean.getClass().getDeclaredFields();
-        for (Field beanField : beanFields) {
-            boolean isAutowiredPresent = beanField.isAnnotationPresent(Autowired.class);
-
-            if (isAutowiredPresent) {
-                InjectorConfig injectorConfig = InjectorConfig.builder()
-                        .withBean(bean)
-                        .withBeanField(beanField)
-                        .withBeanReceiver(this::getBean)
-                        .withBeanOfTypeReceiver(this::getBeansOfType)
-                        .build();
-
-                InjectorExecutor.execute(injectorConfig);
-            }
         }
     }
 
