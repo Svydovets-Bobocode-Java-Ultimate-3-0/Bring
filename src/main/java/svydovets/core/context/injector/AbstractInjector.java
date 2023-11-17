@@ -8,8 +8,38 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 
+/**
+ * The {@code AbstractInjector} class serves as a base class for concrete implementations of the {@code Injector} interface.
+ * It provides common functionality for setting dependencies, retrieving field values, and resolving generic types.
+ *
+ * <p>Concrete injector implementations should extend this class and provide their specific logic for dependency injection.</p>
+ *
+ * <p>Usage example:</p>
+ * <pre>
+ *     // Create a custom injector extending AbstractInjector
+ *     public class CustomInjector extends AbstractInjector {
+ *         // Implement the inject method with custom logic
+ *         {@literal @}Override
+ *         public void inject(InjectorConfig config) {
+ *             // Custom injection logic
+ *         }
+ *     }
+ * </pre>
+ *
+ * @author Oleksii
+ * @see Injector
+ * @see InjectorConfig
+ */
 public abstract class AbstractInjector implements Injector {
 
+    /**
+     * Sets the provided dependency on the specified field of the target bean.
+     *
+     * @param bean               The target bean.
+     * @param fieldForInjection The field within the target bean for dependency injection.
+     * @param autowireCandidate  The dependency to be injected.
+     * @throws AutowireBeanException if there is an issue setting the field due to illegal access.
+     */
     protected void setDependency(Object bean, Field fieldForInjection, Object autowireCandidate) {
         try {
             fieldForInjection.setAccessible(true);
@@ -19,6 +49,14 @@ public abstract class AbstractInjector implements Injector {
         }
     }
 
+    /**
+     * Retrieves the current value of the specified field within the target bean.
+     *
+     * @param targetBean The target bean.
+     * @param field      The field for which to retrieve the value.
+     * @return The current value of the field.
+     * @throws RuntimeException if there is an issue accessing the field.
+     */
     protected Object retrieveFieldValue(Object targetBean, Field field) {
         try {
             field.setAccessible(true);
@@ -28,6 +66,13 @@ public abstract class AbstractInjector implements Injector {
         }
     }
 
+    /**
+     * Retrieves the type of the autowire candidate for a given field.
+     *
+     * @param fieldForInjection The field within the target bean for dependency injection.
+     * @return The type of the autowire candidate.
+     * @throws BeanCreationException if there is an issue resolving the generic type.
+     */
     protected Class<?> retrieveAutowireCandidateType(Field fieldForInjection) {
         // May cause ClassCastException: class java.lang.Class cannot be cast to class java.lang.reflect.ParameterizedType
         // The reason is raw generic type. For example, Set set = new HashSet() => field.getGenericType() == Set.class
