@@ -11,7 +11,7 @@ import svydovets.core.context.beanDefinition.BeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinitionFactory;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
 import svydovets.core.context.beanFactory.command.CommandFactory;
-import svydovets.core.context.beanFactory.command.CommandFactoryEnum;
+import svydovets.core.context.beanFactory.command.CommandFunctionName;
 import svydovets.exception.*;
 import svydovets.util.PackageScanner;
 
@@ -39,8 +39,8 @@ public class BeanFactory {
     private CommandFactory commandFactory = new CommandFactory();
 
     public BeanFactory() {
-        commandFactory.registryCommand(CommandFactoryEnum.FC_GET_BEAN, this::getBean);
-        commandFactory.registryCommand(CommandFactoryEnum.FC_GET_BEANS_OF_TYPE, this::getBeansOfType);
+        commandFactory.registryCommand(CommandFunctionName.FC_GET_BEAN, this::getBean);
+        commandFactory.registryCommand(CommandFunctionName.FC_GET_BEANS_OF_TYPE, this::getBeansOfType);
         beanPostProcessors.add(new AutowiredAnnotationBeanPostProcessor(commandFactory));
     }
 

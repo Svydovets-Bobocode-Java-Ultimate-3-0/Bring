@@ -2,7 +2,7 @@ package svydovets.core.bpp;
 
 import svydovets.core.annotation.Autowired;
 import svydovets.core.context.beanFactory.command.CommandFactory;
-import svydovets.core.context.beanFactory.command.CommandFactoryEnum;
+import svydovets.core.context.beanFactory.command.CommandFunctionName;
 import svydovets.core.context.injector.InjectorConfig;
 import svydovets.core.context.injector.InjectorExecutor;
 import svydovets.exception.AutowireBeanException;
@@ -38,7 +38,7 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
         return BeanPostProcessor.super.postProcessAfterInitialization(bean, beanName);
     }
 
-    public void populateProperties(Object bean) {
+    private void populateProperties(Object bean) {
         doSetterInjection(bean);
         doFieldInjection(bean);
     }
@@ -67,8 +67,8 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
                 InjectorConfig injectorConfig = InjectorConfig.builder()
                         .withBean(bean)
                         .withBeanField(beanField)
-                        .withBeanReceiver(clazz -> commandFactory.execute(CommandFactoryEnum.FC_GET_BEAN).apply(clazz))
-                        .withBeanOfTypeReceiver(clazz -> (Map<String, ?>) commandFactory.execute(CommandFactoryEnum.FC_GET_BEANS_OF_TYPE).apply(clazz))
+                        .withBeanReceiver(clazz -> commandFactory.execute(CommandFunctionName.FC_GET_BEAN).apply(clazz))
+                        .withBeanOfTypeReceiver(clazz -> (Map<String, ?>) commandFactory.execute(CommandFunctionName.FC_GET_BEANS_OF_TYPE).apply(clazz))
                         .build();
                 InjectorExecutor.execute(injectorConfig);
             }
@@ -89,7 +89,7 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
 
     private Stream<Object> getBeanForSetterMethod(Class<?>[] parameterTypes) {
         return Arrays.stream(parameterTypes)
-                .map(clazz -> commandFactory.execute(CommandFactoryEnum.FC_GET_BEAN).apply(clazz));
+                .map(clazz -> commandFactory.execute(CommandFunctionName.FC_GET_BEAN).apply(clazz));
     }
 
 }

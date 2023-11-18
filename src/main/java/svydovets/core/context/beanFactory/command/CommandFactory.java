@@ -1,8 +1,3 @@
-/*
- * This file is a subject to the terms and conditions defined in
- * file 'LICENSE.txt', which is part of this source code package.
- */
-
 package svydovets.core.context.beanFactory.command;
 
 import java.util.HashMap;
@@ -11,13 +6,13 @@ import java.util.function.Function;
 
 public class CommandFactory {
 
-    private Map<CommandFactoryEnum, Function<Class<?>, ?>> commands = new HashMap<>();
+    private Map<CommandFunctionName, Function<Class<?>, Object>> commands = new HashMap<>();
 
-    public void registryCommand(CommandFactoryEnum key, Function<Class<?>, ?> command){
+    public void registryCommand(CommandFunctionName key, Function<Class<?>, Object> command){
         commands.put(key, command);
     }
 
-    public Function<Class<?>, ?> execute(CommandFactoryEnum key){
+    public Function<Class<?>, Object> execute(CommandFunctionName key){
         return commands.get(key);
     }
 
