@@ -7,27 +7,29 @@
     <groupId>org.example</groupId>
     <artifactId>Bring-demo</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
 
-<!--    <repositories>-->
-<!--        <repository>-->
-<!--            <id>central</id>-->
-<!--            <url>https://repo1.maven.org/maven2</url>-->
-<!--        </repository>-->
-<!--        <repository>-->
-<!--            <id>github</id>-->
-<!--            <url>https://maven.pkg.github.com/OWNER/REPOSITORY</url>-->
-<!--            <snapshots>-->
-<!--                <enabled>true</enabled>-->
-<!--            </snapshots>-->
-<!--        </repository>-->
-<!--    </repositories>-->
+
+    <!--    <repositories>-->
+    <!--        <repository>-->
+    <!--            <id>central</id>-->
+    <!--            <url>https://repo1.maven.org/maven2</url>-->
+    <!--        </repository>-->
+    <!--        <repository>-->
+    <!--            <id>github</id>-->
+    <!--            <url>https://maven.pkg.github.com/OWNER/REPOSITORY</url>-->
+    <!--            <snapshots>-->
+    <!--                <enabled>true</enabled>-->
+    <!--            </snapshots>-->
+    <!--        </repository>-->
+    <!--    </repositories>-->
 
     <distributionManagement>
         <repository>
             <id>github</id>
             <name>GitHub OWNER Apache Maven Packages</name>
             <url>https://maven.pkg.github.com/JJJazl/Bring</url>
-<!--            <url>https://maven.pkg.github.com/JJJazl/Svydovets-Bobocode-Java-Ultimate-3-0/Bring</url>-->
+            <!--            <url>https://maven.pkg.github.com/JJJazl/Svydovets-Bobocode-Java-Ultimate-3-0/Bring</url>-->
         </repository>
     </distributionManagement>
 
@@ -35,6 +37,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <tomcat.version>10.1.9</tomcat.version>
     </properties>
 
     <dependencies>
@@ -86,6 +89,34 @@
             <version>5.3.1</version>
             <scope>test</scope>
         </dependency>
+
+
+        <!--        *****************WEB*****************-->
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-core</artifactId>
+            <version>${tomcat.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-jasper</artifactId>
+            <version>${tomcat.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-jasper</artifactId>
+            <version>${tomcat.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-jasper-el</artifactId>
+            <version>${tomcat.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-jsp-api</artifactId>
+            <version>${tomcat.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -94,13 +125,13 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.10.1</version>
                 <configuration>
-<!--                    <source>8</source>-->
-<!--                    <target>8</target>-->
+                    <!--                    <source>8</source>-->
+                    <!--                    <target>8</target>-->
                     <encoding>UTF-8</encoding>
                     <showWarnings>true</showWarnings>
                     <compilerArgs>
                         <arg>-XDcompilePolicy=simple</arg>
-<!--                 doc: https://github.com/google/error-prone-->
+                        <!--                 doc: https://github.com/google/error-prone-->
                         <arg>-Xplugin:ErrorProne -Xep:DeadException:WARN -Xep:GuardedBy:OFF</arg>
                     </compilerArgs>
                     <annotationProcessorPaths>
@@ -117,7 +148,50 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+
+
+<!--            *****************WEB*********************-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                </configuration>
+            </plugin>
         </plugins>
+        <resources>
+            <!--      <resource>-->
+            <!--        <directory>src/main/webapp</directory>-->
+            <!--        <targetPath>META-INF/resources</targetPath>-->
+            <!--      </resource>-->
+        </resources>
+        <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
+            <plugins>
+                <plugin>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>org.example.Main</mainClass>
+                            </manifest>
+                        </archive>
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>make-assembly</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
 </project>

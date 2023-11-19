@@ -4,24 +4,36 @@ import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import svydovets.core.context.AnnotationConfigApplicationContext;
+import svydovets.core.context.ApplicationContext;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
-@WebServlet
 public class DispatcherServlet extends HttpServlet {
+
+    private final ApplicationContext applicationContext;
+
+    public DispatcherServlet(String basePackage) {
+        this.applicationContext = new AnnotationConfigApplicationContext(basePackage);
+    }
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
+        config.getServletContext().setAttribute("ApplicationContext", applicationContext);
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        super.doGet(req, resp);
+        PrintWriter writer = resp.getWriter();
+
+        writer.println("<html><title>Welcome, everyone!</title><body>");
+        writer.println("<h1>Have a Great Day!</h1>");
+        writer.println("</body></html>");
     }
 
     @Override
