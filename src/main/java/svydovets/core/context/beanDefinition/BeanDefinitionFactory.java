@@ -105,4 +105,15 @@ public class BeanDefinitionFactory {
                 ? beanClass.getAnnotation(Scope.class).value()
                 : ApplicationContext.SCOPE_SINGLETON;
     }
+
+    public Map<String, BeanDefinition> getBeanDefinitionsOfType(Class<?> requiredType) {
+        return beanDefinitionMap.entrySet()
+                .stream()
+                .filter(beanDef -> requiredType.isAssignableFrom(beanDef.getValue().getBeanClass()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    public boolean isBeanPrimary(Class<?> beanClass) {
+        return getBeanDefinitionByBeanName(resolveBeanName(beanClass)).isPrimary();
+    }
 }
