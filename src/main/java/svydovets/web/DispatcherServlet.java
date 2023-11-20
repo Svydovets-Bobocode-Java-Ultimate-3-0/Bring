@@ -8,32 +8,58 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import svydovets.core.context.AnnotationConfigApplicationContext;
-import svydovets.core.context.ApplicationContext;
+import svydovets.web.dto.RequestInfoHolder;
+import svydovets.web.path.PathFinder;
+import svydovets.web.path.PathFinderImpl;
 
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.HashSet;
+import java.util.Set;
 
 public class DispatcherServlet extends HttpServlet {
 
-    private final ApplicationContext applicationContext;
+    private final AnnotationConfigWebApplicationContext applicationContext;
+    private PathFinder pathFinder;
 
     public DispatcherServlet(String basePackage) {
-        this.applicationContext = new AnnotationConfigApplicationContext(basePackage);
+        this.applicationContext = new AnnotationConfigWebApplicationContext(basePackage);
     }
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         config.getServletContext().setAttribute("ApplicationContext", applicationContext);
+        pathFinder = new PathFinderImpl();
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        PrintWriter writer = resp.getWriter();
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        super.service(req, resp);
 
-        writer.println("<html><title>Welcome, everyone!</title><body>");
-        writer.println("<h1>Have a Great Day!</h1>");
-        writer.println("</body></html>");
+    }
+
+    @Override
+    public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException {
+        super.service(req, res);
+    }
+
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        Set<String> patternPaths = applicationContext.getMethodPatterns(MethodNameEnum.GET);
+
+        String foundPattern = pathFinder.find(req.getPathInfo(), patternPaths);
+
+        RequestInfoHolder requestInfoHolder = applicationContext.getRequestInfoHolder(MethodNameEnum.GET, foundPattern);//todo: if this value is null, throws exception
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        Set<String> patternPaths = applicationContext.getMethodPatterns(MethodNameEnum.POST);
+
+        String foundPattern = pathFinder.find(req.getPathInfo(), patternPaths);
+
+        RequestInfoHolder requestInfoHolder = applicationContext.getRequestInfoHolder(MethodNameEnum.POST, foundPattern);//todo: if this value is null, throws exception
     }
 
     @Override
@@ -44,11 +70,6 @@ public class DispatcherServlet extends HttpServlet {
     @Override
     protected void doHead(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         super.doHead(req, resp);
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        super.doPost(req, resp);
     }
 
     @Override
@@ -69,15 +90,5 @@ public class DispatcherServlet extends HttpServlet {
     @Override
     protected void doTrace(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         super.doTrace(req, resp);
-    }
-
-    @Override
-    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        super.service(req, resp);
-    }
-
-    @Override
-    public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException {
-        super.service(req, res);
     }
 }
