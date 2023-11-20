@@ -17,7 +17,6 @@ import org.junit.jupiter.api.TestMethodOrder;
 import svydovets.core.context.AnnotationConfigApplicationContext;
 import svydovets.core.context.ApplicationContext;
 import svydovets.exception.NoSuchBeanDefinitionException;
-import svydovets.exception.NoSuchBeanException;
 import svydovets.exception.NoUniqueBeanException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -90,16 +89,16 @@ public class ApplicationContextTest {
 
     @Test
     @Order(7)
-    void shouldThrowNoSuchBeanExceptionWhenBeanIsNotPresentByName() {
+    void shouldThrowNoSuchBeanDefinitionExceptionWhenBeanIsNotPresentByName() {
         ApplicationContext context = new AnnotationConfigApplicationContext(BasePackageBeansConfig.class);
-        assertThatExceptionOfType(NoSuchBeanException.class)
+        assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
                 .isThrownBy(() -> context.getBean("superMessageService", MessageService.class))
-                .withMessage(String.format("No bean found of type %s", MessageService.class.getName()));
+                .withMessage(String.format("No bean definition found of type %s", MessageService.class.getName()));
     }
 
     @Test
     @Order(8)
-    void shouldThrowNoSuchBeanExceptionWhenBeanIsPresentByNameButDifferentClassType() {
+    void shouldThrowNoSuchBeanExceptionWhenBeanIsPresentByNameButHasDifferentClassType() {
         ApplicationContext context = new AnnotationConfigApplicationContext(BasePackageBeansConfig.class);
         assertThatExceptionOfType(ClassCastException.class)
                 .isThrownBy(() -> context.getBean("messageService", CommonService.class))

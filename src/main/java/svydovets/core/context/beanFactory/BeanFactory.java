@@ -40,12 +40,13 @@ import java.util.stream.Stream;
 
 import static svydovets.core.context.ApplicationContext.SCOPE_SINGLETON;
 import static svydovets.util.BeanNameResolver.resolveBeanName;
+import static svydovets.util.ErrorMessages.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
+import static svydovets.util.ErrorMessages.NO_BEAN_FOUND_OF_TYPE;
+import static svydovets.util.ErrorMessages.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
 import static svydovets.util.ReflectionsUtil.prepareConstructor;
 import static svydovets.util.ReflectionsUtil.prepareMethod;
 
 public class BeanFactory {
-    public static final String NO_BEAN_FOUND_OF_TYPE = "No bean found of type %s";
-    public static final String NO_UNIQUE_BEAN_FOUND_OF_TYPE = "No unique bean found of type %s";
     private final Map<String, Object> beanMap = new LinkedHashMap<>();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>(List.of(new AutowiredAnnotationBeanPostProcessor()));
     private final PackageScanner packageScanner = new PackageScanner();
@@ -178,19 +179,25 @@ public class BeanFactory {
         return autowireCandidates;
     }
 
-    private void registerBean(String beanName, BeanDefinition beanDefinition) {
+    public void registerBean(String beanName, BeanDefinition beanDefinition) {
         if (beanDefinition.getScope().equals(SCOPE_SINGLETON)) {
             Object bean = createBean(beanDefinition);
             beanMap.putIfAbsent(beanName, bean);
         }
     }
 
+//    private Object createBeaaan(BeanDefinition beanDefinition) {
+//
+//    }
     private void initializeBeanAfterRegistering(String beanName, Object bean) {
         populateProperties(bean);
         beanMap.putIfAbsent(beanName, initWithBeanPostProcessor(beanName, bean));
     }
 
 
+    /**
+     * Public API
+     */
     public <T> T getBean(Class<T> requiredType) {
         Map<String, T> beansOfType = getBeansOfType(requiredType);
         if (beansOfType.isEmpty()) {
@@ -237,6 +244,9 @@ public class BeanFactory {
                 .orElseThrow();
     }
 
+    /**
+     * Public API
+     */
     public <T> T getBean(String name, Class<T> requiredType) {
         Optional<Object> bean = Optional.ofNullable(beanMap.get(name));
         if (bean.isEmpty()) {
@@ -248,6 +258,9 @@ public class BeanFactory {
         return requiredType.cast(bean.orElseThrow());
     }
 
+    /**
+     * Public API
+     */
     public <T> Map<String, T> getBeansOfType(Class<T> requiredType) {
         return beanMap.entrySet()
                 .stream()
@@ -290,7 +303,7 @@ public class BeanFactory {
         Optional<BeanDefinition> beanDefinitionOptional = Optional
                 .ofNullable(beanDefinitionFactory.getBeanDefinitionByBeanName(name));
         if (beanDefinitionOptional.isEmpty()) {
-            throw new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName()));
+            throw new NoSuchBeanDefinitionException(String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName()));
         }
 
         BeanDefinition beanDefinition = beanDefinitionOptional.orElseThrow();
@@ -358,6 +371,7 @@ public class BeanFactory {
 
     private Object createBeanIfNotPresent(Class<?> beanType) {
         try {
+            // todo: Use another method "getBean()" which will return optional or null and will reuse existing getBean method
             return getBean(beanType);
         } catch (NoSuchBeanException e) {
             return Optional.ofNullable(beanDefinitionFactory.getBeanDefinitionByBeanName(resolveBeanName(beanType)))
