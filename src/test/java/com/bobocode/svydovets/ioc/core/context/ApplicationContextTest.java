@@ -21,6 +21,8 @@ import svydovets.exception.NoUniqueBeanException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static svydovets.util.ErrorMessages.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
+import static svydovets.util.ErrorMessages.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
 
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -74,8 +76,8 @@ public class ApplicationContextTest {
     void shouldThrowNoSuchBeanDefinitionExceptionWhenBeanIsNotPresent() {
         ApplicationContext context = new AnnotationConfigApplicationContext(BasePackageBeansConfig.class);
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
-                .isThrownBy(() -> context.getBean(TrimService.class));
-//                .withMessage(String.format("No bean found of type %s", TrimService.class.getName()));
+                .isThrownBy(() -> context.getBean(TrimService.class))
+                .withMessage(String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, TrimService.class.getName()));
     }
 
     @Test
@@ -84,7 +86,7 @@ public class ApplicationContextTest {
         ApplicationContext context = new AnnotationConfigApplicationContext(QualifierPackageBeansConfig.class);
         assertThatExceptionOfType(NoUniqueBeanException.class)
                 .isThrownBy(() -> context.getBean(PaymentService.class))
-                .withMessage(String.format("No unique bean found of type %s", PaymentService.class.getName()));
+                .withMessage(String.format(NO_UNIQUE_BEAN_FOUND_OF_TYPE, PaymentService.class.getName()));
     }
 
     @Test
@@ -93,7 +95,7 @@ public class ApplicationContextTest {
         ApplicationContext context = new AnnotationConfigApplicationContext(BasePackageBeansConfig.class);
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
                 .isThrownBy(() -> context.getBean("superMessageService", MessageService.class))
-                .withMessage(String.format("No bean definition found of type %s", MessageService.class.getName()));
+                .withMessage(String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, MessageService.class.getName()));
     }
 
     @Test
@@ -124,7 +126,7 @@ public class ApplicationContextTest {
         assertThatExceptionOfType(NoUniqueBeanException.class)
                 .isThrownBy(() -> context.getBean(PrimaryService.class))
                 .withMessage(String.format(
-                        "No unique bean found of type %s",
+                        NO_UNIQUE_BEAN_FOUND_OF_TYPE,
                         PrimaryService.class.getName())
                 );
     }

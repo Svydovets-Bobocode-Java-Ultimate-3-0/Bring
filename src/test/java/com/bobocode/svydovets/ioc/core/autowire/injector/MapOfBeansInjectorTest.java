@@ -51,20 +51,20 @@ class MapOfBeansInjectorTest {
                 .isTrue();
     }
 
-//    @Test
-//    void shouldInjectIntoInitializedMapOfBeans() {
-//        MapHolderService mapHolderService = new MapHolderService();
-//
-//        Field field = mapHolderService.getClass().getDeclaredFields()[1];
-//
-//        InjectorConfig injectorConfig = builder.withBean(mapHolderService).withBeanField(field).build();
-//
-//        mapOfBeansInjector.inject(injectorConfig);
-//
-//        assertThat(mapHolderService.getInitializedProductServiceMap()).isNotNull();
-//        assertThat(mapHolderService.getInitializedProductServiceMap().containsKey("PrimaryProductServiceImpl"))
-//                .isTrue();
-//    }
+    @Test
+    void shouldInjectIntoInitializedMapOfBeans() {
+        MapHolderService mapHolderService = new MapHolderService();
+
+        Field field = mapHolderService.getClass().getDeclaredFields()[1];
+
+        InjectorConfig injectorConfig = builder.withBean(mapHolderService).withBeanField(field).build();
+
+        mapOfBeansInjector.inject(injectorConfig);
+
+        assertThat(mapHolderService.getInitializedProductServiceMap()).isNotNull();
+        assertThat(mapHolderService.getInitializedProductServiceMap().containsKey("PrimaryProductServiceImpl"))
+                .isTrue();
+    }
 
     @Test
     void shouldThrowExceptionWhenKeyIsNotString() {

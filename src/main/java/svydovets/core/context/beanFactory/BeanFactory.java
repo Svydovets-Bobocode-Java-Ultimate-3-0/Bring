@@ -20,6 +20,7 @@ import svydovets.exception.NoSuchBeanException;
 import svydovets.exception.NoUniqueBeanDefinitionException;
 import svydovets.exception.NoUniqueBeanException;
 import svydovets.exception.NoUniquePostConstructException;
+import svydovets.util.ErrorMessages;
 import svydovets.util.PackageScanner;
 
 import java.lang.reflect.Constructor;
@@ -140,7 +141,7 @@ public class BeanFactory {
         var configClassBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName(configClassName);
         var configClass = beanMap.get(configClassBeanDefinition.getBeanName());
         if (configClass == null) {
-            configClass = createBean(configClassBeanDefinition);
+            configClass = saveBean(configClassName, configClassBeanDefinition);
         }
         var initMethod = beanDefinition.getInitMethodOfBeanFromConfigClass();
         Object[] args = retrieveBeanInitMethodArguments(initMethod);
@@ -181,17 +182,19 @@ public class BeanFactory {
 
     public void registerBean(String beanName, BeanDefinition beanDefinition) {
         if (beanDefinition.getScope().equals(SCOPE_SINGLETON)) {
-            Object bean = createBean(beanDefinition);
-            beanMap.putIfAbsent(beanName, bean);
+            saveBean(beanName, beanDefinition);
         }
     }
 
-//    private Object createBeaaan(BeanDefinition beanDefinition) {
-//
-//    }
+    private Object saveBean(String beanName, BeanDefinition beanDefinition) {
+        Object bean = createBean(beanDefinition);
+        beanMap.put(beanName, bean);
+        return bean;
+    }
+
     private void initializeBeanAfterRegistering(String beanName, Object bean) {
         populateProperties(bean);
-        beanMap.putIfAbsent(beanName, initWithBeanPostProcessor(beanName, bean));
+        beanMap.put(beanName, initWithBeanPostProcessor(beanName, bean));
     }
 
 
@@ -203,18 +206,15 @@ public class BeanFactory {
         if (beansOfType.isEmpty()) {
             var beanDefinitions = beanDefinitionFactory.getBeanDefinitionsOfType(requiredType);
             if (beanDefinitions.isEmpty()) {
-                throw new NoSuchBeanDefinitionException("");
+                throw new NoSuchBeanDefinitionException(String.format(
+                        NO_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName())
+                );
             }
             if (beanDefinitions.size() == 1) {
-                // "requiredType" can be an interface, which has an implementation with "prototype" scope
-                // OR bean of that type has not been created YET
-
-                // Need to create bean based on its bean definition
-                var beanDefinition = beanDefinitions.values()
+                BeanDefinition beanDefinition = beanDefinitions.values()
                         .stream()
                         .findAny()
                         .orElseThrow();
-                // It can be not prototype!
                 Object createdPrototypeBean = createBean(beanDefinition);
                 return requiredType.cast(createdPrototypeBean);
             }
@@ -223,15 +223,16 @@ public class BeanFactory {
                     .filter(BeanDefinition::isPrimary)
                     .toList();
             if (primaryBeanDefinitions.size() > 1) {
-                throw new NoUniqueBeanDefinitionException("");
+                throw new NoUniqueBeanDefinitionException(String.format(
+                        ErrorMessages.NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName())
+                );
             }
-            // It can be not prototype!
-            Object createPrototypeBean = primaryBeanDefinitions
+            Object createdPrototypeBean = primaryBeanDefinitions
                     .stream()
                     .map(this::createBean)
                     .findFirst()
                     .orElseThrow();
-            return requiredType.cast(createPrototypeBean);
+            return requiredType.cast(createdPrototypeBean);
         }
         if (beansOfType.size() > 1) {
             // "requiredType" is an interface or abstract class for sure
@@ -250,7 +251,6 @@ public class BeanFactory {
     public <T> T getBean(String name, Class<T> requiredType) {
         Optional<Object> bean = Optional.ofNullable(beanMap.get(name));
         if (bean.isEmpty()) {
-            // todo: Change exception type to "NoSuchBeanDefinitionException" ???
             Object createdPrototypeBean = checkAndCreatePrototypeBean(name, requiredType)
                     .orElseThrow(() -> new NoSuchBeanDefinitionException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName())));
             return requiredType.cast(createdPrototypeBean);
@@ -371,7 +371,6 @@ public class BeanFactory {
 
     private Object createBeanIfNotPresent(Class<?> beanType) {
         try {
-            // todo: Use another method "getBean()" which will return optional or null and will reuse existing getBean method
             return getBean(beanType);
         } catch (NoSuchBeanException e) {
             return Optional.ofNullable(beanDefinitionFactory.getBeanDefinitionByBeanName(resolveBeanName(beanType)))
