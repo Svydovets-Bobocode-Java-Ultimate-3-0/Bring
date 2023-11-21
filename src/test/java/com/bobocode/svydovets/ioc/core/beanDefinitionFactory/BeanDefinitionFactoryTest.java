@@ -38,27 +38,29 @@ class BeanDefinitionFactoryTest {
         beanDefinitionFactory.registerBeanDefinitions(Set.of(CommonService.class, MessageService.class));
         BeanDefinition commonServiceBeandefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("commonService");
         BeanDefinition messageServiceBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("messageService");
-        assertThat(commonServiceBeandefinition.getClass()).isEqualTo(ComponentAnnotationBeanDefinition.class);
-        assertThat(messageServiceBeanDefinition.getClass()).isEqualTo(ComponentAnnotationBeanDefinition.class);
         assertThat(commonServiceBeandefinition).isNotNull();
         assertThat(messageServiceBeanDefinition).isNotNull();
+        assertThat(commonServiceBeandefinition.getClass()).isEqualTo(ComponentAnnotationBeanDefinition.class);
+        assertThat(messageServiceBeanDefinition.getClass()).isEqualTo(ComponentAnnotationBeanDefinition.class);
     }
 
     @Test
     void shouldRegisterComponentAnnotationBeanDefinition() {
         beanDefinitionFactory.registerBeanDefinition(CommonService.class);
         BeanDefinition commonServiceBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("commonService");
-        assertThat(commonServiceBeanDefinition.getClass()).isEqualTo(ComponentAnnotationBeanDefinition.class);
         assertThat(commonServiceBeanDefinition).isNotNull();
+        assertThat(commonServiceBeanDefinition.getClass()).isEqualTo(ComponentAnnotationBeanDefinition.class);
     }
 
     @Test
     void shouldReturnBeanFromConfigClassWith() {
         beanDefinitionFactory.registerBeanDefinitions(Set.of(CommonService.class, BasePackageWithAdditionalBeansConfig.class));
         BeanDefinition trimServiceBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("megaTrimService");
+        BeanDefinition orderBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("orderService");
+        assertThat(trimServiceBeanDefinition).isNotNull();
+        assertThat(orderBeanDefinition).isNotNull();
         String scope = trimServiceBeanDefinition.getScope();
         assertThat(trimServiceBeanDefinition.getClass()).isEqualTo(BeanAnnotationBeanDefinition.class);
-        assertThat(trimServiceBeanDefinition).isNotNull();
         assertThat(scope).isEqualTo("singleton");
     }
 
