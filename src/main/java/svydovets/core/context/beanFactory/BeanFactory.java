@@ -1,6 +1,5 @@
 package svydovets.core.context.beanFactory;
 
-import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.PostConstruct;
 import svydovets.core.annotation.Qualifier;
 import svydovets.core.bpp.AutowiredAnnotationBeanPostProcessor;
@@ -21,10 +20,12 @@ import svydovets.exception.NoUniqueBeanDefinitionException;
 import svydovets.exception.NoUniqueBeanException;
 import svydovets.exception.NoUniquePostConstructException;
 import svydovets.util.ErrorMessages;
+import svydovets.core.context.beanFactory.command.CommandFactory;
+import svydovets.core.context.beanFactory.command.CommandFunctionName;
+import svydovets.exception.*;
 import svydovets.util.PackageScanner;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -49,12 +50,20 @@ import static svydovets.util.ReflectionsUtil.prepareMethod;
 
 public class BeanFactory {
     private final Map<String, Object> beanMap = new LinkedHashMap<>();
-    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>(List.of(new AutowiredAnnotationBeanPostProcessor()));
+    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final PackageScanner packageScanner = new PackageScanner();
     private final BeanDefinitionFactory beanDefinitionFactory = new BeanDefinitionFactory();
 
+    private CommandFactory commandFactory = new CommandFactory();
+
+    public BeanFactory() {
+        commandFactory.registryCommand(CommandFunctionName.FC_GET_BEAN, this::getBean);
+        commandFactory.registryCommand(CommandFunctionName.FC_GET_BEANS_OF_TYPE, this::getBeansOfType);
+        beanPostProcessors.add(new AutowiredAnnotationBeanPostProcessor(commandFactory));
+    }
+
     public void registerBeans(String basePackage) {
-        Set<Class<?>> beanClasses = packageScanner.findComponentsByBasePackage(basePackage);
+        Set<Class<?>> beanClasses = packageScanner.findComponentsByBasePackage(basePackage);  //TODO why dont search Components + Configurations ? (like below)
         doRegisterBeans(beanClasses);
     }
 
@@ -314,26 +323,6 @@ public class BeanFactory {
         return Optional.empty();
     }
 
-    private void populateProperties(Object bean) {
-        doSetterInjection(bean);
-        doFieldInjection(bean);
-    }
-
-    private void doSetterInjection(Object bean) {
-        Method[] declaredMethods = bean.getClass().getDeclaredMethods();
-
-        List<Method> targetMethod = Arrays.stream(declaredMethods)
-                .filter(method -> method.isAnnotationPresent(Autowired.class))
-                .toList();
-
-        Object[] injectBeans = targetMethod.stream()
-                .map(Method::getParameterTypes)
-                .flatMap(this::getBeanForSetterMethod)
-                .toArray();
-
-        invokeSetterMethod(targetMethod, bean, injectBeans);
-    }
-
     private Stream<Object> getBeanForSetterMethod(Class<?>[] parameterTypes) {
         return Arrays.stream(parameterTypes)
                 .map(this::getBean);
@@ -348,24 +337,6 @@ public class BeanFactory {
 
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new AutowireBeanException("There is no access to method");
-        }
-    }
-
-    private void doFieldInjection(Object bean) {
-        Field[] beanFields = bean.getClass().getDeclaredFields();
-        for (Field beanField : beanFields) {
-            boolean isAutowiredPresent = beanField.isAnnotationPresent(Autowired.class);
-
-            if (isAutowiredPresent) {
-                InjectorConfig injectorConfig = InjectorConfig.builder()
-                        .withBean(bean)
-                        .withBeanField(beanField)
-                        .withBeanReceiver(this::getBean)
-                        .withBeanOfTypeReceiver(this::getBeansOfType)
-                        .build();
-
-                InjectorExecutor.execute(injectorConfig);
-            }
         }
     }
 
