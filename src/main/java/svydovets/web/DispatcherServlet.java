@@ -11,21 +11,22 @@ import java.io.IOException;
 import java.util.Set;
 import svydovets.web.dto.RequestInfoHolder;
 import svydovets.web.path.PathFinder;
+import svydovets.web.path.PathFinderImpl;
 
 public class DispatcherServlet extends HttpServlet {
 
-    private final AnnotationConfigWebApplicationContext applicationContext;
+    private final WebApplicationContext webApplicationContext;
     private final PathFinder pathFinder;
 
     public DispatcherServlet(String basePackage) {
-        this.applicationContext = new AnnotationConfigWebApplicationContext(basePackage);
-        this.pathFinder = applicationContext.getPathFinder();
+        this.webApplicationContext = new AnnotationConfigWebApplicationContext(basePackage);
+        this.pathFinder = new PathFinderImpl();
     }
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        config.getServletContext().setAttribute("ApplicationContext", applicationContext);
+        config.getServletContext().setAttribute("WebApplicationContext", webApplicationContext);
     }
 
     @Override
@@ -42,20 +43,22 @@ public class DispatcherServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Set<String> patternPaths = applicationContext.getMethodPatterns(MethodNameEnum.GET);
+        Set<String> patternPaths = webApplicationContext.getMethodPatterns(MethodNameEnum.GET);
 
         String foundPattern = pathFinder.find(req.getPathInfo(), patternPaths);
 
-        RequestInfoHolder requestInfoHolder = applicationContext.getRequestInfoHolder(MethodNameEnum.GET, foundPattern);//todo: if this value is null, throws exception
+        RequestInfoHolder requestInfoHolder = webApplicationContext.getRequestInfoHolder(MethodNameEnum.GET, foundPattern);
+        //todo: if this value is null, throws exception
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Set<String> patternPaths = applicationContext.getMethodPatterns(MethodNameEnum.POST);
+        Set<String> patternPaths = webApplicationContext.getMethodPatterns(MethodNameEnum.POST);
 
         String foundPattern = pathFinder.find(req.getPathInfo(), patternPaths);
 
-        RequestInfoHolder requestInfoHolder = applicationContext.getRequestInfoHolder(MethodNameEnum.POST, foundPattern);//todo: if this value is null, throws exception
+        RequestInfoHolder requestInfoHolder = webApplicationContext.getRequestInfoHolder(MethodNameEnum.POST, foundPattern);
+        //todo: if this value is null, throws exception
     }
 
     @Override
