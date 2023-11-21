@@ -86,6 +86,7 @@ public class PathFinderTest {
         String[] patternLines = getLinesBySpliterator(REQUEST_PATH_1);
         String[] resultLines = getLinesBySpliterator(result);
 
+        //todo: after impl RequestPathParser add 1 test check map
 //        assertEquals(REQUEST_PATH_1, result);
         assertEquals(patternLines.length, resultLines.length);
     }
