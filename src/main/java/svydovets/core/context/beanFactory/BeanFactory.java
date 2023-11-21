@@ -202,7 +202,6 @@ public class BeanFactory {
     }
 
     private void initializeBeanAfterRegistering(String beanName, Object bean) {
-        populateProperties(bean);
         beanMap.put(beanName, initWithBeanPostProcessor(beanName, bean));
     }
 
