@@ -12,11 +12,8 @@ import java.util.stream.Collectors;
 
 public class PathFinderImpl implements PathFinder {
 
-    private static final String SPLITERATOR = "/";
-
     private static final String REQ_PARAM_SPLITERATOR = "\\?";
 
-    private static final String ALPHANUMERIC_REGEX = "\\{\\w+\\}";
 
     private static final String NO_MATCHING_PATTERN_FOUND_EXCEPTION = "No matching pattern found for the request path [%s]";
 

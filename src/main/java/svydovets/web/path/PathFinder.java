@@ -5,6 +5,10 @@ import java.util.Set;
 
 public interface PathFinder {
 
+    String ALPHANUMERIC_REGEX = "\\{\\w+\\}";
+
+    String SPLITERATOR = "/";
+
     /**
      *
      * @param requestPath
