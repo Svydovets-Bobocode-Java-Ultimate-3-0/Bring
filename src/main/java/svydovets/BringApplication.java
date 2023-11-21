@@ -39,6 +39,6 @@ public class BringApplication {
         context.addServletMappingDecoded(urlPattern, servletName);
         tomcat.start();
         tomcat.getServer().await();
-        return (ApplicationContext) dispatcherServlet.getServletContext().getAttribute("ApplicationContext");
+        return (ApplicationContext) dispatcherServlet.getServletContext().getAttribute("WebApplicationContext");
     }
 }
