@@ -9,14 +9,19 @@ import svydovets.exception.NoMatchingPatternFoundException;
 import svydovets.exception.NoUniquePatternFoundException;
 import svydovets.web.path.PathFinder;
 import svydovets.web.path.PathFinderImpl;
+import svydovets.web.path.RequestPathParser;
+import svydovets.web.path.RequestPathParserImpl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -28,9 +33,12 @@ public class PathFinderTest {
 
     private PathFinder pathFinder;
 
+    private RequestPathParser requestPathParser;
+
     @BeforeEach
     void setUp() {
         this.pathFinder = new PathFinderImpl();
+        this.requestPathParser = new RequestPathParserImpl();
     }
 
     @Test
@@ -75,9 +83,12 @@ public class PathFinderTest {
         String[] patternLines = getLinesBySpliterator(REQUEST_PATH_1);
         String[] resultLines = getLinesBySpliterator(result);
 
-        //todo: after impl RequestPathParser add 1 test check map
-//        assertEquals(REQUEST_PATH_1, result);
         assertEquals(patternLines.length, resultLines.length);
+        Map<String, String> map = requestPathParser.parse(REQUEST_PATH_1, result);
+        Map<String, String> expectedMap = new HashMap<>();
+        expectedMap.put("id", "1");
+        expectedMap.put("noteId", "5");
+        assertTrue(checkMapAndExpectedMap(map, expectedMap));
     }
 
     private String[] getLinesBySpliterator(String path) {
@@ -96,5 +107,23 @@ public class PathFinderTest {
         controllerPathMap.add("/users/def/notes/noteDef");
 
         return controllerPathMap;
+    }
+
+    private boolean checkMapAndExpectedMap(Map<String, String> map, Map<String, String> expectedMap) {
+        if (map.size() != expectedMap.size()) {
+            return false;
+        }
+
+        return map.entrySet().stream()
+                .allMatch(entry -> {
+                    var key = entry.getKey();
+                    if (!expectedMap.containsKey(key)) {
+                        return false;
+                    }
+
+                    var expectedValue = expectedMap.get(key);
+
+                    return expectedValue.equals(entry.getValue());
+                });
     }
 }
