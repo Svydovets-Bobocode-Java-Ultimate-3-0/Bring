@@ -1,18 +1,14 @@
 package svydovets.web;
 
-import svydovets.core.context.AnnotationConfigApplicationContext;
-import svydovets.web.dto.RequestInfoHolder;
-import svydovets.web.path.PathFinder;
-import svydovets.web.path.PathFinderImpl;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import svydovets.core.context.AnnotationConfigApplicationContext;
+import svydovets.web.dto.RequestInfoHolder;
 
 public class AnnotationConfigWebApplicationContext extends AnnotationConfigApplicationContext
     implements WebApplicationContext {
 
-  private final PathFinder pathFinder = new PathFinderImpl();
   private final Map<String, RequestInfoHolder> getMethods = new HashMap<>();
   private final Map<String, RequestInfoHolder> postMethods = new HashMap<>();
 
@@ -20,6 +16,7 @@ public class AnnotationConfigWebApplicationContext extends AnnotationConfigAppli
     super(basePackage);
   }
 
+  @Override
   public Set<String> getMethodPatterns(MethodNameEnum methodNameEnum) {
     return switch (methodNameEnum) {
       case GET -> getMethods.keySet();
@@ -28,6 +25,7 @@ public class AnnotationConfigWebApplicationContext extends AnnotationConfigAppli
     };
   }
 
+  @Override
   public RequestInfoHolder getRequestInfoHolder(MethodNameEnum methodNameEnum, String path) {
     return switch (methodNameEnum) {
       case GET -> getMethods.get(path);
@@ -36,7 +34,4 @@ public class AnnotationConfigWebApplicationContext extends AnnotationConfigAppli
     };
   }
 
-  public PathFinder getPathFinder() {
-    return pathFinder;
-  }
 }
