@@ -22,8 +22,6 @@ class RequestPathParserImplTest {
 
     private static final String PATTERN_PATH_1 = "/users/{id}/notes/{type}";
 
-    private static final String PATTERN_PATH_2 = "/users/full/notes/{type}";
-
     private static final String PATTERN_PATH_3 = "/users/full/notes/type";
 
     private static final String PATTERN_PATH_4 = "/users/full/{id}/notes/{type}";
@@ -45,10 +43,6 @@ class RequestPathParserImplTest {
         exception = assertThrows(NoSuchPathVariableException.class,
                 () -> requestPathParser.parse(REQUEST_PATH_1, PATTERN_PATH_4));
         assertEquals(String.format(parsErrMsg, REQUEST_PATH_1, PATTERN_PATH_4), exception.getMessage());
-
-//        exception = assertThrows(NoSuchPathVariableException.class,
-//                () -> requestPathParser.parse(REQUEST_PATH_1, PATTERN_PATH_2));
-//        assertEquals(String.format(parsErrMsg, REQUEST_PATH_1, PATTERN_PATH_2), exception.getMessage());
     }
 
     @Test
