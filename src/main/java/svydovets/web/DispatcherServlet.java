@@ -7,29 +7,25 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import svydovets.core.context.AnnotationConfigApplicationContext;
+import java.io.IOException;
+import java.util.Set;
 import svydovets.web.dto.RequestInfoHolder;
 import svydovets.web.path.PathFinder;
-import svydovets.web.path.PathFinderImpl;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 public class DispatcherServlet extends HttpServlet {
 
     private final AnnotationConfigWebApplicationContext applicationContext;
-    private PathFinder pathFinder;
+    private final PathFinder pathFinder;
 
     public DispatcherServlet(String basePackage) {
         this.applicationContext = new AnnotationConfigWebApplicationContext(basePackage);
+        this.pathFinder = applicationContext.getPathFinder();
     }
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         config.getServletContext().setAttribute("ApplicationContext", applicationContext);
-        pathFinder = new PathFinderImpl();
     }
 
     @Override

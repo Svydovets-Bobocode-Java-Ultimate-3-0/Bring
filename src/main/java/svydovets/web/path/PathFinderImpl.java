@@ -1,24 +1,25 @@
 package svydovets.web.path;
 
-import svydovets.exception.NoMatchingPatternFoundException;
-import svydovets.exception.NoUniquePatternFoundException;
-import svydovets.web.path.PathFinder;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import svydovets.exception.NoMatchingPatternFoundException;
+import svydovets.exception.NoUniquePatternFoundException;
 
 public class PathFinderImpl implements PathFinder {
 
     private static final String REQ_PARAM_SPLITERATOR = "\\?";
-
-
     private static final String NO_MATCHING_PATTERN_FOUND_EXCEPTION = "No matching pattern found for the request path [%s]";
-
     private static final String NO_UNIQUE_PATTERN_FOUND_EXCEPTION = "Check your patch on valid: [%s]";
 
+    /**
+     * Finds the pattern path for the given request path from the set of pattern paths.
+     *
+     * @param requestPath   The request path for which to find the matching pattern.
+     * @param patternPaths  The set of predefined pattern paths.
+     * @return              The pattern path.
+     * @throws NoMatchingPatternFoundException if no matching pattern is found for the given request path.
+     * @throws NoUniquePatternFoundException   if multiple matching patterns are found for the given request path.
+     */
     @Override
     public String find(String requestPath, Set<String> patternPaths) {
         if (patternPaths.contains(requestPath)) {
@@ -43,14 +44,13 @@ public class PathFinderImpl implements PathFinder {
         return patternPaths.stream()
                 .filter(patternPath -> getLinesBySpliterator(patternPath).length == requestLines.length)
                 .filter(patternPath -> filterPatternPath(requestLines, getLinesBySpliterator(patternPath)))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private boolean filterPatternPath(String[] requestLines, String[] patternPath) {
-        boolean foundPath = true;
+        boolean foundPath;
         for (int i = 1; i < requestLines.length; i++) {
-            boolean found = requestLines[i].equals(patternPath[i]) || patternPath[i].matches(ALPHANUMERIC_REGEX);
-            foundPath = foundPath && found;
+            foundPath = requestLines[i].equals(patternPath[i]) || patternPath[i].matches(ALPHANUMERIC_REGEX);
 
             if (!foundPath) {
                 return false;
