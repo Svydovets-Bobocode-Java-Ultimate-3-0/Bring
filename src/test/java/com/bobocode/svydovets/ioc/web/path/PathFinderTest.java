@@ -1,5 +1,6 @@
 package com.bobocode.svydovets.ioc.web.path;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
@@ -34,13 +35,7 @@ public class PathFinderTest {
 
     @Test
     public void shouldThrowNoMatchingPatternFoundExceptionWhenNotFoundRequestPath() {
-        Set<String> controllerPathMap = new HashSet<>();
-        controllerPathMap.add("/users/{id}/card");
-        controllerPathMap.add("/users/{id}/list");
-        controllerPathMap.add("/users/note/list");
-        controllerPathMap.add("/users/{id}/notes/body");
-        controllerPathMap.add("/users/{id}");
-        controllerPathMap.add("/users/def/notes/noteDef");
+        Set<String> controllerPathMap = getDefaultControllerPaths();
 
         var exception = assertThrows(NoMatchingPatternFoundException.class,
                 () -> pathFinder.find(REQUEST_PATH_1, controllerPathMap));
@@ -70,14 +65,8 @@ public class PathFinderTest {
 
     @Test
     public void shouldMatchingPatternFoundForRequestPath() {
-        Set<String> controllerPathMap = new HashSet<>();
-        controllerPathMap.add("/users/{id}/card");
-        controllerPathMap.add("/users/{id}/list");
-        controllerPathMap.add("/users/note/list");
-        controllerPathMap.add("/users/{id}/notes/body");
-        controllerPathMap.add("/users/{id}");
+        Set<String> controllerPathMap = getDefaultControllerPaths();
         controllerPathMap.add("/users/{id}/notes/{noteId}");
-        controllerPathMap.add("/users/def/notes/noteDef");
 
         String result = pathFinder.find(REQUEST_PATH_2, controllerPathMap);
         assertEquals(REQUEST_PATH_2, result);
@@ -93,5 +82,19 @@ public class PathFinderTest {
 
     private String[] getLinesBySpliterator(String path) {
         return path.split("/");
+    }
+
+    @NotNull
+    private static Set<String> getDefaultControllerPaths() {
+        Set<String> controllerPathMap = new HashSet<>();
+
+        controllerPathMap.add("/users/{id}/card");
+        controllerPathMap.add("/users/{id}/list");
+        controllerPathMap.add("/users/note/list");
+        controllerPathMap.add("/users/{id}/notes/body");
+        controllerPathMap.add("/users/{id}");
+        controllerPathMap.add("/users/def/notes/noteDef");
+
+        return controllerPathMap;
     }
 }
