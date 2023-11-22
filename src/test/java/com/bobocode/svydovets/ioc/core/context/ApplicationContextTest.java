@@ -1,12 +1,13 @@
 package com.bobocode.svydovets.ioc.core.context;
 
-import com.bobocode.svydovets.source.base.NullService;
-import com.bobocode.svydovets.source.config.BasePackageBeansConfig;
 import com.bobocode.svydovets.source.autowire.method.TrimService;
 import com.bobocode.svydovets.source.base.CommonService;
 import com.bobocode.svydovets.source.base.MessageService;
+import com.bobocode.svydovets.source.base.NullService;
+import com.bobocode.svydovets.source.config.BasePackageBeansConfig;
+import com.bobocode.svydovets.source.config.PrimaryPackageBeansConfig;
 import com.bobocode.svydovets.source.config.QualifierPackageBeansConfig;
-import com.bobocode.svydovets.source.qualifier.withPrimary.ProductService;
+import com.bobocode.svydovets.source.primary.PrimaryService;
 import com.bobocode.svydovets.source.qualifier.withoutPrimary.PaymentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
@@ -15,11 +16,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import svydovets.core.context.AnnotationConfigApplicationContext;
 import svydovets.core.context.ApplicationContext;
-import svydovets.exception.NoSuchBeanException;
+import svydovets.exception.NoSuchBeanDefinitionException;
 import svydovets.exception.NoUniqueBeanException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static svydovets.util.ErrorMessages.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
+import static svydovets.util.ErrorMessages.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
 
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -70,20 +73,70 @@ public class ApplicationContextTest {
 
     @Test
     @Order(5)
-    void shouldThrowNoSuchBeanExceptionWhenBeanIsNotPresent() {
+    void shouldThrowNoSuchBeanDefinitionExceptionWhenBeanIsNotPresent() {
         ApplicationContext context = new AnnotationConfigApplicationContext(BasePackageBeansConfig.class);
-        assertThatExceptionOfType(NoSuchBeanException.class)
+        assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
                 .isThrownBy(() -> context.getBean(TrimService.class))
-                .withMessage(String.format("No bean found of type %s", TrimService.class.getName()));
+                .withMessage(String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, TrimService.class.getName()));
     }
 
     @Test
     @Order(6)
-    void shouldThrowNoUniqueBeanExceptionWhenNoUniqueBeanIsPresent() {
+    void shouldThrowNoUniqueBeanExceptionWhenUniqueBeanIsNotPresent() {
         ApplicationContext context = new AnnotationConfigApplicationContext(QualifierPackageBeansConfig.class);
         assertThatExceptionOfType(NoUniqueBeanException.class)
                 .isThrownBy(() -> context.getBean(PaymentService.class))
-                .withMessage(String.format("No unique bean found of type %s", PaymentService.class.getName()));
+                .withMessage(String.format(NO_UNIQUE_BEAN_FOUND_OF_TYPE, PaymentService.class.getName()));
+    }
+
+    @Test
+    @Order(7)
+    void shouldThrowNoSuchBeanDefinitionExceptionWhenBeanIsNotPresentByName() {
+        ApplicationContext context = new AnnotationConfigApplicationContext(BasePackageBeansConfig.class);
+        assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
+                .isThrownBy(() -> context.getBean("superMessageService", MessageService.class))
+                .withMessage(String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, MessageService.class.getName()));
+    }
+
+    @Test
+    @Order(8)
+    void shouldThrowNoSuchBeanExceptionWhenBeanIsPresentByNameButHasDifferentClassType() {
+        ApplicationContext context = new AnnotationConfigApplicationContext(BasePackageBeansConfig.class);
+        assertThatExceptionOfType(ClassCastException.class)
+                .isThrownBy(() -> context.getBean("messageService", CommonService.class))
+                .withMessage(String.format(
+                        "Cannot cast %s to %s",
+                        MessageService.class.getName(),
+                        CommonService.class.getName())
+                );
+    }
+
+    @Test
+    @Order(9)
+    void shouldReturnBeanByNameAndClassTypeIfBeanIsPresent() {
+        ApplicationContext context = new AnnotationConfigApplicationContext(BasePackageBeansConfig.class);
+        MessageService messageService = context.getBean("messageService", MessageService.class);
+        assertThat(messageService).isNotNull();
+    }
+
+    @Test
+    @Order(10)
+    void shouldThrowNoUniqueBeanExceptionByBeanClassIfTwoPrimaryBeansArePresent() {
+        ApplicationContext context = new AnnotationConfigApplicationContext(PrimaryPackageBeansConfig.class);
+        assertThatExceptionOfType(NoUniqueBeanException.class)
+                .isThrownBy(() -> context.getBean(PrimaryService.class))
+                .withMessage(String.format(
+                        NO_UNIQUE_BEAN_FOUND_OF_TYPE,
+                        PrimaryService.class.getName())
+                );
+    }
+
+    @Test
+    @Order(11)
+    void shouldReturnBeanByNameAndClassIfTwoPrimaryBeansArePresent() {
+        ApplicationContext context = new AnnotationConfigApplicationContext(PrimaryPackageBeansConfig.class);
+        PrimaryService firstPrimaryServiceImpl = context.getBean("firstPrimaryServiceImpl", PrimaryService.class);
+        assertThat(firstPrimaryServiceImpl).isNotNull();
     }
 
     // todo: 1) Add tests for "getBean(String name, Class<T> requiredType)" method

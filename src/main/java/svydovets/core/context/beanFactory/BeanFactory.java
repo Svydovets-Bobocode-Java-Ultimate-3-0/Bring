@@ -1,8 +1,6 @@
 package svydovets.core.context.beanFactory;
 
-import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.PostConstruct;
-import svydovets.core.annotation.Primary;
 import svydovets.core.annotation.Qualifier;
 import svydovets.core.bpp.AutowiredAnnotationBeanPostProcessor;
 import svydovets.core.bpp.BeanPostProcessor;
@@ -13,34 +11,59 @@ import svydovets.core.context.beanDefinition.BeanDefinitionFactory;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
 import svydovets.core.context.injector.InjectorConfig;
 import svydovets.core.context.injector.InjectorExecutor;
+import svydovets.exception.AutowireBeanException;
+import svydovets.exception.BeanCreationException;
+import svydovets.exception.InvalidInvokePostConstructMethodException;
+import svydovets.exception.NoSuchBeanDefinitionException;
+import svydovets.exception.NoSuchBeanException;
+import svydovets.exception.NoUniqueBeanDefinitionException;
+import svydovets.exception.NoUniqueBeanException;
+import svydovets.exception.NoUniquePostConstructException;
+import svydovets.util.ErrorMessages;
+import svydovets.core.context.beanFactory.command.CommandFactory;
+import svydovets.core.context.beanFactory.command.CommandFunctionName;
 import svydovets.exception.*;
 import svydovets.util.PackageScanner;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static svydovets.core.context.ApplicationContext.SCOPE_SINGLETON;
 import static svydovets.util.BeanNameResolver.resolveBeanName;
+import static svydovets.util.ErrorMessages.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
+import static svydovets.util.ErrorMessages.NO_BEAN_FOUND_OF_TYPE;
+import static svydovets.util.ErrorMessages.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
 import static svydovets.util.ReflectionsUtil.prepareConstructor;
 import static svydovets.util.ReflectionsUtil.prepareMethod;
 
 public class BeanFactory {
-    public static final String NO_BEAN_FOUND_OF_TYPE = "No bean found of type %s";
-    public static final String NO_UNIQUE_BEAN_FOUND_OF_TYPE = "No unique bean found of type %s";
     private final Map<String, Object> beanMap = new LinkedHashMap<>();
-    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>(List.of(new AutowiredAnnotationBeanPostProcessor()));
+    private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final PackageScanner packageScanner = new PackageScanner();
     private final BeanDefinitionFactory beanDefinitionFactory = new BeanDefinitionFactory();
 
+    private CommandFactory commandFactory = new CommandFactory();
+
+    public BeanFactory() {
+        commandFactory.registryCommand(CommandFunctionName.FC_GET_BEAN, this::getBean);
+        commandFactory.registryCommand(CommandFunctionName.FC_GET_BEANS_OF_TYPE, this::getBeansOfType);
+        beanPostProcessors.add(new AutowiredAnnotationBeanPostProcessor(commandFactory));
+    }
+
     public void registerBeans(String basePackage) {
-        Set<Class<?>> beanClasses = packageScanner.findComponentsByBasePackage(basePackage);
+        Set<Class<?>> beanClasses = packageScanner.findComponentsByBasePackage(basePackage);  //TODO why dont search Components + Configurations ? (like below)
         doRegisterBeans(beanClasses);
     }
 
@@ -127,7 +150,7 @@ public class BeanFactory {
         var configClassBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName(configClassName);
         var configClass = beanMap.get(configClassBeanDefinition.getBeanName());
         if (configClass == null) {
-            configClass = createBean(configClassBeanDefinition);
+            configClass = saveBean(configClassName, configClassBeanDefinition);
         }
         var initMethod = beanDefinition.getInitMethodOfBeanFromConfigClass();
         Object[] args = retrieveBeanInitMethodArguments(initMethod);
@@ -166,37 +189,95 @@ public class BeanFactory {
         return autowireCandidates;
     }
 
-    private void registerBean(String beanName, BeanDefinition beanDefinition) {
+    public void registerBean(String beanName, BeanDefinition beanDefinition) {
         if (beanDefinition.getScope().equals(SCOPE_SINGLETON)) {
-            Object bean = createBean(beanDefinition);
-            beanMap.putIfAbsent(beanName, bean);
+            saveBean(beanName, beanDefinition);
         }
+    }
+
+    private Object saveBean(String beanName, BeanDefinition beanDefinition) {
+        Object bean = createBean(beanDefinition);
+        beanMap.put(beanName, bean);
+        return bean;
     }
 
     private void initializeBeanAfterRegistering(String beanName, Object bean) {
-        populateProperties(bean);
-        beanMap.putIfAbsent(beanName, initWithBeanPostProcessor(beanName, bean));
+        beanMap.put(beanName, initWithBeanPostProcessor(beanName, bean));
     }
 
 
+    /**
+     * Public API
+     */
     public <T> T getBean(Class<T> requiredType) {
         Map<String, T> beansOfType = getBeansOfType(requiredType);
         if (beansOfType.isEmpty()) {
-            String beanName = resolveBeanName(requiredType);
-            Optional<T> prototypeBean = checkAndCreatePrototypeBean(beanName, requiredType);
-            if (prototypeBean.isPresent()) {
-                return prototypeBean.get();
+            var beanDefinitions = beanDefinitionFactory.getBeanDefinitionsOfType(requiredType);
+            if (beanDefinitions.isEmpty()) {
+                throw new NoSuchBeanDefinitionException(String.format(
+                        NO_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName())
+                );
             }
-        } else if (beansOfType.size() > 1) {
+            if (beanDefinitions.size() == 1) {
+                BeanDefinition beanDefinition = beanDefinitions.values()
+                        .stream()
+                        .findAny()
+                        .orElseThrow();
+                Object createdPrototypeBean = createBean(beanDefinition);
+                return requiredType.cast(createdPrototypeBean);
+            }
+            List<BeanDefinition> primaryBeanDefinitions = beanDefinitions.values()
+                    .stream()
+                    .filter(BeanDefinition::isPrimary)
+                    .toList();
+            if (primaryBeanDefinitions.size() > 1) {
+                throw new NoUniqueBeanDefinitionException(String.format(
+                        ErrorMessages.NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName())
+                );
+            }
+            Object createdPrototypeBean = primaryBeanDefinitions
+                    .stream()
+                    .map(this::createBean)
+                    .findFirst()
+                    .orElseThrow();
+            return requiredType.cast(createdPrototypeBean);
+        }
+        if (beansOfType.size() > 1) {
+            // "requiredType" is an interface or abstract class for sure
             return defineSpecificBean(requiredType, beansOfType);
         }
+        // We 100% have a bean of the required type
+        return beansOfType.values()
+                .stream()
+                .findAny()
+                .orElseThrow();
+    }
 
-        return beansOfType.values().stream()
-                .findFirst()
-                .orElseThrow(() -> new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName())));
+    /**
+     * Public API
+     */
+    public <T> T getBean(String name, Class<T> requiredType) {
+        Optional<Object> bean = Optional.ofNullable(beanMap.get(name));
+        if (bean.isEmpty()) {
+            Object createdPrototypeBean = checkAndCreatePrototypeBean(name, requiredType)
+                    .orElseThrow(() -> new NoSuchBeanDefinitionException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName())));
+            return requiredType.cast(createdPrototypeBean);
+        }
+        return requiredType.cast(bean.orElseThrow());
+    }
+
+    /**
+     * Public API
+     */
+    public <T> Map<String, T> getBeansOfType(Class<T> requiredType) {
+        return beanMap.entrySet()
+                .stream()
+                .filter(entry -> requiredType.isAssignableFrom(entry.getValue().getClass()))
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> requiredType.cast(entry.getValue())));
     }
 
     private <T> T defineSpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
+        // todo: ************Must be moved to additional method************
         if (requiredType.isAnnotationPresent(Qualifier.class)) {
             var qualifier = requiredType.getDeclaredAnnotation(Qualifier.class);
 
@@ -206,64 +287,43 @@ public class BeanFactory {
                 return beansOfType.get(beanName);
             }
         }
-
-        return beansOfType.values()
+        // todo: ************Must be moved to additional method************
+        List<T> beansOfRequiredType = beansOfType.values()
                 .stream()
-                .filter(bean -> bean.getClass().isAnnotationPresent(Primary.class))
+                .filter(bean -> beanDefinitionFactory.isBeanPrimary(bean.getClass()))
+                .toList();
+        if (beansOfRequiredType.isEmpty()) {
+            // We have no beans of required type with @Primary
+            // Exception message: No qualifying bean of type 'com.example.springbootdemo.test.CommonInterface' available: more than one 'primary' bean found among candidates: [commonService, secondCommonService]
+            throw new NoUniqueBeanException(String.format(NO_UNIQUE_BEAN_FOUND_OF_TYPE, requiredType.getName()));
+        }
+        if (beansOfRequiredType.size() > 1) {
+            // We have more than 1 @Primary beans of required type
+            // Exception message: No qualifying bean of type 'com.example.springbootdemo.test.CommonInterface' available: expected single matching bean but found 2: commonService,secondCommonService
+            throw new NoUniqueBeanException(String.format(NO_UNIQUE_BEAN_FOUND_OF_TYPE, requiredType.getName()));
+        }
+        return beansOfRequiredType.stream()
                 .findAny()
-                .orElseThrow(() ->
-                        new NoUniqueBeanException(String.format(NO_UNIQUE_BEAN_FOUND_OF_TYPE, requiredType.getName()))
-                );
+                .orElseThrow();
     }
 
-    public <T> T getBean(String name, Class<T> requiredType) {
-        Optional<Object> bean = Optional.ofNullable(beanMap.get(name));
-        Object beanObject = bean.orElse(checkAndCreatePrototypeBean(name, requiredType).orElseThrow(()
-                -> new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName()))));
-
-        return requiredType.cast(beanObject);
-    }
-
-    public <T> Map<String, T> getBeansOfType(Class<T> requiredType) {
-        return beanMap.entrySet()
-                .stream()
-                .filter(entry -> requiredType.isAssignableFrom(entry.getValue().getClass()))
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> requiredType.cast(entry.getValue())));
+    public Map<String, Object> getBeans() {
+        return beanMap;
     }
 
     private <T> Optional<T> checkAndCreatePrototypeBean(String name, Class<T> requiredType) {
         Optional<BeanDefinition> beanDefinitionOptional = Optional
                 .ofNullable(beanDefinitionFactory.getBeanDefinitionByBeanName(name));
         if (beanDefinitionOptional.isEmpty()) {
-            throw new NoSuchBeanException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName()));
+            throw new NoSuchBeanDefinitionException(String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName()));
         }
 
-        BeanDefinition beanDefinition = beanDefinitionOptional.get();
+        BeanDefinition beanDefinition = beanDefinitionOptional.orElseThrow();
         if (beanDefinition.getScope().equals(ApplicationContext.SCOPE_PROTOTYPE)) {
             return Optional.of(requiredType.cast(createBean(beanDefinition)));
         }
 
         return Optional.empty();
-    }
-
-    private void populateProperties(Object bean) {
-        doSetterInjection(bean);
-        doFieldInjection(bean);
-    }
-
-    private void doSetterInjection(Object bean) {
-        Method[] declaredMethods = bean.getClass().getDeclaredMethods();
-
-        List<Method> targetMethod = Arrays.stream(declaredMethods)
-                .filter(method -> method.isAnnotationPresent(Autowired.class))
-                .toList();
-
-        Object[] injectBeans = targetMethod.stream()
-                .map(Method::getParameterTypes)
-                .flatMap(this::getBeanForSetterMethod)
-                .toArray();
-
-        invokeSetterMethod(targetMethod, bean, injectBeans);
     }
 
     private Stream<Object> getBeanForSetterMethod(Class<?>[] parameterTypes) {
@@ -278,26 +338,8 @@ public class BeanFactory {
                 method.invoke(targetBean, injectBeans);
             }
 
-        } catch (IllegalAccessException | InvocationTargetException e){
+        } catch (IllegalAccessException | InvocationTargetException e) {
             throw new AutowireBeanException("There is no access to method");
-        }
-    }
-
-    private void doFieldInjection(Object bean) {
-        Field[] beanFields = bean.getClass().getDeclaredFields();
-        for (Field beanField : beanFields) {
-            boolean isAutowiredPresent = beanField.isAnnotationPresent(Autowired.class);
-
-            if (isAutowiredPresent) {
-                InjectorConfig injectorConfig = InjectorConfig.builder()
-                        .withBean(bean)
-                        .withBeanField(beanField)
-                        .withBeanReceiver(this::getBean)
-                        .withBeanOfTypeReceiver(this::getBeansOfType)
-                        .build();
-
-                InjectorExecutor.execute(injectorConfig);
-            }
         }
     }
 
