@@ -29,4 +29,9 @@ public class AnnotationConfigApplicationContext implements ApplicationContext {
     public <T> Map<String, T> getBeansOfType(Class<T> requiredType) {
         return beanFactory.getBeansOfType(requiredType);
     }
+
+    @Override
+    public Map<String, Object> getBeans() {
+        return beanFactory.getBeans();
+    }
 }
