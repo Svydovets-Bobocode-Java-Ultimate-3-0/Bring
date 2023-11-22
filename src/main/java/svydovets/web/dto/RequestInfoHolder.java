@@ -2,10 +2,17 @@ package svydovets.web.dto;
 
 public class RequestInfoHolder {
 
+  // todo: Rewrite to save Class<?> classType instead String className
+  private Class<?> classType;
   private String className;
   private String methodName;
   private String[] parameterNames;
   private Class<?>[] parameterTypes;
+
+  public RequestInfoHolder(String className, Class<?> classType) {
+    this.className = className;
+    this.classType = classType;
+  }
 
   public RequestInfoHolder(String className) {
     this.className = className;
@@ -41,5 +48,13 @@ public class RequestInfoHolder {
 
   public void setParameterTypes(Class<?>[] parameterTypes) {
     this.parameterTypes = parameterTypes;
+  }
+
+  public Class<?> getClassType() {
+    return classType;
+  }
+
+  public void setClassType(Class<?> classType) {
+    this.classType = classType;
   }
 }

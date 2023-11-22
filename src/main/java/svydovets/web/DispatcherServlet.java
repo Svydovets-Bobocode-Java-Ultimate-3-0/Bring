@@ -17,10 +17,12 @@ public class DispatcherServlet extends HttpServlet {
 
     private final WebApplicationContext webApplicationContext;
     private final PathFinder pathFinder;
+    private final WebInvocationHandler webInvocationHandler;
 
     public DispatcherServlet(String basePackage) {
         this.webApplicationContext = new AnnotationConfigWebApplicationContext(basePackage);
         this.pathFinder = new PathFinderImpl();
+        this.webInvocationHandler = new WebInvocationHandler();
     }
 
     @Override
