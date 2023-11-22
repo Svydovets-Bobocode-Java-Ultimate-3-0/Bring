@@ -307,6 +307,10 @@ public class BeanFactory {
                 .orElseThrow();
     }
 
+    public Map<String, Object> getBeans() {
+        return beanMap;
+    }
+
     private <T> Optional<T> checkAndCreatePrototypeBean(String name, Class<T> requiredType) {
         Optional<BeanDefinition> beanDefinitionOptional = Optional
                 .ofNullable(beanDefinitionFactory.getBeanDefinitionByBeanName(name));
