@@ -3,6 +3,7 @@ package svydovets.web;
 import java.util.*;
 import svydovets.core.context.AnnotationConfigApplicationContext;
 import svydovets.web.dto.RequestInfoHolder;
+import svydovets.web.util.RestMethodFiller;
 
 public class AnnotationConfigWebApplicationContext extends AnnotationConfigApplicationContext
     implements WebApplicationContext {

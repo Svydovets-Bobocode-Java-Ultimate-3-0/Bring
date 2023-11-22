@@ -1,7 +1,8 @@
-package svydovets.web.dto;
+package svydovets.web.util;
 
 import svydovets.web.annotation.PathVariable;
 import svydovets.web.annotation.RequestParam;
+import svydovets.web.dto.RequestInfoHolder;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;

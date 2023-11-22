@@ -1,8 +1,7 @@
-package svydovets.web;
+package svydovets.web.util;
 
 import svydovets.web.annotation.*;
 import svydovets.web.dto.RequestInfoHolder;
-import svydovets.web.dto.RequestInfoHolderCreator;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
