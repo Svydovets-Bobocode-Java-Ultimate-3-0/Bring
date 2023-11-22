@@ -7,7 +7,6 @@ import svydovets.web.dto.RequestInfoHolder;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
-import java.util.Map;
 
 /**
  * Utility class responsible for creating {@link RequestInfoHolder} instances based on
@@ -19,14 +18,14 @@ public class RequestInfoHolderCreator {
     }
 
     /**
-     * Creates a new {@link RequestInfoHolder} instance using the provided entry and method.
+     * Creates a new {@link RequestInfoHolder} instance using the provided entry name and method.
      *
-     * @param entry  bean entry.
+     * @param className  Class name of bean entry.
      * @param method The method for which to create the request information holder.
      * @return       A new RequestInfoHolder instance populated with relevant information.
      */
-    public static RequestInfoHolder create(Map.Entry<String, Object> entry, Method method) {
-        RequestInfoHolder requestInfoHolder = new RequestInfoHolder(entry.getKey());
+    public static RequestInfoHolder create(String className, Method method) {
+        RequestInfoHolder requestInfoHolder = new RequestInfoHolder(className);
 
         requestInfoHolder.setMethodName(method.getName());
         requestInfoHolder.setParameterTypes(method.getParameterTypes());

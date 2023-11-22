@@ -88,23 +88,23 @@ public class RestMethodFiller {
             if (method.isAnnotationPresent(GetMapping.class)) {
                 String path = controllerPath + method.getDeclaredAnnotation(GetMapping.class).value();
 
-                getMethods.put(path, RequestInfoHolderCreator.create(entry, method));
+                getMethods.put(path, RequestInfoHolderCreator.create(entry.getKey(), method));
             } else if (method.isAnnotationPresent(PostMapping.class)) {
                 String path = controllerPath + method.getDeclaredAnnotation(PostMapping.class).value();
 
-                postMethods.put(path, RequestInfoHolderCreator.create(entry, method));
+                postMethods.put(path, RequestInfoHolderCreator.create(entry.getKey(), method));
             } else if (method.isAnnotationPresent(PutMapping.class)) {
                 String path = controllerPath + method.getDeclaredAnnotation(PutMapping.class).value();
 
-                putMethods.put(path, RequestInfoHolderCreator.create(entry, method));
+                putMethods.put(path, RequestInfoHolderCreator.create(entry.getKey(), method));
             } else if (method.isAnnotationPresent(DeleteMapping.class)) {
                 String path = controllerPath + method.getDeclaredAnnotation(DeleteMapping.class).value();
 
-                deleteMethods.put(path, RequestInfoHolderCreator.create(entry, method));
+                deleteMethods.put(path, RequestInfoHolderCreator.create(entry.getKey(), method));
             } else if (method.isAnnotationPresent(PatchMapping.class)) {
                 String path = controllerPath + method.getDeclaredAnnotation(PatchMapping.class).value();
 
-                patchMethods.put(path, RequestInfoHolderCreator.create(entry, method));
+                patchMethods.put(path, RequestInfoHolderCreator.create(entry.getKey(), method));
             }
         }
     }
