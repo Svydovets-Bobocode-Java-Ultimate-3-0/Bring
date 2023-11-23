@@ -1,5 +1,6 @@
 package svydovets.web.util;
 
+import svydovets.web.MethodNameEnum;
 import svydovets.web.annotation.*;
 import svydovets.web.dto.RequestInfoHolder;
 
@@ -27,13 +28,7 @@ public class RestMethodFiller {
     public void fill(Map<String, Object> beans) {
         beans.entrySet().stream()
                 .filter(entry -> entry.getValue().getClass().isAnnotationPresent(RestController.class))
-                .forEach(
-                        entry -> {
-                            Class<?> beanType = entry.getValue().getClass();
-                            String methodPath = getControllerPath(beanType);
-                            Method[] declaredMethods = beanType.getDeclaredMethods();
-                            fillMethods(entry, declaredMethods, methodPath);
-                        });
+                .forEach(this::fillMethods);
     }
 
 
@@ -82,29 +77,31 @@ public class RestMethodFiller {
         return patchMethods;
     }
 
-    private void fillMethods(
-            Map.Entry<String, Object> entry, Method[] declaredMethods, String controllerPath) {
-        for (Method method : declaredMethods) {
+    private void fillMethods(Map.Entry<String, Object> entry) {
+        String key = entry.getKey();
+        Class<?> beanType = entry.getValue().getClass();
+        String controllerPath = getControllerPath(beanType);
+        for (Method method : beanType.getDeclaredMethods()) {
             if (method.isAnnotationPresent(GetMapping.class)) {
                 String path = controllerPath + method.getDeclaredAnnotation(GetMapping.class).value();
 
-                getMethods.put(path, RequestInfoHolderCreator.create(entry.getKey(), method));
+                getMethods.put(path, RequestInfoHolderCreator.create(key, beanType, method));
             } else if (method.isAnnotationPresent(PostMapping.class)) {
                 String path = controllerPath + method.getDeclaredAnnotation(PostMapping.class).value();
 
-                postMethods.put(path, RequestInfoHolderCreator.create(entry.getKey(), method));
+                postMethods.put(path, RequestInfoHolderCreator.create(key, beanType, method));
             } else if (method.isAnnotationPresent(PutMapping.class)) {
                 String path = controllerPath + method.getDeclaredAnnotation(PutMapping.class).value();
 
-                putMethods.put(path, RequestInfoHolderCreator.create(entry.getKey(), method));
+                putMethods.put(path, RequestInfoHolderCreator.create(key, beanType, method));
             } else if (method.isAnnotationPresent(DeleteMapping.class)) {
                 String path = controllerPath + method.getDeclaredAnnotation(DeleteMapping.class).value();
 
-                deleteMethods.put(path, RequestInfoHolderCreator.create(entry.getKey(), method));
+                deleteMethods.put(path, RequestInfoHolderCreator.create(key, beanType, method));
             } else if (method.isAnnotationPresent(PatchMapping.class)) {
                 String path = controllerPath + method.getDeclaredAnnotation(PatchMapping.class).value();
 
-                patchMethods.put(path, RequestInfoHolderCreator.create(entry.getKey(), method));
+                patchMethods.put(path, RequestInfoHolderCreator.create(key, beanType, method));
             }
         }
     }

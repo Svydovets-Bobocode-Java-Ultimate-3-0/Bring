@@ -24,9 +24,8 @@ public class RequestInfoHolderCreator {
      * @param method The method for which to create the request information holder.
      * @return       A new RequestInfoHolder instance populated with relevant information.
      */
-    public static RequestInfoHolder create(String className, Method method) {
-        RequestInfoHolder requestInfoHolder = new RequestInfoHolder(className);
-
+    public static RequestInfoHolder create(String className, Class<?> classType, Method method) {
+        RequestInfoHolder requestInfoHolder = new RequestInfoHolder(className, classType);
         requestInfoHolder.setMethodName(method.getName());
         requestInfoHolder.setParameterTypes(method.getParameterTypes());
         String[] parameterNames = getParameterNames(method);

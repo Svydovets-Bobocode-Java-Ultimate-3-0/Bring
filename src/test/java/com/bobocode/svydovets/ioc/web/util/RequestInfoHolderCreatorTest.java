@@ -9,21 +9,20 @@ import svydovets.web.util.RequestInfoHolderCreator;
 import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RequestInfoHolderCreatorTest {
 
   @Test
   void shouldCreateRequestInfoHolder() {
     Method[] methods = SimpleRestController.class.getDeclaredMethods();
+    assertEquals(1, methods.length);
 
-    RequestInfoHolder requestInfoHolder = null;
+    Method firstMethod = methods[0];
+    assertTrue(firstMethod.isAnnotationPresent(GetMapping.class));
 
-    for (Method method : methods) {
-      if (method.isAnnotationPresent(GetMapping.class)) {
-        requestInfoHolder =
-            RequestInfoHolderCreator.create(SimpleRestController.class.getSimpleName(), method);
-      }
-    }
+    RequestInfoHolder requestInfoHolder = RequestInfoHolderCreator
+            .create(SimpleRestController.class.getSimpleName(), SimpleRestController.class, firstMethod);
 
     assertEquals(SimpleRestController.class.getSimpleName(), requestInfoHolder.getClassName());
     assertEquals(1, requestInfoHolder.getParameterNames().length);

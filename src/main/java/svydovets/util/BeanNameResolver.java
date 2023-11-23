@@ -5,23 +5,33 @@ import java.lang.reflect.Method;
 import svydovets.core.annotation.Bean;
 import svydovets.core.annotation.Component;
 import svydovets.core.annotation.Configuration;
+import svydovets.web.annotation.RestController;
 
 public class BeanNameResolver {
 
     //create javadoc for description
     public static String resolveBeanName(Class<?> beanClass) {
+        if (beanClass.isAnnotationPresent(RestController.class)) {
+            var beanValue = beanClass.getAnnotation(RestController.class).value();
+            if (!beanValue.isEmpty()) {
+                return beanValue;
+            }
+        }
+
         if (beanClass.isAnnotationPresent(Configuration.class)) {
             var beanValue = beanClass.getAnnotation(Configuration.class).value();
             if (!beanValue.isEmpty()) {
                 return beanValue;
             }
         }
+
         if (beanClass.isAnnotationPresent(Component.class)) {
             var beanValue = beanClass.getAnnotation(Component.class).value();
             if (!beanValue.isEmpty()) {
                 return beanValue;
             }
         }
+
         return setFirstCharacterToLowercase(beanClass.getSimpleName());
     }
 
