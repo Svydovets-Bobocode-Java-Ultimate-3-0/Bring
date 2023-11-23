@@ -11,4 +11,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Component
 public @interface RestController {
+    String value() default "";
 }

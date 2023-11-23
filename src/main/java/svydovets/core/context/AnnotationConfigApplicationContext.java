@@ -5,7 +5,7 @@ import svydovets.core.context.beanFactory.BeanFactory;
 import java.util.Map;
 
 public class AnnotationConfigApplicationContext implements ApplicationContext {
-    private final BeanFactory beanFactory = new BeanFactory();
+    protected final BeanFactory beanFactory = new BeanFactory();
 
     public AnnotationConfigApplicationContext(String basePackage) {
         beanFactory.registerBeans(basePackage);
