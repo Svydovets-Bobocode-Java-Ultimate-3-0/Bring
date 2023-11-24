@@ -29,7 +29,7 @@ public class UserController {
     }
 
     @GetMapping
-    public User getOneByFirstName(@RequestParam String firstName, HttpServletRequest req, HttpServletResponse resp) {
+    public User getOneByFirstName(@RequestParam String firstName) {
         return new User(DEFAULT_ID, firstName, DEFAULT_LAST_NAME, DEFAULT_STATUS);
     }
 

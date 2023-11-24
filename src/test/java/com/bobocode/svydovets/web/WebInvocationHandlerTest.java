@@ -35,7 +35,7 @@ public class WebInvocationHandlerTest {
     public void shouldExtractValueFromPathVariable() throws Exception {
         User expectedResult = createDefaultUser();
         String methodName = "getOneById";
-        Method methodToInvoke = UserController.class.getDeclaredMethod(methodName, long.class);
+        Method methodToInvoke = UserController.class.getDeclaredMethod(methodName, Long.class);
         RequestInfo requestInfo = buildRequestInfo(Map.of("id", DEFAULT_ID.toString()), emptyMap(), null);
         Object[] args = webInvocationHandler.invoke(methodToInvoke, requestInfo);
 
