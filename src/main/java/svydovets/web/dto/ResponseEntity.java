@@ -2,16 +2,20 @@ package svydovets.web.dto;
 
 import jakarta.annotation.Nullable;
 
-import java.util.Map;
-
 public class ResponseEntity<T>{
 
     private final T body;
     private HttpStatus status;
-    private Map<String, String> headers;
+    private HttpHeaders headers;
 
     public ResponseEntity(T body) {
         this.body = body;
+    }
+
+    public ResponseEntity(T body, HttpHeaders headers, HttpStatus status) {
+        this.body = body;
+        this.headers = headers;
+        this.status = status;
     }
 
     public T getBody() {
@@ -22,16 +26,12 @@ public class ResponseEntity<T>{
         return status;
     }
 
-    public Map<String, String> getHeaders() {
+    public HttpHeaders getHeaders() {
         return headers;
     }
 
     public static BodyBuilder ok() {
         return status(HttpStatus.OK);
-    }
-
-    public static BodyBuilder status(int status) {
-        return new DefaultBuilder(status);
     }
 
     public static BodyBuilder status(HttpStatus status) {
@@ -52,15 +52,11 @@ public class ResponseEntity<T>{
 
     private static class DefaultBuilder implements BodyBuilder {
 
-        private final int statusCode;
+        private final HttpStatus status;
         private final HttpHeaders headers = new HttpHeaders();
 
-        private DefaultBuilder(int statusCode) {
-            this.statusCode = statusCode;
-        }
-
-        private DefaultBuilder(HttpStatus httpStatus) {
-            this.statusCode = httpStatus.getStatus();
+        private DefaultBuilder(HttpStatus status) {
+            this.status = status;
         }
 
         public BodyBuilder header(String headerName, String headerValue) {
@@ -83,8 +79,7 @@ public class ResponseEntity<T>{
             }
 
             public <T> ResponseEntity<T> body(@Nullable T body) {
-                return new ResponseEntity<>(body);
+                return new ResponseEntity<>(body, this.headers, this.status);
             }
-
         }
 }
