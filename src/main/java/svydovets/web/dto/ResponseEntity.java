@@ -43,8 +43,8 @@ public class ResponseEntity<T>{
     }
 
     public interface BodyBuilder extends HeadersBuilder{
-        BodyBuilder contentLength(String type);
-        BodyBuilder contentType(MediaType contentType);
+        BodyBuilder contentLength(int length);
+        BodyBuilder contentType(String contentType);
         <T> ResponseEntity<T> body(@Nullable T body);
         <T> ResponseEntity<T> build();
 
@@ -69,12 +69,14 @@ public class ResponseEntity<T>{
             }
 
             @Override
-            public BodyBuilder contentLength(String type) {
+            public BodyBuilder contentLength(int length) {
+                headers.setHeader("Content-Length", String.valueOf(length));
                 return this;
             }
 
             @Override
-            public BodyBuilder contentType(MediaType contentType) {
+            public BodyBuilder contentType(String contentType) {
+                headers.setHeader("Content-Type", contentType);
                 return this;
             }
 
