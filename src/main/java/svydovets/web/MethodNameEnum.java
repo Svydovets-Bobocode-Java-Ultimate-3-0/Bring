@@ -2,6 +2,6 @@ package svydovets.web;
 
 public enum MethodNameEnum {
 
-    GET, POST, PUT, DELETE;
+    GET, POST, PUT, DELETE, PATCH
 
 }
