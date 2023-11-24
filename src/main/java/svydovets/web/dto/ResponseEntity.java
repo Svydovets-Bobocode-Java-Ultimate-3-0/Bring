@@ -14,6 +14,18 @@ public class ResponseEntity<T>{
         this.body = body;
     }
 
+    public T getBody() {
+        return body;
+    }
+
+    public HttpStatus getStatus() {
+        return status;
+    }
+
+    public Map<String, String> getHeaders() {
+        return headers;
+    }
+
     public static BodyBuilder ok() {
         return status(HttpStatus.OK);
     }
@@ -40,15 +52,20 @@ public class ResponseEntity<T>{
 
     private static class DefaultBuilder implements BodyBuilder {
 
-        private final Object statusCode;
+        private final int statusCode;
         private final HttpHeaders headers = new HttpHeaders();
 
-        private DefaultBuilder(Object statusCode) {
+        private DefaultBuilder(int statusCode) {
             this.statusCode = statusCode;
         }
 
-        public BodyBuilder header(String headerName, String headerValues) {
-                return this;
+        private DefaultBuilder(HttpStatus httpStatus) {
+            this.statusCode = httpStatus.getStatus();
+        }
+
+        public BodyBuilder header(String headerName, String headerValue) {
+              headers.setHeader(headerName, headerValue);
+              return this;
             }
 
             public <T> ResponseEntity<T> build() {

@@ -33,6 +33,11 @@ public class DispatcherServlet extends HttpServlet {
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         super.service(req, resp);
 
+        //TODO add processing ResponseEntity;
+        //if (result instance of ResponseEntity){
+        // fill(resp, result)
+        // }
+
     }
 
     @Override
