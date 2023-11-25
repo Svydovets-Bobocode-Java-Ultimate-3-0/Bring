@@ -1,21 +1,19 @@
 package svydovets.web;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import svydovets.exception.UnsupportedTypeException;
 import svydovets.web.annotation.PathVariable;
 import svydovets.web.annotation.RequestBody;
 import svydovets.web.annotation.RequestParam;
-import svydovets.web.path.RequestInfo;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.math.BigDecimal;
-import java.util.Map;
 
-public class WebInvocationHandler {
+public class MethodArgumentResolver {
 
-    public Object[] invoke(Method method, RequestInfo requestInfo) {
+    public Object[] invoke(Method method, ServletWebRequest servletWebRequest) {
         Parameter[] parameters = method.getParameters();
         Object[] args = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
@@ -23,39 +21,26 @@ public class WebInvocationHandler {
             Class<?> parameterType = parameter.getType();
 
             String parameterName = parameter.getName();
+
             if (parameter.isAnnotationPresent(PathVariable.class)) {
-                Map<String, String> pathVariableValuesMap = requestInfo.pathVariableValuesMap();
-                String parameterValue = pathVariableValuesMap.get(parameterName);
+                String parameterValue = servletWebRequest.getPathVariableValue(parameterName);
 
                 args[i] = convertRequestParameterValue(parameterType, parameterValue);
             } else if (parameter.isAnnotationPresent(RequestParam.class)) {
-                Map<String, String[]> requestParameterValuesMap = requestInfo.requestParameterValuesMap();
-                String parameterValue = getRequestParameterValue(parameterName, requestParameterValuesMap);
+                String parameterValue = servletWebRequest.getRequestParameterValue(parameterName);
 
                 args[i] = convertRequestParameterValue(parameterType, parameterValue);
             } else if (parameter.isAnnotationPresent(RequestBody.class)) {
-                args[i] = parameterType.cast(parseRequestBodyJson(requestInfo, parameterType));
-            } 
+                args[i] = parameterType.cast(servletWebRequest.getRequestBody(parameterType));
+            } else if (HttpServletRequest.class == parameterType) {
+                args[i] = servletWebRequest.getRequest();
+            } else if (HttpServletResponse.class == parameterType) {
+                args[i] = servletWebRequest.getResponse();
+            }
         }
         return args;
     }
 
-    private Object parseRequestBodyJson(RequestInfo requestInfo, Class<?> parameterType) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            return objectMapper.readValue(requestInfo.requestBody(), parameterType);
-        } catch (JsonProcessingException e) {
-            // todo: LOG ERROR
-            throw new RuntimeException("Error processing JSON request body", e);
-        }
-    }
-
-    private String getRequestParameterValue(String parameterName, Map<String, String[]> requestParameterValuesMap) {
-        String[] requestParameters = requestParameterValuesMap.get(parameterName);
-        return requestParameters == null
-                ? null
-                : requestParameters[0];
-    }
 
     public Object convertRequestParameterValue(Class<?> parameterType, String requestParameterValue) {
         if (isNumeric(parameterType)) {

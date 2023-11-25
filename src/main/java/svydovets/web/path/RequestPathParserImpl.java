@@ -26,7 +26,7 @@ public class RequestPathParserImpl implements RequestPathParser {
      */
     @Override
     public Map<String, String> parse(String requestPath, String patternPath) {
-        String[] requestLines = requestPath.split(SPLITERATOR);
+        String[] requestLines = requestPath.split(PathFinder.REQ_PARAM_SPLITERATOR)[0].split(SPLITERATOR);
         String[] patternLines = patternPath.split(SPLITERATOR);
 
         if (requestLines.length != patternLines.length) {
