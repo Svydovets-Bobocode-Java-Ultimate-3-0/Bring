@@ -1,5 +1,6 @@
 package svydovets.web;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
@@ -7,6 +8,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import svydovets.web.dto.RequestInfoHolder;
+import svydovets.web.dto.ResponseEntity;
 import svydovets.web.path.PathFinder;
 import svydovets.web.path.PathFinderImpl;
 import svydovets.web.path.RequestInfo;
@@ -14,6 +16,7 @@ import svydovets.web.path.RequestInfoCreator;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.Set;
 
 public class DispatcherServlet extends HttpServlet {
@@ -21,6 +24,8 @@ public class DispatcherServlet extends HttpServlet {
     private final WebApplicationContext webApplicationContext;
     private final PathFinder pathFinder;
     private final WebInvocationHandler webInvocationHandler;
+
+    ObjectMapper objectMapper = new ObjectMapper();
 
     public DispatcherServlet(String basePackage) {
         this.webApplicationContext = new AnnotationConfigWebApplicationContext(basePackage);
@@ -38,6 +43,7 @@ public class DispatcherServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
             Object result = processRequest(req, MethodNameEnum.GET);
+            processResponseEntity(resp, result);
         } catch (Exception e) {
 
         }
@@ -63,10 +69,33 @@ public class DispatcherServlet extends HttpServlet {
         return methodToInvoke.invoke(controller, requestArguments);
     }
 
+    private void processResponseEntity(HttpServletResponse resp, Object responseObject) throws IOException {
+
+        if (responseObject instanceof ResponseEntity<?> responseEntity){
+            //get info from ResponseEntity
+            int status = responseEntity.getStatus().getStatus();
+            Map<String, String> headers = responseEntity.getHeaders().getHeaders();
+            Object body = responseEntity.getBody();
+
+            //set info from ResponseEntity to response
+            resp.setStatus(status);
+            headers.forEach(resp::setHeader);
+            String jsonBody = objectMapper.writeValueAsString(body);
+
+            //v1
+            resp.getWriter().write(jsonBody);
+            //v2
+//            PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(resp.getOutputStream()));
+//            printWriter.println(jsonBody);
+
+        }
+    }
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
             Object result = processRequest(req, MethodNameEnum.POST);
+            processResponseEntity(resp, result);
         } catch (Exception e) {
 
         }
@@ -76,6 +105,7 @@ public class DispatcherServlet extends HttpServlet {
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
             Object result = processRequest(req, MethodNameEnum.PUT);
+            processResponseEntity(resp, result);
         } catch (Exception e) {
         }
     }
@@ -84,6 +114,7 @@ public class DispatcherServlet extends HttpServlet {
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
             Object result = processRequest(req, MethodNameEnum.DELETE);
+            processResponseEntity(resp, result);
         } catch (Exception e) {
         }
     }
