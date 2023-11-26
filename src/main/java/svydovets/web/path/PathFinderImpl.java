@@ -1,5 +1,7 @@
 package svydovets.web.path;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svydovets.exception.NoMatchingPatternFoundException;
 import svydovets.exception.NoUniquePatternFoundException;
 import svydovets.util.ErrorMessageConstants;
@@ -8,6 +10,8 @@ import java.util.List;
 import java.util.Set;
 
 public class PathFinderImpl implements PathFinder {
+
+    private static final Logger log = LoggerFactory.getLogger(PathFinderImpl.class);
 
     /**
      * Finds the pattern path for the given request path from the set of pattern paths.
@@ -20,7 +24,10 @@ public class PathFinderImpl implements PathFinder {
      */
     @Override
     public String find(String requestPath, Set<String> patternPaths) {
+        log.trace("Call find({}, {})", requestPath, patternPaths);
         if (patternPaths.contains(requestPath)) {
+            log.trace("Found patternPath equals with requestPath: {}", requestPath);
+
             return requestPath;
         }
 
@@ -34,10 +41,15 @@ public class PathFinderImpl implements PathFinder {
             throw new NoUniquePatternFoundException(String.format(ErrorMessageConstants.NO_UNIQUE_PATTERN_FOUND_EXCEPTION, patternPathList));
         }
 
-        return patternPathList.get(0);
+        String patternPath = patternPathList.get(0);
+
+        log.trace("Found patternPath: {} for requestPath: {}", patternPath, requestPath);
+
+        return patternPath;
     }
 
     private List<String> findAll(String requestPath, Set<String> patternPaths) {
+        log.trace("Call findAll({}, {})", requestPath, patternPaths);
         String[] requestLines = getLinesBySpliterator(requestPath);
         return patternPaths.stream()
                 .filter(patternPath -> getLinesBySpliterator(patternPath).length == requestLines.length)

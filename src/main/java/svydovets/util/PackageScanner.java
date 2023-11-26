@@ -31,17 +31,20 @@ public class PackageScanner {
     }
 
     public Set<Class<?>> findAllBeanCandidatesByBaseClass(Class<?>... classTypes) {
+        log.trace("Call findAllBeanCandidatesByBaseClass({})", (Object[]) classTypes);
         Set<Class<?>> beanClasses = new HashSet<>();
-
         for (Class<?> beanClass : classTypes) {
             if (beanClass.isAnnotationPresent(Configuration.class) || beanClass.isAnnotationPresent(Component.class)) {
                 beanClasses.add(beanClass);
             }
+
             ComponentScan componentScan = beanClass.getAnnotation(ComponentScan.class);
             if (componentScan != null) {
                 beanClasses.addAll(findComponentsByBasePackage(componentScan.value()));
             }
         }
+
+        log.trace("Found set beanClasses: {}", beanClasses);
 
         return beanClasses;
     }
