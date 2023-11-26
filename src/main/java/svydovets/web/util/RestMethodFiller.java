@@ -1,7 +1,12 @@
 package svydovets.web.util;
 
-import svydovets.web.MethodNameEnum;
-import svydovets.web.annotation.*;
+import svydovets.web.annotation.DeleteMapping;
+import svydovets.web.annotation.GetMapping;
+import svydovets.web.annotation.PatchMapping;
+import svydovets.web.annotation.PostMapping;
+import svydovets.web.annotation.PutMapping;
+import svydovets.web.annotation.RequestMapping;
+import svydovets.web.annotation.RestController;
 import svydovets.web.dto.RequestInfoHolder;
 
 import java.lang.reflect.Method;

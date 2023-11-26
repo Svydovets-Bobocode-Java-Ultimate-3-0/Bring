@@ -55,7 +55,7 @@ public class MethodArgumentResolverTest {
         when(request.getAttribute(DispatcherServlet.CONTROLLER_REDIRECT_REQUEST_PATH)).thenReturn("/users/{id}");
 
         ServletWebRequest servletWebRequest = new ServletWebRequest(request, response);
-        Object[] actualArgs = methodArgumentResolver.invoke(methodToInvoke, servletWebRequest);
+        Object[] actualArgs = methodArgumentResolver.resolveArguments(methodToInvoke, servletWebRequest);
 
         assertThat(actualArgs.length).isEqualTo(expectedArgs.length);
         assertThat(actualArgs[0]).isEqualTo(expectedArgs[0]);
@@ -69,7 +69,7 @@ public class MethodArgumentResolverTest {
         when(request.getParameterMap()).thenReturn(Map.of("firstName", new String[]{DEFAULT_FIRST_NAME}));
 
         ServletWebRequest servletWebRequest = new ServletWebRequest(request, response);
-        Object[] actualArgs = methodArgumentResolver.invoke(methodToInvoke, servletWebRequest);
+        Object[] actualArgs = methodArgumentResolver.resolveArguments(methodToInvoke, servletWebRequest);
 
         assertThat(actualArgs.length).isEqualTo(expectedArgs.length);
         assertThat(actualArgs[0]).isEqualTo(expectedArgs[0]);
@@ -86,7 +86,7 @@ public class MethodArgumentResolverTest {
         when(request.getReader()).thenReturn(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(userJson.getBytes()))));
 
         ServletWebRequest servletWebRequest = new ServletWebRequest(request, response);
-        Object[] actualArgs = methodArgumentResolver.invoke(methodToInvoke, servletWebRequest);
+        Object[] actualArgs = methodArgumentResolver.resolveArguments(methodToInvoke, servletWebRequest);
 
         assertThat(actualArgs.length).isEqualTo(expectedArgs.length);
         assertThat(actualArgs[0]).isEqualTo(expectedArgs[0]);
@@ -111,7 +111,7 @@ public class MethodArgumentResolverTest {
 
 
         ServletWebRequest servletWebRequest = new ServletWebRequest(request, response);
-        Object[] actualArgs = methodArgumentResolver.invoke(methodToInvoke, servletWebRequest);
+        Object[] actualArgs = methodArgumentResolver.resolveArguments(methodToInvoke, servletWebRequest);
 
         assertThat(actualArgs.length).isEqualTo(expectedArgs.length);
         assertThat(actualArgs[0]).isEqualTo(expectedArgs[0]);
@@ -125,7 +125,7 @@ public class MethodArgumentResolverTest {
         Method methodToInvoke = UserController.class.getDeclaredMethod("removeWithServletRequestAndResponse", HttpServletRequest.class, HttpServletResponse.class);
 
         ServletWebRequest servletWebRequest = new ServletWebRequest(request, response);
-        Object[] actualArgs = methodArgumentResolver.invoke(methodToInvoke, servletWebRequest);
+        Object[] actualArgs = methodArgumentResolver.resolveArguments(methodToInvoke, servletWebRequest);
         methodToInvoke.invoke(new UserController(), actualArgs);
 
         assertThat(actualArgs.length).isEqualTo(expectedArgs.length);

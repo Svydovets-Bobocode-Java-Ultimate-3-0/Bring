@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import static svydovets.web.DispatcherServlet.CONTROLLER_REDIRECT_REQUEST_PATH;
 
 public class ServletWebRequest {
+    static final ObjectMapper objectMapper = new ObjectMapper();
     private static final RequestPathParser requestPathParser = new RequestPathParserImpl();
     private final HttpServletRequest request;
     private final HttpServletResponse response;
@@ -34,7 +35,6 @@ public class ServletWebRequest {
 
     public String getPathVariableValue(String parameterName) {
         if (pathVariableValuesMap == null) {
-            RequestPathParser requestPathParser = new RequestPathParserImpl();
             pathVariableValuesMap = requestPathParser.parse(request.getPathInfo(), (String) request.getAttribute(CONTROLLER_REDIRECT_REQUEST_PATH));
         }
         return pathVariableValuesMap.get(parameterName);
@@ -50,8 +50,7 @@ public class ServletWebRequest {
 
     public Object getRequestBody(Class<?> parameterType) {
         if (requestBody == null) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            requestBody = parseRequestBody(objectMapper, parameterType);
+            requestBody = parseRequestBody(parameterType);
         }
         return this.requestBody;
     }
@@ -64,7 +63,7 @@ public class ServletWebRequest {
         return request.getAttribute(name);
     }
 
-    private Object parseRequestBody(ObjectMapper objectMapper, Class<?> parameterType) {
+    private Object parseRequestBody(Class<?> parameterType) {
         try {
             String jsonRequestBody = request.getReader()
                     .lines()

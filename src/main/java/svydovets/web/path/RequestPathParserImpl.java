@@ -1,6 +1,7 @@
 package svydovets.web.path;
 
 import svydovets.exception.NoSuchPathVariableException;
+import svydovets.util.ErrorMessages;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,14 +15,13 @@ import static svydovets.web.path.PathFinder.SPLITERATOR;
  */
 public class RequestPathParserImpl implements RequestPathParser {
 
-    private static final String NO_SUCH_PATH_VARIABLES_FOR_THIS_REQUEST_PATH = "Request path [%s] parsing error from pattern path [%s]";
 
     /**
      * Parses the given request path based on the specified pattern path and extracts variables.
      *
-     * @param requestPath   The request path to be parsed.
-     * @param patternPath   The pattern path used as a template for parsing.
-     * @return              A map of variable names to their corresponding values extracted from the request path.
+     * @param requestPath The request path to be parsed.
+     * @param patternPath The pattern path used as a template for parsing.
+     * @return A map of variable names to their corresponding values extracted from the request path.
      * @throws NoSuchPathVariableException if the parsing fails due to mismatched path lengths or no variables found.
      */
     @Override
@@ -30,7 +30,7 @@ public class RequestPathParserImpl implements RequestPathParser {
         String[] patternLines = patternPath.split(SPLITERATOR);
 
         if (requestLines.length != patternLines.length) {
-            String parsingErrMsg = String.format(NO_SUCH_PATH_VARIABLES_FOR_THIS_REQUEST_PATH, requestPath, patternPath);
+            String parsingErrMsg = String.format(ErrorMessages.NO_SUCH_PATH_VARIABLES_FOR_THIS_REQUEST_PATH, requestPath, patternPath);
             throw new NoSuchPathVariableException(parsingErrMsg);
         }
 
@@ -42,7 +42,7 @@ public class RequestPathParserImpl implements RequestPathParser {
         }
 
         if (pathVariables.isEmpty()) {
-            String parsingErrMsg = String.format(NO_SUCH_PATH_VARIABLES_FOR_THIS_REQUEST_PATH, requestPath, patternPath);
+            String parsingErrMsg = String.format(ErrorMessages.NO_SUCH_PATH_VARIABLES_FOR_THIS_REQUEST_PATH, requestPath, patternPath);
             throw new NoSuchPathVariableException(parsingErrMsg);
         }
 
