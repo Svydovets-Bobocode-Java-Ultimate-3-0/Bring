@@ -2,6 +2,7 @@ package svydovets.core.context.injector;
 
 import svydovets.exception.AutowireBeanException;
 import svydovets.exception.BeanCreationException;
+import svydovets.exception.FieldValueIllegalAccessException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;

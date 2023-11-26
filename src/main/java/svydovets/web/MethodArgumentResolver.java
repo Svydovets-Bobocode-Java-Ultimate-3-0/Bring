@@ -3,7 +3,7 @@ package svydovets.web;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import svydovets.exception.UnsupportedTypeException;
-import svydovets.util.ErrorMessages;
+import svydovets.util.ErrorMessageConstants;
 import svydovets.web.annotation.PathVariable;
 import svydovets.web.annotation.RequestBody;
 import svydovets.web.annotation.RequestParam;
@@ -59,7 +59,7 @@ public class MethodArgumentResolver {
 
         // todo: LOG ERROR
         throw new UnsupportedTypeException(String.format(
-                ErrorMessages.UNSUPPORTED_TYPE_ERROR_MESSAGE,
+                ErrorMessageConstants.UNSUPPORTED_TYPE_ERROR_MESSAGE,
                 parameterType)
         );
     }
@@ -92,7 +92,7 @@ public class MethodArgumentResolver {
         }
         // todo: LOG ERROR
         throw new UnsupportedTypeException(String.format(
-                ErrorMessages.UNSUPPORTED_TYPE_ERROR_MESSAGE,
+                ErrorMessageConstants.UNSUPPORTED_TYPE_ERROR_MESSAGE,
                 parameterType)
         );
     }
@@ -120,7 +120,7 @@ public class MethodArgumentResolver {
         }
         // todo: LOG ERROR
         throw new UnsupportedTypeException(String.format(
-                ErrorMessages.UNSUPPORTED_NUMBER_TYPE_ERROR_MESSAGE,
+                ErrorMessageConstants.UNSUPPORTED_NUMBER_TYPE_ERROR_MESSAGE,
                 parameterType)
         );
     }

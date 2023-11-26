@@ -1,5 +1,7 @@
 package svydovets.core.context.beanFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svydovets.core.annotation.PostConstruct;
 import svydovets.core.annotation.Qualifier;
 import svydovets.core.bpp.AutowiredAnnotationBeanPostProcessor;
@@ -9,8 +11,8 @@ import svydovets.core.context.beanDefinition.BeanAnnotationBeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinitionFactory;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
-import svydovets.core.context.injector.InjectorConfig;
-import svydovets.core.context.injector.InjectorExecutor;
+import svydovets.core.context.beanFactory.command.CommandFactory;
+import svydovets.core.context.beanFactory.command.CommandFunctionName;
 import svydovets.exception.AutowireBeanException;
 import svydovets.exception.BeanCreationException;
 import svydovets.exception.InvalidInvokePostConstructMethodException;
@@ -19,10 +21,7 @@ import svydovets.exception.NoSuchBeanException;
 import svydovets.exception.NoUniqueBeanDefinitionException;
 import svydovets.exception.NoUniqueBeanException;
 import svydovets.exception.NoUniquePostConstructException;
-import svydovets.util.ErrorMessages;
-import svydovets.core.context.beanFactory.command.CommandFactory;
-import svydovets.core.context.beanFactory.command.CommandFunctionName;
-import svydovets.exception.*;
+import svydovets.util.ErrorMessageConstants;
 import svydovets.util.PackageScanner;
 
 import java.lang.reflect.Constructor;
@@ -31,6 +30,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,21 +40,27 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static svydovets.core.context.ApplicationContext.SCOPE_SINGLETON;
 import static svydovets.util.BeanNameResolver.resolveBeanName;
-import static svydovets.util.ErrorMessages.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
-import static svydovets.util.ErrorMessages.NO_BEAN_FOUND_OF_TYPE;
-import static svydovets.util.ErrorMessages.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
+import static svydovets.util.ErrorMessageConstants.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
+import static svydovets.util.ErrorMessageConstants.NO_BEAN_FOUND_OF_TYPE;
+import static svydovets.util.ErrorMessageConstants.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
 import static svydovets.util.ReflectionsUtil.prepareConstructor;
 import static svydovets.util.ReflectionsUtil.prepareMethod;
 
 public class BeanFactory {
+
+    public static final Set<String> SUPPORTED_SCOPES = new HashSet<>(Arrays.asList(
+            ApplicationContext.SCOPE_SINGLETON,
+            ApplicationContext.SCOPE_PROTOTYPE
+    ));
+    private static final Logger log = LoggerFactory.getLogger(BeanFactory.class);
+
     private final Map<String, Object> beanMap = new LinkedHashMap<>();
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
     private final PackageScanner packageScanner = new PackageScanner();
     private final BeanDefinitionFactory beanDefinitionFactory = new BeanDefinitionFactory();
 
-    private CommandFactory commandFactory = new CommandFactory();
+    private final CommandFactory commandFactory = new CommandFactory();
 
     public BeanFactory() {
         commandFactory.registryCommand(CommandFunctionName.FC_GET_BEAN, this::getBean);
@@ -63,7 +69,9 @@ public class BeanFactory {
     }
 
     public void registerBeans(String basePackage) {
+        log.info("Scanning package: {}", basePackage);
         Set<Class<?>> beanClasses = packageScanner.findComponentsByBasePackage(basePackage);  //TODO why dont search Components + Configurations ? (like below)
+        log.info("Registering beans");
         doRegisterBeans(beanClasses);
     }
 
@@ -73,9 +81,13 @@ public class BeanFactory {
     }
 
     private void doRegisterBeans(Set<Class<?>> beanClasses) {
+        log.trace("Call doRegisterBeans({})", beanClasses);
         beanDefinitionFactory
                 .registerBeanDefinitions(beanClasses)
                 .forEach(this::registerBean);
+
+        log.info("Beans post processing");
+
         beanMap.forEach(this::initializeBeanAfterRegistering);
     }
 
@@ -108,21 +120,23 @@ public class BeanFactory {
         Method[] declaredMethods = beanType.getDeclaredMethods();
         Predicate<Method> isAnnotatedMethod = method -> method.isAnnotationPresent(PostConstruct.class);
 
+        // todo: Refactor a little bit. Collect methods to list to avoid second filtering
         boolean isNotUniqueMethod = Arrays.stream(declaredMethods)
-                .filter(method -> method.isAnnotationPresent(PostConstruct.class))
+                .filter(isAnnotatedMethod)
                 .count() > 1;
 
         if (isNotUniqueMethod) {
             throw new NoUniquePostConstructException("You cannot have more than one method that is annotated with @PostConstruct.");
         }
 
+        // todo: Refactor a little bit
         Arrays.stream(declaredMethods)
                 .filter(isAnnotatedMethod)
                 .findFirst()
                 .ifPresent(method -> invokePostConstructMethod(bean, method));
     }
 
-    private static void invokePostConstructMethod(Object bean, Method method) {
+    private void invokePostConstructMethod(Object bean, Method method) {
         try {
             prepareMethod(method).invoke(bean);
         } catch (IllegalAccessException | InvocationTargetException e) {
@@ -132,6 +146,7 @@ public class BeanFactory {
 
 
     private Object createBean(BeanDefinition beanDefinition) {
+        log.trace("Call createBean({})", beanDefinition);
         try {
             if (beanDefinition instanceof ComponentAnnotationBeanDefinition componentBeanDefinition) {
                 return createComponent(componentBeanDefinition);
@@ -174,12 +189,14 @@ public class BeanFactory {
     }
 
     private Object createComponent(ComponentAnnotationBeanDefinition beanDefinition) throws InvocationTargetException, InstantiationException, IllegalAccessException {
+        log.trace("Call createComponent({})", beanDefinition);
         Constructor<?> initializationConstructor = prepareConstructor(beanDefinition.getInitializationConstructor());
         Object[] autowireCandidates = retrieveAutowireCandidates(initializationConstructor);
         return initializationConstructor.newInstance(autowireCandidates);
     }
 
     private Object[] retrieveAutowireCandidates(Constructor<?> initializationConstructor) {
+        log.trace("");
         Class<?>[] autowireCandidateTypes = initializationConstructor.getParameterTypes();
         Object[] autowireCandidates = new Object[autowireCandidateTypes.length];
         for (int i = 0; i < autowireCandidateTypes.length; i++) {
@@ -190,14 +207,17 @@ public class BeanFactory {
     }
 
     public void registerBean(String beanName, BeanDefinition beanDefinition) {
-        if (beanDefinition.getScope().equals(SCOPE_SINGLETON)) {
+        log.trace("Call registerBean({}, {})", beanName, beanDefinition);
+        if (beanDefinition.getScope().equals(ApplicationContext.SCOPE_SINGLETON)) {
             saveBean(beanName, beanDefinition);
         }
     }
 
     private Object saveBean(String beanName, BeanDefinition beanDefinition) {
+        log.trace("Call saveBean({}, {})", beanName, beanDefinition);
         Object bean = createBean(beanDefinition);
         beanMap.put(beanName, bean);
+        log.trace("Bean has been saved: {}", bean);
         return bean;
     }
 
@@ -232,7 +252,7 @@ public class BeanFactory {
                     .toList();
             if (primaryBeanDefinitions.size() > 1) {
                 throw new NoUniqueBeanDefinitionException(String.format(
-                        ErrorMessages.NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName())
+                        ErrorMessageConstants.NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName())
                 );
             }
             Object createdPrototypeBean = primaryBeanDefinitions

@@ -21,8 +21,8 @@ import svydovets.exception.NoUniqueBeanException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
-import static svydovets.util.ErrorMessages.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
-import static svydovets.util.ErrorMessages.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
+import static svydovets.util.ErrorMessageConstants.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
+import static svydovets.util.ErrorMessageConstants.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
 
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

@@ -1,5 +1,7 @@
 package svydovets.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svydovets.core.annotation.Autowired;
 import svydovets.exception.NoDefaultConstructor;
 
@@ -12,15 +14,19 @@ import java.util.stream.Collectors;
 
 public class ReflectionsUtil {
 
-    public static final String NO_DEFAULT_CONSTRUCTOR_FOUND_OF_TYPE = "No default constructor found of type %s";
+    private static final Logger log = LoggerFactory.getLogger(ReflectionsUtil.class);
 
     public static List<String> findAutowiredFieldNames(Class<?> beanClass) {
+        log.trace("Call findAutowiredFieldNames({})", beanClass);
         var fields = beanClass.getDeclaredFields();
 
-        return Arrays.stream(fields)
+        List<String> autowireFieldNames = Arrays.stream(fields)
                 .filter(field -> field.isAnnotationPresent(Autowired.class))
                 .map(Field::getName)
-                .collect(Collectors.toList());
+                .toList();
+        log.trace("Founded autowire field names: {}", autowireFieldNames);
+
+        return autowireFieldNames;
     }
 
     public static <T> Constructor<T> getPreparedNoArgsConstructor(Class<T> beanType) {

@@ -3,12 +3,16 @@ package svydovets;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.startup.Tomcat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svydovets.core.context.ApplicationContext;
+import svydovets.core.context.beanFactory.BeanFactory;
 import svydovets.web.DispatcherServlet;
 
 import java.io.File;
 
 public class BringApplication {
+    private static final Logger log = LoggerFactory.getLogger(BringApplication.class);
 
     public static ApplicationContext run(Class<?> baseClass) {
         try {
@@ -32,7 +36,7 @@ public class BringApplication {
         Context context = tomcat.addContext(contextPath, docBase);
 
         String servletName = "DispatcherServlet";
-        String urlPattern = "/test";
+        String urlPattern = "/";
 
         DispatcherServlet dispatcherServlet = new DispatcherServlet(baseClass.getPackageName());
         tomcat.addServlet(contextPath, servletName, dispatcherServlet);

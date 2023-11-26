@@ -1,7 +1,7 @@
 package svydovets.web.path;
 
 import svydovets.exception.NoSuchPathVariableException;
-import svydovets.util.ErrorMessages;
+import svydovets.util.ErrorMessageConstants;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +30,7 @@ public class RequestPathParserImpl implements RequestPathParser {
         String[] patternLines = patternPath.split(SPLITERATOR);
 
         if (requestLines.length != patternLines.length) {
-            String parsingErrMsg = String.format(ErrorMessages.NO_SUCH_PATH_VARIABLES_FOR_THIS_REQUEST_PATH, requestPath, patternPath);
+            String parsingErrMsg = String.format(ErrorMessageConstants.NO_SUCH_PATH_VARIABLES_FOR_THIS_REQUEST_PATH, requestPath, patternPath);
             throw new NoSuchPathVariableException(parsingErrMsg);
         }
 
@@ -42,7 +42,7 @@ public class RequestPathParserImpl implements RequestPathParser {
         }
 
         if (pathVariables.isEmpty()) {
-            String parsingErrMsg = String.format(ErrorMessages.NO_SUCH_PATH_VARIABLES_FOR_THIS_REQUEST_PATH, requestPath, patternPath);
+            String parsingErrMsg = String.format(ErrorMessageConstants.NO_SUCH_PATH_VARIABLES_FOR_THIS_REQUEST_PATH, requestPath, patternPath);
             throw new NoSuchPathVariableException(parsingErrMsg);
         }
 

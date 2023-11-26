@@ -53,10 +53,9 @@ public class DispatcherServlet extends HttpServlet {
         processRequest(req, resp, HttpMethod.DELETE);
     }
 
-    // todo: Remove "throws Exception"
     private void processRequest(HttpServletRequest req, HttpServletResponse resp, HttpMethod httpMethod) {
         try {
-            String requestPath = req.getPathInfo();
+            String requestPath = req.getServletPath();
 
             RequestInfoHolder requestInfoHolder = webApplicationContext.getRequestInfoHolder(httpMethod, requestPath);
 
