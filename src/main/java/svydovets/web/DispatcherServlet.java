@@ -1,5 +1,6 @@
 package svydovets.web;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -54,7 +55,7 @@ public class DispatcherServlet extends HttpServlet {
             //set info from ResponseEntity to response
             resp.setStatus(status);
             headers.forEach(resp::setHeader);
-            String jsonBody = objectMapper.writeValueAsString(body);
+            String jsonBody = ServletWebRequest.objectMapper.writeValueAsString(body);
 
             //v1
             resp.getWriter().write(jsonBody);
@@ -113,8 +114,12 @@ public class DispatcherServlet extends HttpServlet {
 
     private void processRequestResult(HttpServletResponse response, Object result) throws Exception {
         if (result != null) {
-            String json = ServletWebRequest.objectMapper.writeValueAsString(result);
-            response.getWriter().write(json);
+            if (result instanceof ResponseEntity<?> responseEntity){
+                processResponseEntity(response, result);
+            } else {
+                String json = ServletWebRequest.objectMapper.writeValueAsString(result);
+                response.getWriter().write(json);
+            }
         }
     }
 
