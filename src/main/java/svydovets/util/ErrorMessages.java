@@ -13,4 +13,7 @@ public abstract class ErrorMessages {
     public static final String UNSUPPORTED_TYPE_ERROR_MESSAGE = "Unsupported parameter type: %s";
     public static final String UNSUPPORTED_ANNOTATION_ERROR_MESSAGE = "Unsupported annotation: %s";
     public static final String UNSUPPORTED_NUMBER_TYPE_ERROR_MESSAGE = "Unsupported number type: %s";
+
+    public static final String JSON_PROCESSING_ERROR = "Error processing JSON request body for %s";
+    public static final String REQUEST_PROCESSING_ERROR = "Error processing request: %s %s";
 }

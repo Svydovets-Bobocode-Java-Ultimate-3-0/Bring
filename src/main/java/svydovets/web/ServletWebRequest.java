@@ -3,9 +3,12 @@ package svydovets.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import svydovets.exception.RequestProcessingException;
+import svydovets.util.ErrorMessages;
 import svydovets.web.path.RequestPathParser;
 import svydovets.web.path.RequestPathParserImpl;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -35,17 +38,13 @@ public class ServletWebRequest {
 
     public String getPathVariableValue(String parameterName) {
         if (pathVariableValuesMap == null) {
-            pathVariableValuesMap = requestPathParser.parse(request.getPathInfo(), (String) request.getAttribute(CONTROLLER_REDIRECT_REQUEST_PATH));
+            pathVariableValuesMap = requestPathParser.parse(request.getServletPath(), (String) request.getAttribute(CONTROLLER_REDIRECT_REQUEST_PATH));
         }
         return pathVariableValuesMap.get(parameterName);
     }
 
     public String getRequestParameterValue(String parameterName) {
-        String[] requestParameters = request.getParameterMap().get(parameterName);
-
-        return requestParameters == null
-                ? null
-                : requestParameters[0];
+        return request.getParameter(parameterName);
     }
 
     public Object getRequestBody(Class<?> parameterType) {
@@ -69,9 +68,9 @@ public class ServletWebRequest {
                     .lines()
                     .collect(Collectors.joining());
             return objectMapper.readValue(jsonRequestBody, parameterType);
-        } catch (Exception e) {
+        } catch (IOException e) {
             // todo: LOG ERROR
-            throw new RuntimeException("Error processing JSON request body", e);
+            throw new RequestProcessingException(String.format(ErrorMessages.JSON_PROCESSING_ERROR, parameterType), e);
         }
     }
 }
