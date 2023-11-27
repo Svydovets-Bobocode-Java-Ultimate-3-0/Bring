@@ -13,14 +13,13 @@ import svydovets.core.context.beanDefinition.BeanDefinitionFactory;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
 import svydovets.core.context.beanFactory.command.CommandFactory;
 import svydovets.core.context.beanFactory.command.CommandFunctionName;
-import svydovets.exception.AutowireBeanException;
 import svydovets.exception.BeanCreationException;
 import svydovets.exception.InvalidInvokePostConstructMethodException;
 import svydovets.exception.NoSuchBeanDefinitionException;
-import svydovets.exception.NoSuchBeanException;
 import svydovets.exception.NoUniqueBeanDefinitionException;
 import svydovets.exception.NoUniqueBeanException;
 import svydovets.exception.NoUniquePostConstructException;
+import svydovets.util.BeanNameResolver;
 import svydovets.util.ErrorMessageConstants;
 import svydovets.util.PackageScanner;
 
@@ -38,9 +37,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static svydovets.util.BeanNameResolver.resolveBeanName;
+import static svydovets.util.ErrorMessageConstants.ERROR_CREATED_BEAN_OF_TYPE;
+import static svydovets.util.ErrorMessageConstants.ERROR_NOT_UNIQUE_METHOD_THAT_ANNOTATED_POST_CONSTRUCT;
+import static svydovets.util.ErrorMessageConstants.ERROR_THE_METHOD_THAT_WAS_ANNOTATED_WITH_POST_CONSTRUCT;
 import static svydovets.util.ErrorMessageConstants.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
 import static svydovets.util.ErrorMessageConstants.NO_BEAN_FOUND_OF_TYPE;
 import static svydovets.util.ErrorMessageConstants.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
@@ -53,17 +54,21 @@ public class BeanFactory {
             ApplicationContext.SCOPE_SINGLETON,
             ApplicationContext.SCOPE_PROTOTYPE
     ));
+
     private static final Logger log = LoggerFactory.getLogger(BeanFactory.class);
 
     private final Map<String, Object> beanMap = new LinkedHashMap<>();
+
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
+
     private final PackageScanner packageScanner = new PackageScanner();
+
     private final BeanDefinitionFactory beanDefinitionFactory = new BeanDefinitionFactory();
 
     private final CommandFactory commandFactory = new CommandFactory();
 
     public BeanFactory() {
-        commandFactory.registryCommand(CommandFunctionName.FC_GET_BEAN, this::getBean);
+        commandFactory.registryCommand(CommandFunctionName.FC_GET_BEAN, this::createBeanIfNotPresent);
         commandFactory.registryCommand(CommandFunctionName.FC_GET_BEANS_OF_TYPE, this::getBeansOfType);
         beanPostProcessors.add(new AutowiredAnnotationBeanPostProcessor(commandFactory));
     }
@@ -112,21 +117,21 @@ public class BeanFactory {
     private Object initWithBeanPostProcessor(String beanName, Object bean) {
         bean = postProcessBeforeInitialization(bean, beanName);
         postConstructInitialization(bean);
+
         return postProcessAfterInitialization(bean, beanName);
     }
 
-    private void postConstructInitialization(Object bean) {
+    private void postConstructInitialization(Object bean) throws NoUniquePostConstructException {
         Class<?> beanType = bean.getClass();
         Method[] declaredMethods = beanType.getDeclaredMethods();
         Predicate<Method> isAnnotatedMethod = method -> method.isAnnotationPresent(PostConstruct.class);
 
         // todo: Refactor a little bit. Collect methods to list to avoid second filtering
-        boolean isNotUniqueMethod = Arrays.stream(declaredMethods)
-                .filter(isAnnotatedMethod)
-                .count() > 1;
-
+        boolean isNotUniqueMethod = Arrays.stream(declaredMethods).filter(isAnnotatedMethod).count() > 1;
         if (isNotUniqueMethod) {
-            throw new NoUniquePostConstructException("You cannot have more than one method that is annotated with @PostConstruct.");
+            log.error(ERROR_NOT_UNIQUE_METHOD_THAT_ANNOTATED_POST_CONSTRUCT);
+
+            throw new NoUniquePostConstructException(ERROR_NOT_UNIQUE_METHOD_THAT_ANNOTATED_POST_CONSTRUCT);
         }
 
         // todo: Refactor a little bit
@@ -139,34 +144,40 @@ public class BeanFactory {
     private void invokePostConstructMethod(Object bean, Method method) {
         try {
             prepareMethod(method).invoke(bean);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new InvalidInvokePostConstructMethodException("Something went wrong. Please check the method that was annotated with @PostConstruct", e);
+        } catch (IllegalAccessException | InvocationTargetException exception) {
+            log.error(ERROR_THE_METHOD_THAT_WAS_ANNOTATED_WITH_POST_CONSTRUCT);
+
+            throw new InvalidInvokePostConstructMethodException(
+                    ERROR_THE_METHOD_THAT_WAS_ANNOTATED_WITH_POST_CONSTRUCT, exception);
         }
     }
 
-
     private Object createBean(BeanDefinition beanDefinition) {
         log.trace("Call createBean({})", beanDefinition);
+
         try {
             if (beanDefinition instanceof ComponentAnnotationBeanDefinition componentBeanDefinition) {
                 return createComponent(componentBeanDefinition);
             } else {
                 return createInnerBeanOfConfigClass((BeanAnnotationBeanDefinition) beanDefinition);
             }
-        } catch (Exception e) {
-            throw new BeanCreationException(
-                    String.format("Error creating bean of type '%s'", beanDefinition.getBeanClass().getName()), e
-            );
+        } catch (Exception exception) {
+            String message = String.format(ERROR_CREATED_BEAN_OF_TYPE, beanDefinition.getBeanClass().getName());
+            log.error(message);
+
+            throw new BeanCreationException(message, exception);
         }
     }
 
-    private Object createInnerBeanOfConfigClass(BeanAnnotationBeanDefinition beanDefinition) throws InvocationTargetException, IllegalAccessException {
+    private Object createInnerBeanOfConfigClass(BeanAnnotationBeanDefinition beanDefinition)
+            throws InvocationTargetException, IllegalAccessException {
         var configClassName = beanDefinition.getConfigClassName();
         var configClassBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName(configClassName);
         var configClass = beanMap.get(configClassBeanDefinition.getBeanName());
         if (configClass == null) {
             configClass = saveBean(configClassName, configClassBeanDefinition);
         }
+
         var initMethod = beanDefinition.getInitMethodOfBeanFromConfigClass();
         Object[] args = retrieveBeanInitMethodArguments(initMethod);
 
@@ -178,31 +189,39 @@ public class BeanFactory {
         Object[] args = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
-            BeanDefinition parameterBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName(resolveBeanName(parameter.getType()));
+            BeanDefinition parameterBeanDefinition = beanDefinitionFactory
+                    .getBeanDefinitionByBeanName(resolveBeanName(parameter.getType()));
             Object parameterDependency = beanMap.get(parameterBeanDefinition.getBeanName());
             if (parameterDependency == null) {
                 createBean(parameterBeanDefinition);
             }
+
             args[i] = parameterDependency;
         }
+
         return args;
     }
 
-    private Object createComponent(ComponentAnnotationBeanDefinition beanDefinition) throws InvocationTargetException, InstantiationException, IllegalAccessException {
+    private Object createComponent(ComponentAnnotationBeanDefinition beanDefinition)
+            throws InvocationTargetException, InstantiationException, IllegalAccessException {
         log.trace("Call createComponent({})", beanDefinition);
+
         Constructor<?> initializationConstructor = prepareConstructor(beanDefinition.getInitializationConstructor());
         Object[] autowireCandidates = retrieveAutowireCandidates(initializationConstructor);
+
         return initializationConstructor.newInstance(autowireCandidates);
     }
 
     private Object[] retrieveAutowireCandidates(Constructor<?> initializationConstructor) {
-        log.trace("");
+        log.trace("Call retrieveAutowireCandidates({})", initializationConstructor);
+
         Class<?>[] autowireCandidateTypes = initializationConstructor.getParameterTypes();
         Object[] autowireCandidates = new Object[autowireCandidateTypes.length];
         for (int i = 0; i < autowireCandidateTypes.length; i++) {
             Class<?> autowireCandidateType = autowireCandidateTypes[i];
             autowireCandidates[i] = createBeanIfNotPresent(autowireCandidateType);
         }
+
         return autowireCandidates;
     }
 
@@ -215,9 +234,11 @@ public class BeanFactory {
 
     private Object saveBean(String beanName, BeanDefinition beanDefinition) {
         log.trace("Call saveBean({}, {})", beanName, beanDefinition);
+
         Object bean = createBean(beanDefinition);
         beanMap.put(beanName, bean);
         log.trace("Bean has been saved: {}", bean);
+
         return bean;
     }
 
@@ -225,65 +246,96 @@ public class BeanFactory {
         beanMap.put(beanName, initWithBeanPostProcessor(beanName, bean));
     }
 
-
     /**
      * Public API
      */
     public <T> T getBean(Class<T> requiredType) {
-        Map<String, T> beansOfType = getBeansOfType(requiredType);
-        if (beansOfType.isEmpty()) {
-            var beanDefinitions = beanDefinitionFactory.getBeanDefinitionsOfType(requiredType);
-            if (beanDefinitions.isEmpty()) {
-                throw new NoSuchBeanDefinitionException(String.format(
-                        NO_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName())
-                );
-            }
-            if (beanDefinitions.size() == 1) {
-                BeanDefinition beanDefinition = beanDefinitions.values()
-                        .stream()
-                        .findAny()
-                        .orElseThrow();
-                Object createdPrototypeBean = createBean(beanDefinition);
-                return requiredType.cast(createdPrototypeBean);
-            }
-            List<BeanDefinition> primaryBeanDefinitions = beanDefinitions.values()
-                    .stream()
-                    .filter(BeanDefinition::isPrimary)
-                    .toList();
-            if (primaryBeanDefinitions.size() > 1) {
-                throw new NoUniqueBeanDefinitionException(String.format(
-                        ErrorMessageConstants.NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName())
-                );
-            }
-            Object createdPrototypeBean = primaryBeanDefinitions
-                    .stream()
-                    .map(this::createBean)
-                    .findFirst()
-                    .orElseThrow();
-            return requiredType.cast(createdPrototypeBean);
+        log.trace("Call getBean({})", requiredType);
+
+        if (!isSelectSingleBeansOfType(requiredType)) {
+            return createBeanIfNotPresent(requiredType, true);
         }
-        if (beansOfType.size() > 1) {
-            // "requiredType" is an interface or abstract class for sure
-            return defineSpecificBean(requiredType, beansOfType);
-        }
-        // We 100% have a bean of the required type
-        return beansOfType.values()
-                .stream()
-                .findAny()
-                .orElseThrow();
+
+        String beanName = BeanNameResolver.resolveBeanName(requiredType);
+
+        return getBean(beanName, requiredType);
     }
 
     /**
      * Public API
      */
     public <T> T getBean(String name, Class<T> requiredType) {
+        log.trace("Call getBean({}, {})", name, requiredType);
         Optional<Object> bean = Optional.ofNullable(beanMap.get(name));
         if (bean.isEmpty()) {
             Object createdPrototypeBean = checkAndCreatePrototypeBean(name, requiredType)
-                    .orElseThrow(() -> new NoSuchBeanDefinitionException(String.format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName())));
+                    .orElseThrow(() -> new NoSuchBeanDefinitionException(String
+                            .format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName())));
             return requiredType.cast(createdPrototypeBean);
         }
+
         return requiredType.cast(bean.orElseThrow());
+    }
+
+    private <T> T createBeanIfNotPresent(Class<T> requiredType) {
+        return createBeanIfNotPresent(requiredType, false);
+    }
+
+    private <T> T createBeanIfNotPresent(Class<T> requiredType, boolean onlyPrototype) {
+        log.trace("Call createBeanIfNotPresent({}, {})", requiredType, onlyPrototype);
+
+        Map<String, T> beansOfType = getBeansOfType(requiredType);
+        if (beansOfType.isEmpty()) {
+            BeanDefinition beanDefinitionsOfType = getBeanDefinitionsOfType(requiredType, onlyPrototype);
+            Object bean = createBean(beanDefinitionsOfType);
+
+            return requiredType.cast(bean);
+        }
+
+        if (beansOfType.size() > 1) {
+            return defineSpecificBean(requiredType, beansOfType);
+        }
+
+        return beansOfType.values().stream().findAny().orElseThrow();
+    }
+
+    private BeanDefinition getBeanDefinitionsOfType(Class<?> requiredType, boolean onlyPrototype) {
+        log.trace("Call getBeanDefinitionsOfType({})", requiredType);
+
+        Map<String, BeanDefinition> beanDefinitions = onlyPrototype
+                ? beanDefinitionFactory.getPrototypeBeanDefinitionsOfType(requiredType)
+                : beanDefinitionFactory.getBeanDefinitionsOfType(requiredType);
+        if (beanDefinitions.isEmpty()) {
+            String message = String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName());
+            log.error(message);
+
+            throw new NoSuchBeanDefinitionException(message);
+        }
+
+        if (beanDefinitions.size() == 1) {
+            return beanDefinitions.values().stream().toList().get(0);
+        }
+
+        List<BeanDefinition> primaryBeanDefinitions = beanDefinitions.values()
+                .stream()
+                .filter(BeanDefinition::isPrimary)
+                .toList();
+        if (primaryBeanDefinitions.isEmpty()) {
+            String message = String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName());
+            log.error(message);
+
+            throw new NoSuchBeanDefinitionException(message);
+        }
+
+        if (primaryBeanDefinitions.size() > 1) {
+            String message = String
+                    .format(ErrorMessageConstants.NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName());
+            log.error(message);
+
+            throw new NoUniqueBeanDefinitionException(message);
+        }
+
+        return primaryBeanDefinitions.get(0);
     }
 
     /**
@@ -294,6 +346,15 @@ public class BeanFactory {
                 .stream()
                 .filter(entry -> requiredType.isAssignableFrom(entry.getValue().getClass()))
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> requiredType.cast(entry.getValue())));
+    }
+
+    private boolean isSelectSingleBeansOfType(Class<?> requiredType) {
+        log.trace("Call isSelectSingleBeansOfType({})", requiredType);
+
+        return beanMap.entrySet()
+                .stream()
+                .filter(entry -> requiredType.isAssignableFrom(entry.getValue().getClass()))
+                .count() == 1;
     }
 
     private <T> T defineSpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
@@ -346,32 +407,4 @@ public class BeanFactory {
         return Optional.empty();
     }
 
-    private Stream<Object> getBeanForSetterMethod(Class<?>[] parameterTypes) {
-        return Arrays.stream(parameterTypes)
-                .map(this::getBean);
-    }
-
-    private static void invokeSetterMethod(List<Method> methods, Object targetBean, Object[] injectBeans) {
-        try {
-            for (Method method : methods) {
-                method.setAccessible(true);
-                method.invoke(targetBean, injectBeans);
-            }
-
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new AutowireBeanException("There is no access to method");
-        }
-    }
-
-    private Object createBeanIfNotPresent(Class<?> beanType) {
-        try {
-            return getBean(beanType);
-        } catch (NoSuchBeanException e) {
-            return Optional.ofNullable(beanDefinitionFactory.getBeanDefinitionByBeanName(resolveBeanName(beanType)))
-                    .map(this::createBean)
-                    .orElseThrow(() -> new NoSuchBeanDefinitionException(
-                            String.format("No bean definition found for type '%s'", beanType.getName()))
-                    );
-        }
-    }
 }

@@ -17,7 +17,9 @@ public abstract class ErrorMessageConstants {
     public static final String NO_UNIQUE_PATTERN_FOUND_EXCEPTION = "Check your patch on valid: [%s]";
 
     public static final String NO_SUCH_PATH_VARIABLES_FOR_THIS_REQUEST_PATH = "Request path [%s] parsing error from pattern path [%s]";
+
     public static final String UNSUPPORTED_SCOPE_TYPE = "Unsupported scope type: %s";
+
     public static final String UNSUPPORTED_TYPE_ERROR_MESSAGE = "Unsupported parameter type: %s";
 
     public static final String UNSUPPORTED_ANNOTATION_ERROR_MESSAGE = "Unsupported annotation: %s";
@@ -39,4 +41,11 @@ public abstract class ErrorMessageConstants {
     public static final String ERROR_NO_ACCESS_TO_METHOD = "There is no access to method";
 
     public static final String REQUEST_PROCESSING_ERROR = "Error processing request: %s %s";
+
+    public static final String ERROR_CREATED_BEAN_OF_TYPE = "Error creating bean of type '%s'";
+
+    public static final String ERROR_THE_METHOD_THAT_WAS_ANNOTATED_WITH_POST_CONSTRUCT = "Something went wrong. Please check the method that was annotated with @PostConstruct";
+
+    public static final String ERROR_NOT_UNIQUE_METHOD_THAT_ANNOTATED_POST_CONSTRUCT = "You cannot have more than one method that is annotated with @PostConstruct.";
+
 }
