@@ -1,18 +1,16 @@
 package svydovets.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import svydovets.exception.RequestProcessingException;
+import svydovets.util.ErrorMessageConstants;
 import svydovets.web.dto.RequestInfoHolder;
 import svydovets.web.dto.ResponseEntity;
 import svydovets.web.path.PathFinder;
 import svydovets.web.path.PathFinderImpl;
-import svydovets.web.path.RequestInfo;
-import svydovets.web.path.RequestInfoCreator;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -21,53 +19,29 @@ import java.util.Set;
 
 public class DispatcherServlet extends HttpServlet {
 
+    public static final String CONTROLLER_REDIRECT_REQUEST_PATH = "controllerRedirectRequestPath";
+    public static final String WEB_APPLICATION_CONTEXT = "webApplicationContext";
+    private static final PathFinder pathFinder = new PathFinderImpl();
+    private static final MethodArgumentResolver methodArgumentResolver = new MethodArgumentResolver();
     private final WebApplicationContext webApplicationContext;
-    private final PathFinder pathFinder;
-    private final WebInvocationHandler webInvocationHandler;
 
     ObjectMapper objectMapper = new ObjectMapper();
 
     public DispatcherServlet(String basePackage) {
         this.webApplicationContext = new AnnotationConfigWebApplicationContext(basePackage);
-        this.pathFinder = new PathFinderImpl();
-        this.webInvocationHandler = new WebInvocationHandler();
     }
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        config.getServletContext().setAttribute("WebApplicationContext", webApplicationContext);
+        config.getServletContext().setAttribute(WEB_APPLICATION_CONTEXT, webApplicationContext);
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        try {
-            Object result = processRequest(req, MethodNameEnum.GET);
-            processResponseEntity(resp, result);
-        } catch (Exception e) {
-
-        }
-        // todo: Process "result"
+        processRequest(req, resp, HttpMethod.GET);
     }
 
-    // todo: Remove "throws Exception"
-    private Object processRequest(HttpServletRequest req, MethodNameEnum httpMethodName) throws Exception {
-        String requestPath = req.getPathInfo();
-
-        RequestInfoHolder requestInfoHolder = webApplicationContext.getRequestInfoHolder(httpMethodName, requestPath);
-        Class<?> controllerType = requestInfoHolder.getClassType();
-        Object controller = webApplicationContext.getBean(requestInfoHolder.getClassName(), controllerType);
-        // todo: Move logic of getting method by name to additional method
-        Method methodToInvoke = controllerType.getDeclaredMethod(requestInfoHolder.getMethodName(), requestInfoHolder.getParameterTypes());
-
-        String controllerMethodPath = getControllerMethodPath(requestPath, httpMethodName);
-        req.setAttribute(RequestDispatcher.INCLUDE_REQUEST_URI, controllerMethodPath);
-
-
-        RequestInfo requestInfo = RequestInfoCreator.create(req);
-        Object[] requestArguments = webInvocationHandler.invoke(methodToInvoke, requestInfo);
-        return methodToInvoke.invoke(controller, requestArguments);
-    }
 
     private void processResponseEntity(HttpServletResponse resp, Object responseObject) throws IOException {
 
@@ -93,33 +67,58 @@ public class DispatcherServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        try {
-            Object result = processRequest(req, MethodNameEnum.POST);
-            processResponseEntity(resp, result);
-        } catch (Exception e) {
-
-        }
+        processRequest(req, resp, HttpMethod.POST);
     }
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        try {
-            Object result = processRequest(req, MethodNameEnum.PUT);
-            processResponseEntity(resp, result);
-        } catch (Exception e) {
-        }
+        processRequest(req, resp, HttpMethod.PUT);
     }
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        processRequest(req, resp, HttpMethod.DELETE);
+    }
+
+    private void processRequest(HttpServletRequest req, HttpServletResponse resp, HttpMethod httpMethod) {
         try {
-            Object result = processRequest(req, MethodNameEnum.DELETE);
-            processResponseEntity(resp, result);
+            String requestPath = req.getServletPath();
+
+            RequestInfoHolder requestInfoHolder = webApplicationContext.getRequestInfoHolder(httpMethod, requestPath);
+
+            saveControllerRedirectRequestPathAsAttribute(req, httpMethod, requestPath);
+
+            Class<?> controllerType = requestInfoHolder.getClassType();
+            Object controller = webApplicationContext.getBean(requestInfoHolder.getClassName(), controllerType);
+
+            Method methodToInvoke = controllerType.getDeclaredMethod(requestInfoHolder.getMethodName(), requestInfoHolder.getParameterTypes());
+
+            ServletWebRequest servletWebRequest = new ServletWebRequest(req, resp);
+            Object[] resolvedRequestArguments = methodArgumentResolver.resolveArguments(methodToInvoke, servletWebRequest);
+            Object result = methodToInvoke.invoke(controller, resolvedRequestArguments);
+
+            processRequestResult(resp, result);
         } catch (Exception e) {
+            throw new RequestProcessingException(
+                    String.format(ErrorMessageConstants.REQUEST_PROCESSING_ERROR, httpMethod.name(), req.getServletPath()),
+                    e
+            );
         }
     }
 
-    private String getControllerMethodPath(String requestPath, MethodNameEnum httpMethodName) {
+    private void saveControllerRedirectRequestPathAsAttribute(HttpServletRequest req, HttpMethod httpMethod, String requestPath) {
+        String controllerMethodPath = getControllerMethodPath(requestPath, httpMethod);
+        req.setAttribute(CONTROLLER_REDIRECT_REQUEST_PATH, controllerMethodPath);
+    }
+
+    private void processRequestResult(HttpServletResponse response, Object result) throws Exception {
+        if (result != null) {
+            String json = ServletWebRequest.objectMapper.writeValueAsString(result);
+            response.getWriter().write(json);
+        }
+    }
+
+    private String getControllerMethodPath(String requestPath, HttpMethod httpMethodName) {
         Set<String> patternPath = webApplicationContext.getMethodPatterns(httpMethodName);
         return pathFinder.find(requestPath, patternPath);
     }

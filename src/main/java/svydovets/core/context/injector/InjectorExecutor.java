@@ -1,9 +1,14 @@
 package svydovets.core.context.injector;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svydovets.exception.NoSuchBeanDefinitionException;
 import svydovets.exception.NoSuchBeanException;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * The {@code InjectorExecutor} class is responsible for executing dependency injection
@@ -30,7 +35,10 @@ import java.util.*;
  */
 public class InjectorExecutor {
 
+  private static final Logger log = LoggerFactory.getLogger(InjectorExecutor.class);
+
   private static final Injector beanInjector;
+
   private static final Map<Class<?>, Injector> injectors = new HashMap<>();
 
   static {
@@ -50,18 +58,19 @@ public class InjectorExecutor {
    * @throws NoSuchBeanDefinitionException if no bean definition is available for the given field type.
    */
   public static void execute(InjectorConfig injectorConfig) {
+    log.trace("Call execute({})", injectorConfig);
 
     var autowireCandidateType = injectorConfig.getBeanField().getType();
 
     try {
       beanInjector.inject(injectorConfig);
-    } catch (NoSuchBeanException | NoSuchBeanDefinitionException e) {
+    } catch (NoSuchBeanException | NoSuchBeanDefinitionException exception) {
       Set<Class<?>> keys = injectors.keySet();
 
       Class<?> foundKey = keys.stream()
               .filter(key -> key.isAssignableFrom(autowireCandidateType))
               .findFirst()
-              .orElseThrow(() -> e);
+              .orElseThrow(() -> exception);
 
       injectors.get(foundKey).inject(injectorConfig);
     }

@@ -7,8 +7,8 @@ import java.util.Set;
 
 public interface WebApplicationContext extends ApplicationContext {
 
-    Set<String> getMethodPatterns(MethodNameEnum methodNameEnum);
+    Set<String> getMethodPatterns(HttpMethod httpMethod);
 
-    RequestInfoHolder getRequestInfoHolder(MethodNameEnum methodNameEnum, String path);
+    RequestInfoHolder getRequestInfoHolder(HttpMethod httpMethod, String path);
 
 }

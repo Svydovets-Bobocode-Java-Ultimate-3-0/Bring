@@ -1,5 +1,8 @@
 package svydovets.core.context.injector;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.Field;
 
 /**
@@ -29,6 +32,8 @@ import java.lang.reflect.Field;
  */
 public class MapOfBeansInjector extends AbstractInjector {
 
+  private static final Logger log = LoggerFactory.getLogger(MapOfBeansInjector.class);
+
   /**
    * Injects dependencies into a map field of a target bean based on the provided configuration.
    * If the map field is already created by the user, the dependencies are added to the existing map.
@@ -39,20 +44,13 @@ public class MapOfBeansInjector extends AbstractInjector {
    */
   @Override
   public void inject(InjectorConfig config) {
+    log.trace("Call inject({})", config);
+
     Object bean = config.getBean();
     Field field = config.getBeanField();
 
     Class<?> autowireCandidateType = retrieveAutowireCandidateType(field);
-    var mapOfBeansForInjection = retrieveFieldValue(bean, field);
     var mapOfBeansToInject = config.getBeanOfTypeReceiver().apply(autowireCandidateType);
-
-    if (mapOfBeansForInjection == null) {
-      // Initialize map logic
-      setDependency(bean, field, mapOfBeansToInject);
-    } else {
-      // todo: Implement BR-6
-      // todo: CREATE NEW MAP IMPLEMENTATION AND SET TO FIELD!
-      setDependency(bean, field, mapOfBeansToInject);
-    }
+    setDependency(bean, field, mapOfBeansToInject);
   }
 }
