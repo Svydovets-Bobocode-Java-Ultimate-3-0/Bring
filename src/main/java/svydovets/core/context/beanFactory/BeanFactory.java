@@ -297,37 +297,47 @@ public class BeanFactory {
     }
 
     private <T> T defineSpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
-        // todo: ************Must be moved to additional method************
+        var defineQualifierSpecificBean = defineQualifierSpecificBean(requiredType, beansOfType);
+
+        return defineQualifierSpecificBean.orElseGet(() -> definePrimarySpecificBean(requiredType, beansOfType));
+    }
+
+    private <T> T definePrimarySpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
+        log.trace("Call definePrimarySpecificBean({}, {})", requiredType, beansOfType);
+        List<T> beansOfRequiredType = beansOfType.values().stream()
+                .filter(bean -> beanDefinitionFactory.isBeanPrimary(bean.getClass()))
+                .toList();
+
+        if (beansOfRequiredType.isEmpty()) {
+            // We have no beans of required type with @Primary
+            throw new NoUniqueBeanException(String.format(NO_UNIQUE_BEAN_FOUND_OF_TYPE, requiredType.getName()));
+        }
+
+        if (beansOfRequiredType.size() > 1) {
+            // We have more than 1 @Primary beans of required type
+            throw new NoUniqueBeanException(String.format(NO_UNIQUE_BEAN_FOUND_OF_TYPE, requiredType.getName()));
+        }
+
+        return beansOfRequiredType.stream().findAny().orElseThrow();
+    }
+
+    private <T> Optional<T> defineQualifierSpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
+        log.trace("Call defineQualifierSpecificBean({}, {})", requiredType, beansOfType);
+
         if (requiredType.isAnnotationPresent(Qualifier.class)) {
             var qualifier = requiredType.getDeclaredAnnotation(Qualifier.class);
 
             String beanName = qualifier.value();
 
-            if (beansOfType.containsKey(beanName)) {
-                return beansOfType.get(beanName);
-            }
+            return Optional.ofNullable(beansOfType.get(beanName));
         }
-        // todo: ************Must be moved to additional method************
-        List<T> beansOfRequiredType = beansOfType.values()
-                .stream()
-                .filter(bean -> beanDefinitionFactory.isBeanPrimary(bean.getClass()))
-                .toList();
-        if (beansOfRequiredType.isEmpty()) {
-            // We have no beans of required type with @Primary
-            // Exception message: No qualifying bean of type 'com.example.springbootdemo.test.CommonInterface' available: more than one 'primary' bean found among candidates: [commonService, secondCommonService]
-            throw new NoUniqueBeanException(String.format(NO_UNIQUE_BEAN_FOUND_OF_TYPE, requiredType.getName()));
-        }
-        if (beansOfRequiredType.size() > 1) {
-            // We have more than 1 @Primary beans of required type
-            // Exception message: No qualifying bean of type 'com.example.springbootdemo.test.CommonInterface' available: expected single matching bean but found 2: commonService,secondCommonService
-            throw new NoUniqueBeanException(String.format(NO_UNIQUE_BEAN_FOUND_OF_TYPE, requiredType.getName()));
-        }
-        return beansOfRequiredType.stream()
-                .findAny()
-                .orElseThrow();
+
+        return Optional.empty();
     }
 
     public Map<String, Object> getBeans() {
+        log.trace("Call getBeans()");
+
         return beanMap;
     }
 
