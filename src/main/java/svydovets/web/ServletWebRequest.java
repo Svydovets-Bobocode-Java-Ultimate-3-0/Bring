@@ -3,21 +3,28 @@ package svydovets.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import svydovets.exception.RequestProcessingException;
-import svydovets.util.ErrorMessages;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import svydovets.exception.ParseRequestBodyException;
 import svydovets.web.path.RequestPathParser;
 import svydovets.web.path.RequestPathParserImpl;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static svydovets.util.ErrorMessageConstants.ERROR_PROCESSING_JSON_REQUEST_BODY;
 import static svydovets.web.DispatcherServlet.CONTROLLER_REDIRECT_REQUEST_PATH;
 
 public class ServletWebRequest {
+
+    private static final Logger log = LoggerFactory.getLogger(ServletWebRequest.class);
+
     static final ObjectMapper objectMapper = new ObjectMapper();
+
     private static final RequestPathParser requestPathParser = new RequestPathParserImpl();
+
     private final HttpServletRequest request;
+
     private final HttpServletResponse response;
 
     private Map<String, String> pathVariableValuesMap;
@@ -37,9 +44,12 @@ public class ServletWebRequest {
     }
 
     public String getPathVariableValue(String parameterName) {
+        log.trace("Call getPathVariableValue({})", parameterName);
         if (pathVariableValuesMap == null) {
-            pathVariableValuesMap = requestPathParser.parse(request.getServletPath(), (String) request.getAttribute(CONTROLLER_REDIRECT_REQUEST_PATH));
+            pathVariableValuesMap = requestPathParser
+                    .parse(request.getServletPath(), (String) request.getAttribute(CONTROLLER_REDIRECT_REQUEST_PATH));
         }
+
         return pathVariableValuesMap.get(parameterName);
     }
 
@@ -68,9 +78,11 @@ public class ServletWebRequest {
                     .lines()
                     .collect(Collectors.joining());
             return objectMapper.readValue(jsonRequestBody, parameterType);
-        } catch (IOException e) {
-            // todo: LOG ERROR
-            throw new RequestProcessingException(String.format(ErrorMessages.JSON_PROCESSING_ERROR, parameterType), e);
+        } catch (Exception exception) {
+            log.trace(ERROR_PROCESSING_JSON_REQUEST_BODY);
+            log.trace(exception.getMessage());
+
+            throw new ParseRequestBodyException(ERROR_PROCESSING_JSON_REQUEST_BODY, exception);
         }
     }
 }

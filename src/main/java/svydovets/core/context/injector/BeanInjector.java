@@ -1,5 +1,8 @@
 package svydovets.core.context.injector;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Implementation of {@link Injector} that represents injection to beans.
  *
@@ -20,6 +23,8 @@ package svydovets.core.context.injector;
  */
 public class BeanInjector extends AbstractInjector {
 
+    private static final Logger log = LoggerFactory.getLogger(BeanInjector.class);
+
     /**
      * Injects a dependency into a specified field of a target bean based on the provided configuration.
      *
@@ -28,8 +33,9 @@ public class BeanInjector extends AbstractInjector {
      */
     @Override
     public void inject(InjectorConfig config) {
-        var autowireCandidateType = config.getBeanField().getType();
+        log.trace("Call inject({})", config);
 
+        var autowireCandidateType = config.getBeanField().getType();
         Object autowireCandidate = config.getBeanReceiver().apply(autowireCandidateType);
 
         setDependency(config.getBean(), config.getBeanField(), autowireCandidate);

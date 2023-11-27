@@ -1,11 +1,15 @@
 package svydovets.core.bpp;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svydovets.core.annotation.Autowired;
 import svydovets.core.context.beanFactory.command.CommandFactory;
 import svydovets.core.context.beanFactory.command.CommandFunctionName;
+import svydovets.core.context.injector.BeanInjector;
 import svydovets.core.context.injector.InjectorConfig;
 import svydovets.core.context.injector.InjectorExecutor;
 import svydovets.exception.AutowireBeanException;
+import svydovets.util.ErrorMessageConstants;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -15,12 +19,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-// todo: Maybe it is better to add new annotation @BeanPostProcessor
+import static svydovets.util.ErrorMessageConstants.ERROR_NO_ACCESS_TO_METHOD;
+
 public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
+
+    private static final Logger log = LoggerFactory.getLogger(AutowiredAnnotationBeanPostProcessor.class);
 
     private CommandFactory commandFactory;
 
     public AutowiredAnnotationBeanPostProcessor() {
+        //empty constructor
     }
 
     public AutowiredAnnotationBeanPostProcessor(CommandFactory commandFactory) {
@@ -39,11 +47,14 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
     }
 
     private void populateProperties(Object bean) {
+        log.trace("Call populateProperties({})", bean);
+
         doSetterInjection(bean);
         doFieldInjection(bean);
     }
 
     private void doSetterInjection(Object bean) {
+        log.trace("Call doSetterInjection({})", bean);
         Method[] declaredMethods = bean.getClass().getDeclaredMethods();
 
         List<Method> targetMethod = Arrays.stream(declaredMethods)
@@ -59,6 +70,8 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
     }
 
     private void doFieldInjection(Object bean) {
+        log.trace("Call doFieldInjection({})", bean);
+
         Field[] beanFields = bean.getClass().getDeclaredFields();
         for (Field beanField : beanFields) {
             boolean isAutowiredPresent = beanField.isAnnotationPresent(Autowired.class);
@@ -76,14 +89,17 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
     }
 
     private static void invokeSetterMethod(List<Method> methods, Object targetBean, Object[] injectBeans) {
+        log.trace("Call invokeSetterMethod({}, {}, {})", methods, targetBean, injectBeans);
+
         try {
             for (Method method : methods) {
                 method.setAccessible(true);
                 method.invoke(targetBean, injectBeans);
             }
+        } catch (IllegalAccessException | InvocationTargetException exception) {
+            log.error(ERROR_NO_ACCESS_TO_METHOD);
 
-        } catch (IllegalAccessException | InvocationTargetException e){
-            throw new AutowireBeanException("There is no access to method");
+            throw new AutowireBeanException(ERROR_NO_ACCESS_TO_METHOD);
         }
     }
 
