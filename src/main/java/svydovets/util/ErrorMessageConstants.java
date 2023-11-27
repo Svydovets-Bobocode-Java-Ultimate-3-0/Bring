@@ -38,4 +38,5 @@ public abstract class ErrorMessageConstants {
 
     public static final String ERROR_NO_ACCESS_TO_METHOD = "There is no access to method";
 
+    public static final String REQUEST_PROCESSING_ERROR = "Error processing request: %s %s";
 }

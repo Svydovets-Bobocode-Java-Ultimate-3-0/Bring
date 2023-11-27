@@ -9,7 +9,6 @@ import svydovets.exception.ParseRequestBodyException;
 import svydovets.web.path.RequestPathParser;
 import svydovets.web.path.RequestPathParserImpl;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -48,7 +47,7 @@ public class ServletWebRequest {
         log.trace("Call getPathVariableValue({})", parameterName);
         if (pathVariableValuesMap == null) {
             pathVariableValuesMap = requestPathParser
-                    .parse(request.getPathInfo(), (String) request.getAttribute(CONTROLLER_REDIRECT_REQUEST_PATH));
+                    .parse(request.getServletPath(), (String) request.getAttribute(CONTROLLER_REDIRECT_REQUEST_PATH));
         }
 
         return pathVariableValuesMap.get(parameterName);
