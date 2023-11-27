@@ -48,6 +48,10 @@ import static svydovets.util.ErrorMessageConstants.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
 import static svydovets.util.ReflectionsUtil.prepareConstructor;
 import static svydovets.util.ReflectionsUtil.prepareMethod;
 
+
+/**
+ * Public API
+ */
 public class BeanFactory {
 
     public static final Set<String> SUPPORTED_SCOPES = new HashSet<>(Arrays.asList(
@@ -246,9 +250,6 @@ public class BeanFactory {
         beanMap.put(beanName, initWithBeanPostProcessor(beanName, bean));
     }
 
-    /**
-     * Public API
-     */
     public <T> T getBean(Class<T> requiredType) {
         log.trace("Call getBean({})", requiredType);
 
@@ -261,9 +262,6 @@ public class BeanFactory {
         return getBean(beanName, requiredType);
     }
 
-    /**
-     * Public API
-     */
     public <T> T getBean(String name, Class<T> requiredType) {
         log.trace("Call getBean({}, {})", name, requiredType);
         Optional<Object> bean = Optional.ofNullable(beanMap.get(name));
@@ -338,9 +336,6 @@ public class BeanFactory {
         return primaryBeanDefinitions.get(0);
     }
 
-    /**
-     * Public API
-     */
     public <T> Map<String, T> getBeansOfType(Class<T> requiredType) {
         return beanMap.entrySet()
                 .stream()
