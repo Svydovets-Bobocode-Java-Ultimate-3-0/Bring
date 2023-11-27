@@ -8,8 +8,8 @@ import svydovets.core.annotation.ComponentScan;
 import svydovets.core.annotation.Configuration;
 
 @Configuration
-@ComponentScan("com.bobocode.svydovets.source.autowire")
-public class AutowirePackageBeansConfig {
+@ComponentScan("com.bobocode.svydovets.source.autowire.method")
+public class AutowireByMethodPackageBeansConfig {
 
     @Bean
     public MessageService messageService() {
