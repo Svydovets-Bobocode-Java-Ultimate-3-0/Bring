@@ -9,6 +9,7 @@ import svydovets.exception.ParseRequestBodyException;
 import svydovets.web.path.RequestPathParser;
 import svydovets.web.path.RequestPathParserImpl;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -28,7 +29,6 @@ public class ServletWebRequest {
     private final HttpServletResponse response;
 
     private Map<String, String> pathVariableValuesMap;
-
     private Object requestBody;
 
     public ServletWebRequest(HttpServletRequest request, HttpServletResponse response) {
@@ -55,11 +55,7 @@ public class ServletWebRequest {
     }
 
     public String getRequestParameterValue(String parameterName) {
-        String[] requestParameters = request.getParameterMap().get(parameterName);
-
-        return requestParameters == null
-                ? null
-                : requestParameters[0];
+        return request.getParameter(parameterName);
     }
 
     public Object getRequestBody(Class<?> parameterType) {

@@ -51,7 +51,7 @@ public class MethodArgumentResolverTest {
         Object[] expectedArgs = new Object[]{DEFAULT_ID};
         String methodName = "getOneById";
         Method methodToInvoke = UserController.class.getDeclaredMethod(methodName, Long.class);
-        when(request.getPathInfo()).thenReturn("/users/1");
+        when(request.getServletPath()).thenReturn("/users/1");
         when(request.getAttribute(DispatcherServlet.CONTROLLER_REDIRECT_REQUEST_PATH)).thenReturn("/users/{id}");
 
         ServletWebRequest servletWebRequest = new ServletWebRequest(request, response);
@@ -66,7 +66,7 @@ public class MethodArgumentResolverTest {
         Object[] expectedArgs = new Object[]{DEFAULT_FIRST_NAME};
         String methodName = "getOneByFirstName";
         Method methodToInvoke = UserController.class.getDeclaredMethod(methodName, String.class);
-        when(request.getParameterMap()).thenReturn(Map.of("firstName", new String[]{DEFAULT_FIRST_NAME}));
+        when(request.getParameter("firstName")).thenReturn(DEFAULT_FIRST_NAME);
 
         ServletWebRequest servletWebRequest = new ServletWebRequest(request, response);
         Object[] actualArgs = methodArgumentResolver.resolveArguments(methodToInvoke, servletWebRequest);
@@ -104,9 +104,9 @@ public class MethodArgumentResolverTest {
         String methodName = "update";
         Method methodToInvoke = UserController.class.getDeclaredMethod(methodName, Long.class, String.class, User.class);
 
-        when(request.getPathInfo()).thenReturn(String.format("/users/%d?status=%s", id, status));
+        when(request.getServletPath()).thenReturn(String.format("/users/%d?status=%s", id, status));
         when(request.getAttribute(DispatcherServlet.CONTROLLER_REDIRECT_REQUEST_PATH)).thenReturn("/users/{id}");
-        when(request.getParameterMap()).thenReturn(Map.of("status", new String[]{status}));
+        when(request.getParameter("status")).thenReturn(status);
         when(request.getReader()).thenReturn(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(userJson.getBytes()))));
 
 
