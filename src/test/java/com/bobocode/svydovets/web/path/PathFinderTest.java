@@ -1,4 +1,4 @@
-package com.bobocode.svydovets.ioc.web.path;
+package com.bobocode.svydovets.web.path;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;

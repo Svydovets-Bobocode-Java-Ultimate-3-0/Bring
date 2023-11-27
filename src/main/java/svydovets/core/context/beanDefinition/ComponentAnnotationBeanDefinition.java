@@ -4,8 +4,11 @@ import java.lang.reflect.Constructor;
 import java.util.List;
 
 public class ComponentAnnotationBeanDefinition extends AbstractBeanDefinition {
+
     private Constructor<?> initializationConstructor;
+
     private List<Class<?>> constructorCandidates;
+
     private List<String> autowiredFieldNames;
 
     public Constructor<?> getInitializationConstructor() {

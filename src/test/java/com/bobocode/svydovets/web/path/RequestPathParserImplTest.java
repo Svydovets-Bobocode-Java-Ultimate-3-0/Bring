@@ -1,4 +1,4 @@
-package com.bobocode.svydovets.ioc.web.path;
+package com.bobocode.svydovets.web.path;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
@@ -22,9 +22,9 @@ class RequestPathParserImplTest {
 
     private static final String PATTERN_PATH_1 = "/users/{id}/notes/{type}";
 
-    private static final String PATTERN_PATH_3 = "/users/full/notes/type";
+    private static final String PATTERN_PATH_2 = "/users/full/notes/type";
 
-    private static final String PATTERN_PATH_4 = "/users/full/{id}/notes/{type}";
+    private static final String PATTERN_PATH_3 = "/users/full/{id}/notes/{type}";
 
     private RequestPathParser requestPathParser;
 
@@ -37,12 +37,12 @@ class RequestPathParserImplTest {
     public void shouldThrowNoSuchPathVariableExceptionWhenParseRequestPath() {
         String parsErrMsg = "Request path [%s] parsing error from pattern path [%s]";
         var exception = assertThrows(NoSuchPathVariableException.class,
-                () -> requestPathParser.parse(REQUEST_PATH_1, PATTERN_PATH_3));
-        assertEquals(String.format(parsErrMsg, REQUEST_PATH_1, PATTERN_PATH_3), exception.getMessage());
+                () -> requestPathParser.parse(REQUEST_PATH_1, PATTERN_PATH_2));
+        assertEquals(String.format(parsErrMsg, REQUEST_PATH_1, PATTERN_PATH_2), exception.getMessage());
 
         exception = assertThrows(NoSuchPathVariableException.class,
-                () -> requestPathParser.parse(REQUEST_PATH_1, PATTERN_PATH_4));
-        assertEquals(String.format(parsErrMsg, REQUEST_PATH_1, PATTERN_PATH_4), exception.getMessage());
+                () -> requestPathParser.parse(REQUEST_PATH_1, PATTERN_PATH_3));
+        assertEquals(String.format(parsErrMsg, REQUEST_PATH_1, PATTERN_PATH_3), exception.getMessage());
     }
 
     @Test

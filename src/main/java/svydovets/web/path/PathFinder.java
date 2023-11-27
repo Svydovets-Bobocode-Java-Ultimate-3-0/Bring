@@ -17,6 +17,9 @@ public interface PathFinder {
      */
     String SPLITERATOR = "/";
 
+    String REQ_PARAM_SPLITERATOR = "\\?";
+
+
     /**
      * Finds the pattern path for the given request path from the set of pattern paths.
      *
