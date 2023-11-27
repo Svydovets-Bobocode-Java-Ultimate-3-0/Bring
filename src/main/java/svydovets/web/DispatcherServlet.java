@@ -115,7 +115,7 @@ public class DispatcherServlet extends HttpServlet {
     private void processRequestResult(HttpServletResponse response, Object result) throws Exception {
         if (result != null) {
             if (result instanceof ResponseEntity<?> responseEntity){
-                processResponseEntity(response, result);
+                processResponseEntity(response, responseEntity);
             } else {
                 String json = ServletWebRequest.objectMapper.writeValueAsString(result);
                 response.getWriter().write(json);
