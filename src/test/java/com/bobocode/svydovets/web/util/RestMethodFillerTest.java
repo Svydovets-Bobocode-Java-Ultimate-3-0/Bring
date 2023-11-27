@@ -1,4 +1,4 @@
-package com.bobocode.svydovets.ioc.web.util;
+package com.bobocode.svydovets.web.util;
 
 import com.bobocode.svydovets.source.web.AllMethodRestController;
 import org.junit.jupiter.api.BeforeEach;

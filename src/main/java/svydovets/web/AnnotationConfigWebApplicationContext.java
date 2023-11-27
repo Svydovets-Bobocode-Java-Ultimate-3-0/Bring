@@ -28,8 +28,8 @@ public class AnnotationConfigWebApplicationContext extends AnnotationConfigAppli
   }
 
   @Override
-  public Set<String> getMethodPatterns(MethodNameEnum methodNameEnum) {
-    return switch (methodNameEnum) {
+  public Set<String> getMethodPatterns(HttpMethod httpMethod) {
+    return switch (httpMethod) {
       case GET -> getMethods.keySet();
       case POST -> postMethods.keySet();
       case PUT -> putMethods.keySet();
@@ -39,8 +39,8 @@ public class AnnotationConfigWebApplicationContext extends AnnotationConfigAppli
   }
 
   @Override
-  public RequestInfoHolder getRequestInfoHolder(MethodNameEnum methodNameEnum, String path) {
-    return switch (methodNameEnum) {
+  public RequestInfoHolder getRequestInfoHolder(HttpMethod httpMethod, String path) {
+    return switch (httpMethod) {
       case GET -> getMethods.get(path);
       case POST -> postMethods.get(path);
       case PUT -> putMethods.get(path);
