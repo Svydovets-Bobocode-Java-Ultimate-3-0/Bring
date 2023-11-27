@@ -1,6 +1,5 @@
 package svydovets.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -25,8 +24,6 @@ public class DispatcherServlet extends HttpServlet {
     private static final PathFinder pathFinder = new PathFinderImpl();
     private static final MethodArgumentResolver methodArgumentResolver = new MethodArgumentResolver();
     private final WebApplicationContext webApplicationContext;
-
-    ObjectMapper objectMapper = new ObjectMapper();
 
     public DispatcherServlet(String basePackage) {
         this.webApplicationContext = new AnnotationConfigWebApplicationContext(basePackage);
