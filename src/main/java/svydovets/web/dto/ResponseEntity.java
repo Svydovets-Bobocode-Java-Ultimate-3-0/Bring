@@ -2,7 +2,7 @@ package svydovets.web.dto;
 
 import jakarta.annotation.Nullable;
 
-public class ResponseEntity<T>{
+public class ResponseEntity<T> {
 
     private final T body;
     private HttpStatus status;
@@ -38,11 +38,11 @@ public class ResponseEntity<T>{
         return new DefaultBuilder(status);
     }
 
-    public interface HeadersBuilder{
+    public interface HeadersBuilder {
         BodyBuilder header(String headerName, String headerValues);
     }
 
-    public interface BodyBuilder extends HeadersBuilder{
+    public interface BodyBuilder extends HeadersBuilder {
         BodyBuilder contentLength(int length);
         BodyBuilder contentType(String contentType);
         <T> ResponseEntity<T> body(@Nullable T body);
