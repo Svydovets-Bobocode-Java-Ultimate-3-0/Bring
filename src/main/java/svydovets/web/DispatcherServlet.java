@@ -8,11 +8,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import svydovets.exception.RequestProcessingException;
 import svydovets.util.ErrorMessageConstants;
 import svydovets.web.dto.RequestInfoHolder;
+import svydovets.web.dto.ResponseEntity;
 import svydovets.web.path.PathFinder;
 import svydovets.web.path.PathFinderImpl;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.Set;
 
 public class DispatcherServlet extends HttpServlet {
@@ -38,6 +40,28 @@ public class DispatcherServlet extends HttpServlet {
         processRequest(req, resp, HttpMethod.GET);
     }
 
+
+    private void processResponseEntity(HttpServletResponse resp, Object responseObject) throws IOException {
+
+        if (responseObject instanceof ResponseEntity<?> responseEntity){
+            //get info from ResponseEntity
+            int status = responseEntity.getStatus().getStatus();
+            Map<String, String> headers = responseEntity.getHeaders().getHeaders();
+            Object body = responseEntity.getBody();
+
+            //set info from ResponseEntity to response
+            resp.setStatus(status);
+            headers.forEach(resp::setHeader);
+            String jsonBody = ServletWebRequest.objectMapper.writeValueAsString(body);
+
+            //v1
+            resp.getWriter().write(jsonBody);
+            //v2
+//            PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(resp.getOutputStream()));
+//            printWriter.println(jsonBody);
+
+        }
+    }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -87,8 +111,12 @@ public class DispatcherServlet extends HttpServlet {
 
     private void processRequestResult(HttpServletResponse response, Object result) throws Exception {
         if (result != null) {
-            String json = ServletWebRequest.objectMapper.writeValueAsString(result);
-            response.getWriter().write(json);
+            if (result instanceof ResponseEntity<?> responseEntity){
+                processResponseEntity(response, responseEntity);
+            } else {
+                String json = ServletWebRequest.objectMapper.writeValueAsString(result);
+                response.getWriter().write(json);
+            }
         }
     }
 
