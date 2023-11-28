@@ -6,7 +6,6 @@ import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Bean;
 import svydovets.core.annotation.Primary;
 import svydovets.core.annotation.Scope;
-import svydovets.core.context.ApplicationContext;
 import svydovets.core.context.beanFactory.BeanFactory;
 import svydovets.exception.BeanDefinitionCreateException;
 import svydovets.exception.UnsupportedScopeException;
@@ -23,6 +22,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static svydovets.core.context.ApplicationContext.SCOPE_SINGLETON;
 import static svydovets.util.BeanNameResolver.resolveBeanName;
 import static svydovets.util.ReflectionsUtil.findAutowiredFieldNames;
 
@@ -39,6 +39,7 @@ public class BeanDefinitionFactory {
             beanDefinitionMap.putAll(createBeanDefinitionMapByConfigClass(configClass));
         }
         log.trace("Bean definition map has been created with keys: {}", beanDefinitionMap.keySet());
+
         return beanDefinitionMap;
     }
 
@@ -54,6 +55,7 @@ public class BeanDefinitionFactory {
 
     public Map<String, BeanDefinition> createBeanDefinitionMapByConfigClass(Class<?> configClass) {
         log.trace("Call createBeanDefinitionMapByConfigClass({})", configClass);
+
         return Arrays.stream(configClass.getDeclaredMethods())
                 .filter(method -> method.isAnnotationPresent(Bean.class))
                 .map(this::createBeanDefinitionByBeanInitMethod)
@@ -139,8 +141,8 @@ public class BeanDefinitionFactory {
 
             throw new UnsupportedScopeException(errorMessage);
         }
-        log.trace("Scope values is not specified explicitly. Set '{}' by default", ApplicationContext.SCOPE_SINGLETON);
-        return ApplicationContext.SCOPE_SINGLETON;
+        log.trace("Scope values is not specified explicitly. Set '{}' by default", SCOPE_SINGLETON);
+        return SCOPE_SINGLETON;
     }
 
     public Map<String, BeanDefinition> getBeanDefinitionsOfType(Class<?> requiredType) {
@@ -148,6 +150,18 @@ public class BeanDefinitionFactory {
                 .stream()
                 .filter(beanDef -> requiredType.isAssignableFrom(beanDef.getValue().getBeanClass()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+        public Map<String, BeanDefinition> getPrototypeBeanDefinitionsOfType(Class<?> requiredType) {
+        return beanDefinitionMap.entrySet()
+                .stream()
+                .filter(beanDef -> isFilteredBeanDefinition(requiredType, beanDef.getValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    private boolean isFilteredBeanDefinition(Class<?> requiredType, BeanDefinition beanDefinition) {
+        return requiredType.isAssignableFrom(beanDefinition.getBeanClass())
+                && SCOPE_SINGLETON.equals(beanDefinition.getScope());
     }
 
     public boolean isBeanPrimary(Class<?> beanClass) {
