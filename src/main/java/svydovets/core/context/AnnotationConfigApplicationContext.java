@@ -1,14 +1,21 @@
 package svydovets.core.context;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svydovets.core.context.beanFactory.BeanFactory;
 
 import java.util.Map;
 
 public class AnnotationConfigApplicationContext implements ApplicationContext {
-    private final BeanFactory beanFactory = new BeanFactory();
+
+    private static final Logger log = LoggerFactory.getLogger(AnnotationConfigApplicationContext.class);
+
+    protected final BeanFactory beanFactory = new BeanFactory();
 
     public AnnotationConfigApplicationContext(String basePackage) {
+        log.info("Start creating an application context");
         beanFactory.registerBeans(basePackage);
+        log.info("Finish creating an application context");
     }
 
     public AnnotationConfigApplicationContext(Class<?>... classes) { // @Config or @Component

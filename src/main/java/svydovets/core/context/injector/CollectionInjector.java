@@ -1,9 +1,18 @@
 package svydovets.core.context.injector;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svydovets.exception.BeanCreationException;
+import svydovets.exception.InjectCollectionFieldException;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+import static svydovets.util.ErrorMessageConstants.ERROR_NOT_SUPPORT_DEPENDENCY_INJECT_TO_COLLECTION;
 
 /**
  * The {@code CollectionInjector} class is an implementation of the {@code AbstractInjector}
@@ -30,6 +39,8 @@ import java.util.*;
  */
 public class CollectionInjector extends AbstractInjector {
 
+    private static final Logger log = LoggerFactory.getLogger(CollectionInjector.class);
+
     /**
      * Injects dependencies into a collection field of a target bean based on the provided configuration.
      * If the collection field is already created by the user, the dependencies are added to the existing collection.
@@ -41,6 +52,8 @@ public class CollectionInjector extends AbstractInjector {
      */
     @Override
     public void inject(InjectorConfig config) {
+        log.trace("Call inject({})", config);
+
         Class<?> autowireCandidateType = retrieveAutowireCandidateType(config.getBeanField());
         Object collectionOfBeansForInjection = retrieveFieldValue(config.getBean(), config.getBeanField());
 
@@ -49,19 +62,20 @@ public class CollectionInjector extends AbstractInjector {
         if (collectionOfBeansForInjection == null) {
             injectCollectionField(config.getBean(), config.getBeanField(), collectionOfBeansToInject);
         } else {
-            // Already created via "new" by user
             ((Collection) collectionOfBeansForInjection).addAll(collectionOfBeansToInject);
         }
     }
 
     @SuppressWarnings("unchecked")
     private void injectCollectionField(Object bean, Field fieldForInjection, Collection<?> collectionOfBeansToInject) {
+        log.trace("Call injectCollectionField({}, {}, {})", bean, fieldForInjection, collectionOfBeansToInject);
+
         try {
             Collection<?> collectionOfBeans = createCollectionInstance(fieldForInjection.getType());
             collectionOfBeans.addAll((Collection) collectionOfBeansToInject);
             fieldForInjection.set(bean, collectionOfBeans);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException("");
+        } catch (IllegalAccessException exception) {
+            throw new InjectCollectionFieldException(exception.getMessage());
         }
     }
 
@@ -71,9 +85,8 @@ public class CollectionInjector extends AbstractInjector {
         } else if (collectionType == Set.class || collectionType == Collection.class) {
             return new LinkedHashSet<>();
         } else {
-            throw new BeanCreationException(String.format(
-                    "We don't support dependency injection into collection of type: %s",
-                    collectionType.getName())
+            throw new BeanCreationException(String
+                    .format(ERROR_NOT_SUPPORT_DEPENDENCY_INJECT_TO_COLLECTION, collectionType.getName())
             );
         }
     }
