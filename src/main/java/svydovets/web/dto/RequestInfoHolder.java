@@ -2,8 +2,8 @@ package svydovets.web.dto;
 
 public class RequestInfoHolder {
 
-  // todo: Rewrite to save Class<?> classType instead String className
   private Class<?> classType;
+
   private String className;
 
   private String methodName;
@@ -11,6 +11,10 @@ public class RequestInfoHolder {
   private String[] parameterNames;
 
   private Class<?>[] parameterTypes;
+
+  public RequestInfoHolder() {
+    //empty constructor
+  }
 
   public RequestInfoHolder(String className, Class<?> classType) {
     this.className = className;
