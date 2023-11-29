@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static svydovets.util.BeanNameResolver.resolveBeanName;
+import static svydovets.util.NameResolver.resolveBeanName;
 import static svydovets.util.ReflectionsUtil.findAutowiredFieldNames;
 
 public class BeanDefinitionFactory {

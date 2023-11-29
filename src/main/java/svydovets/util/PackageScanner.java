@@ -14,8 +14,8 @@ public class PackageScanner {
     public Set<Class<?>> findComponentsByBasePackage(String basePackage) {
         Reflections reflections = new Reflections((Object) basePackage);
         Set<Class<?>> classes = reflections.getTypesAnnotatedWith(Component.class);
-        // todo: Remove all interfaces from set
-        classes.remove(RestController.class); // todo: REMOVE THIS SHIT!
+        classes.addAll(reflections.getTypesAnnotatedWith(Configuration.class));
+        classes.removeIf(Class::isInterface);
         return classes;
     }
 

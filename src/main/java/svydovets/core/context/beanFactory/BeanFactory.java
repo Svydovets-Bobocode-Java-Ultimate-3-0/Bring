@@ -9,8 +9,6 @@ import svydovets.core.context.beanDefinition.BeanAnnotationBeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinitionFactory;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
-import svydovets.core.context.injector.InjectorConfig;
-import svydovets.core.context.injector.InjectorExecutor;
 import svydovets.exception.AutowireBeanException;
 import svydovets.exception.BeanCreationException;
 import svydovets.exception.InvalidInvokePostConstructMethodException;
@@ -22,7 +20,6 @@ import svydovets.exception.NoUniquePostConstructException;
 import svydovets.util.ErrorMessages;
 import svydovets.core.context.beanFactory.command.CommandFactory;
 import svydovets.core.context.beanFactory.command.CommandFunctionName;
-import svydovets.exception.*;
 import svydovets.util.PackageScanner;
 
 import java.lang.reflect.Constructor;
@@ -41,7 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static svydovets.core.context.ApplicationContext.SCOPE_SINGLETON;
-import static svydovets.util.BeanNameResolver.resolveBeanName;
+import static svydovets.util.NameResolver.resolveBeanName;
 import static svydovets.util.ErrorMessages.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
 import static svydovets.util.ErrorMessages.NO_BEAN_FOUND_OF_TYPE;
 import static svydovets.util.ErrorMessages.NO_UNIQUE_BEAN_FOUND_OF_TYPE;

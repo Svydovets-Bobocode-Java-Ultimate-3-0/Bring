@@ -1,5 +1,7 @@
 package svydovets.web;
 
+import static svydovets.util.NameResolver.resolveRequestParameterName;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import svydovets.exception.UnsupportedTypeException;
@@ -22,28 +24,29 @@ public class WebInvocationHandler {
             Parameter parameter = parameters[i];
             Class<?> parameterType = parameter.getType();
 
-            String parameterName = parameter.getName();
             if (parameter.isAnnotationPresent(PathVariable.class)) {
+                String parameterName = resolveRequestParameterName(parameter);
                 Map<String, String> pathVariableValuesMap = requestInfo.pathVariableValuesMap();
                 String parameterValue = pathVariableValuesMap.get(parameterName);
 
                 args[i] = convertRequestParameterValue(parameterType, parameterValue);
             } else if (parameter.isAnnotationPresent(RequestParam.class)) {
+                String parameterName = resolveRequestParameterName(parameter);
                 Map<String, String[]> requestParameterValuesMap = requestInfo.requestParameterValuesMap();
                 String parameterValue = getRequestParameterValue(parameterName, requestParameterValuesMap);
 
                 args[i] = convertRequestParameterValue(parameterType, parameterValue);
             } else if (parameter.isAnnotationPresent(RequestBody.class)) {
-                args[i] = parameterType.cast(parseRequestBodyJson(requestInfo, parameterType));
+                args[i] = parameterType.cast(parseRequestBodyJson(requestInfo.requestBody(), parameterType));
             } 
         }
         return args;
     }
 
-    private Object parseRequestBodyJson(RequestInfo requestInfo, Class<?> parameterType) {
+    private Object parseRequestBodyJson(String requestBody, Class<?> parameterType) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            return objectMapper.readValue(requestInfo.requestBody(), parameterType);
+            return objectMapper.readValue(requestBody, parameterType);
         } catch (JsonProcessingException e) {
             // todo: LOG ERROR
             throw new RuntimeException("Error processing JSON request body", e);

@@ -2,6 +2,7 @@ package com.bobocode.svydovets.source.config;
 
 import com.bobocode.svydovets.source.autowire.method.OrderService;
 import com.bobocode.svydovets.source.autowire.method.TrimService;
+import com.bobocode.svydovets.source.base.NullService;
 import svydovets.core.annotation.Bean;
 import svydovets.core.annotation.ComponentScan;
 import svydovets.core.annotation.Configuration;
@@ -18,5 +19,9 @@ public class BasePackageWithAdditionalBeansConfig {
     @Bean
     public OrderService orderService() {
         return new OrderService();
+    }
+
+    public NullService nullService() {
+        return new NullService();
     }
 }
