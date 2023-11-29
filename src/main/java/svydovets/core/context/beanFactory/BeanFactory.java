@@ -252,7 +252,7 @@ public class BeanFactory {
     public <T> T getBean(Class<T> requiredType) {
         log.trace("Call getBean({})", requiredType);
 
-        if (!isSelectSingleBeansOfType(requiredType)) {
+        if (!isSelectSingleBeansOfType(requiredType) || isSelectMoreOneBeanDefinitionsOfType(requiredType)) {
             return createBeanIfNotPresent(requiredType, true);
         }
 
@@ -300,9 +300,10 @@ public class BeanFactory {
     }
 
     private void checkIfCircularDependencyExist(BeanDefinition beanDefinition) {
-        if (BeanDefinition.BeanCreationStatus.IN_PROGRESS.name().equals(beanDefinition.getCreationStatus())) {
-            throw new UnresolvedCircularDependencyException(
-                    String.format(ErrorMessageConstants.CIRCULAR_DEPENDENCY_DETECTED, beanDefinition.getBeanClass().getName())
+        if (beanDefinition.getScope().equals(ApplicationContext.SCOPE_SINGLETON)
+                && BeanDefinition.BeanCreationStatus.IN_PROGRESS.name().equals(beanDefinition.getCreationStatus())) {
+            throw new UnresolvedCircularDependencyException(String
+                    .format(ErrorMessageConstants.CIRCULAR_DEPENDENCY_DETECTED, beanDefinition.getBeanClass().getName())
             );
         }
     }
@@ -360,6 +361,15 @@ public class BeanFactory {
                 .stream()
                 .filter(entry -> requiredType.isAssignableFrom(entry.getValue().getClass()))
                 .count() == 1;
+    }
+
+    private boolean isSelectMoreOneBeanDefinitionsOfType(Class<?> requiredType) {
+        log.trace("Call isSelectMoreOneBeanDefinitionsOfType({})", requiredType);
+
+        return beanDefinitionFactory.getBeanDefinitionsOfType(requiredType).entrySet()
+                .stream()
+                .filter(entry -> requiredType.isAssignableFrom(entry.getValue().getBeanClass()))
+                .count() > 1;
     }
 
     private <T> T defineSpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
