@@ -6,7 +6,7 @@ import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Bean;
 import svydovets.core.annotation.Primary;
 import svydovets.core.annotation.Scope;
-import svydovets.core.context.beanFactory.BeanFactory;
+import svydovets.core.context.beanFactory.BeanFactoryImpl;
 import svydovets.exception.BeanDefinitionCreateException;
 import svydovets.exception.UnsupportedScopeException;
 import svydovets.util.ErrorMessageConstants;
@@ -146,7 +146,7 @@ public class BeanDefinitionFactory {
         if (scopeAnnotation != null) {
             String scopeValue = scopeAnnotation.value();
             log.trace("Scope value is specified explicitly: '{}'", scopeValue);
-            if (BeanFactory.SUPPORTED_SCOPES.contains(scopeValue)) {
+            if (BeanFactoryImpl.SUPPORTED_SCOPES.contains(scopeValue)) {
                 return scopeValue;
             }
 

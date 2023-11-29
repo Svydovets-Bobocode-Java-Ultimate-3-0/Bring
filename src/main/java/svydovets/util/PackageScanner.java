@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import svydovets.core.annotation.Component;
 import svydovets.core.annotation.ComponentScan;
 import svydovets.core.annotation.Configuration;
-import svydovets.core.context.beanFactory.BeanFactory;
 import svydovets.web.annotation.RestController;
 
 import java.util.HashSet;

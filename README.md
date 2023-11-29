@@ -107,6 +107,12 @@ ___
 <summary>Example of code</summary> 
 
 ```java
+public class Application {
+    public static void main(String[] args) {
+        ApplicationContext applicationContext = new AnnotationConfigApplicationContext("com.example.bring_test.beans");
+        Map<String, Object> beans = applicationContext.getBeans();
+    }
+}
 ```
 
 </details>
@@ -119,6 +125,21 @@ ___
 <summary>Example of code</summary> 
 
 ```java
+@Configuration
+public class TestConfig {
+
+    @Bean
+    public MessageService messageService() {
+        MessageService messageService = new MessageService();
+        messageService.setMessage("Hello from \"MessageService\"");
+        return messageService;
+    }
+
+    @Bean
+    public PrintService printService(MessageService messageService) {
+        return new PrintService(messageService);
+    }
+}
 ```
 
 </details>
@@ -133,6 +154,7 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
 ```
 
 </details>
@@ -203,6 +225,40 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+@Component
+public class ServiceWithAutowiredConstructor {
+
+    private final MessageService messageService;
+
+    @Autowired
+    public ServiceWithAutowiredConstructor(MessageService messageService) {
+        this.messageService = messageService;
+    }
+}
+
+@Component
+public class TrimService {
+    private CommonService commonService;
+
+    @Autowired
+    public void setCommonService(CommonService commonService) {
+        this.commonService = commonService;
+    }
+
+    public CommonService getCommonService() {
+        return commonService;
+    }
+}
+
+@Component
+public class EditService {
+
+    @Autowired
+    private MessageService messageService;
+
+    @Autowired
+    private InjectionCandidate injectionCandidate;
+}
 ```
 
 </details>
@@ -217,6 +273,10 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+@Configuration
+@ComponentScan("com.exmaple.bring_test.beans")
+public class ScanConfigTest {
+}
 ```
 
 </details>
