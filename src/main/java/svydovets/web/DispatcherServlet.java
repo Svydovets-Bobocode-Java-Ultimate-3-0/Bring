@@ -42,24 +42,16 @@ public class DispatcherServlet extends HttpServlet {
 
 
     private void processResponseEntity(HttpServletResponse resp, Object responseObject) throws IOException {
-
-        if (responseObject instanceof ResponseEntity<?> responseEntity){
-            //get info from ResponseEntity
+        if (responseObject instanceof ResponseEntity<?> responseEntity) {
             int status = responseEntity.getStatus().getStatus();
             Map<String, String> headers = responseEntity.getHeaders().getHeaders();
             Object body = responseEntity.getBody();
 
-            //set info from ResponseEntity to response
             resp.setStatus(status);
             headers.forEach(resp::setHeader);
             String jsonBody = ServletWebRequest.objectMapper.writeValueAsString(body);
 
-            //v1
             resp.getWriter().write(jsonBody);
-            //v2
-//            PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(resp.getOutputStream()));
-//            printWriter.println(jsonBody);
-
         }
     }
 
@@ -81,21 +73,23 @@ public class DispatcherServlet extends HttpServlet {
     private void processRequest(HttpServletRequest req, HttpServletResponse resp, HttpMethod httpMethod) {
         try {
             String requestPath = req.getServletPath();
+            if (isUserRequest(requestPath)) {
 
-            RequestInfoHolder requestInfoHolder = webApplicationContext.getRequestInfoHolder(httpMethod, requestPath);
+                String controllerRedirectRequestPath = saveControllerRedirectRequestPathAsAttribute(req, httpMethod, requestPath);
 
-            saveControllerRedirectRequestPathAsAttribute(req, httpMethod, requestPath);
+                RequestInfoHolder requestInfoHolder = webApplicationContext.getRequestInfoHolder(httpMethod, controllerRedirectRequestPath);
 
-            Class<?> controllerType = requestInfoHolder.getClassType();
-            Object controller = webApplicationContext.getBean(requestInfoHolder.getClassName(), controllerType);
+                Class<?> controllerType = requestInfoHolder.getClassType();
+                Object controller = webApplicationContext.getBean(requestInfoHolder.getClassName(), controllerType);
 
-            Method methodToInvoke = controllerType.getDeclaredMethod(requestInfoHolder.getMethodName(), requestInfoHolder.getParameterTypes());
+                Method methodToInvoke = controllerType.getDeclaredMethod(requestInfoHolder.getMethodName(), requestInfoHolder.getParameterTypes());
 
-            ServletWebRequest servletWebRequest = new ServletWebRequest(req, resp);
-            Object[] resolvedRequestArguments = methodArgumentResolver.resolveArguments(methodToInvoke, servletWebRequest);
-            Object result = methodToInvoke.invoke(controller, resolvedRequestArguments);
+                ServletWebRequest servletWebRequest = new ServletWebRequest(req, resp);
+                Object[] resolvedRequestArguments = methodArgumentResolver.resolveArguments(methodToInvoke, servletWebRequest);
+                Object result = methodToInvoke.invoke(controller, resolvedRequestArguments);
 
-            processRequestResult(resp, result);
+                processRequestResult(resp, result);
+            }
         } catch (Exception e) {
             throw new RequestProcessingException(
                     String.format(ErrorMessageConstants.REQUEST_PROCESSING_ERROR, httpMethod.name(), req.getServletPath()),
@@ -104,14 +98,20 @@ public class DispatcherServlet extends HttpServlet {
         }
     }
 
-    private void saveControllerRedirectRequestPathAsAttribute(HttpServletRequest req, HttpMethod httpMethod, String requestPath) {
+
+    private boolean isUserRequest(String requestPath) {
+        return !"/favicon.ico".equals(requestPath);
+    }
+
+    private String saveControllerRedirectRequestPathAsAttribute(HttpServletRequest req, HttpMethod httpMethod, String requestPath) {
         String controllerMethodPath = getControllerMethodPath(requestPath, httpMethod);
         req.setAttribute(CONTROLLER_REDIRECT_REQUEST_PATH, controllerMethodPath);
+        return controllerMethodPath;
     }
 
     private void processRequestResult(HttpServletResponse response, Object result) throws Exception {
         if (result != null) {
-            if (result instanceof ResponseEntity<?> responseEntity){
+            if (result instanceof ResponseEntity<?> responseEntity) {
                 processResponseEntity(response, responseEntity);
             } else {
                 String json = ServletWebRequest.objectMapper.writeValueAsString(result);

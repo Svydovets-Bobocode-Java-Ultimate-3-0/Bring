@@ -18,5 +18,13 @@ public interface BeanDefinition {
 
     String getScope();
 
+    String getCreationStatus();
 
+    void setCreationStatus(BeanCreationStatus status);
+
+    enum BeanCreationStatus {
+        CREATED,
+        NOT_CREATED,
+        IN_PROGRESS
+    }
 }

@@ -6,7 +6,6 @@ import org.apache.catalina.startup.Tomcat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import svydovets.core.context.ApplicationContext;
-import svydovets.core.context.beanFactory.BeanFactory;
 import svydovets.web.DispatcherServlet;
 
 import java.io.File;
