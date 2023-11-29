@@ -3,14 +3,16 @@ package com.bobocode.svydovets.ioc.core.beanDefinitionFactory;
 import com.bobocode.svydovets.source.autowire.constructor.ValidConstructorInjectionService;
 import com.bobocode.svydovets.source.autowire.constructor.InvalidConstructorInjectionService;
 import com.bobocode.svydovets.source.autowire.constructor.FirstInjectionCandidate;
+import com.bobocode.svydovets.source.autowire.method.CopyService;
+import com.bobocode.svydovets.source.autowire.method.PrintLnService;
 import com.bobocode.svydovets.source.autowire.method.TrimService;
 import com.bobocode.svydovets.source.base.CommonService;
 import com.bobocode.svydovets.source.base.MessageService;
 import com.bobocode.svydovets.source.config.BasePackageBeansConfig;
 import com.bobocode.svydovets.source.config.BasePackageWithAdditionalBeansConfig;
+import com.bobocode.svydovets.source.config.ConfigWithThrowScope;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import svydovets.core.context.ApplicationContext;
 import svydovets.core.context.beanDefinition.BeanAnnotationBeanDefinition;
@@ -18,11 +20,14 @@ import svydovets.core.context.beanDefinition.BeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinitionFactory;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
 import svydovets.exception.BeanDefinitionCreateException;
+import svydovets.exception.UnsupportedScopeException;
 import svydovets.util.BeanNameResolver;
+import svydovets.util.ErrorMessageConstants;
 
 import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class BeanDefinitionFactoryTest {
@@ -58,13 +63,34 @@ class BeanDefinitionFactoryTest {
         assertThat(baseAdditionalPackageBeanDefinition).isNotNull();
         assertThat(basePackageBeanDefinition.getClass()).isEqualTo(ComponentAnnotationBeanDefinition.class);
         assertThat(baseAdditionalPackageBeanDefinition.getClass()).isEqualTo(ComponentAnnotationBeanDefinition.class);
-//        BeanDefinition trimServiceBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("megaTrimService");
-//        BeanDefinition orderBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("orderService");
-//        assertThat(trimServiceBeanDefinition).isNotNull();
-//        assertThat(orderBeanDefinition).isNotNull();
-//        String scope = trimServiceBeanDefinition.getScope();
-//        assertThat(trimServiceBeanDefinition.getClass()).isEqualTo(BeanAnnotationBeanDefinition.class);
-//        assertThat(scope).isEqualTo(ApplicationContext.SCOPE_SINGLETON);
+    }
+
+    @Test
+    void shouldRegisterFilledBeanAnnotationSingletonBeanDefinition() {
+        beanDefinitionFactory.registerBeanDefinitions(Set.of(BasePackageWithAdditionalBeansConfig.class));
+        BeanDefinition beanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("copyService");
+
+        assertThat(beanDefinition).isNotNull();
+        assertThat(beanDefinition.getScope()).isEqualTo(ApplicationContext.SCOPE_SINGLETON);
+        assertThat(beanDefinition.getBeanClass()).isEqualTo(CopyService.class);
+    }
+
+    @Test
+    void shouldRegisterFilledBeanAnnotationPrototypeBeanDefinition() {
+        beanDefinitionFactory.registerBeanDefinitions(Set.of(BasePackageWithAdditionalBeansConfig.class));
+        BeanDefinition beanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("printLnService");
+
+        assertThat(beanDefinition).isNotNull();
+        assertThat(beanDefinition.getScope()).isEqualTo(ApplicationContext.SCOPE_PROTOTYPE);
+        assertThat(beanDefinition.getBeanClass()).isEqualTo(PrintLnService.class);
+    }
+
+    @Test
+    void shouldThrowUnsupportedScopeExceptionWithNotValidScope() {
+        String errorMessage = String.format(ErrorMessageConstants.UNSUPPORTED_SCOPE_TYPE, "hernya");
+        assertThatExceptionOfType(UnsupportedScopeException.class)
+                .isThrownBy(() -> beanDefinitionFactory.registerBeanDefinitions(Set.of(ConfigWithThrowScope.class)))
+                .withMessage(errorMessage);
     }
 
     @Test
@@ -74,9 +100,6 @@ class BeanDefinitionFactoryTest {
         assertThat(commonServiceBeanDefinition).isNotNull();
         assertThat(commonServiceBeanDefinition.getClass()).isEqualTo(ComponentAnnotationBeanDefinition.class);
     }
-
-    // Test to check that for methods marked @Bean creates BeanAnnotationBeanDefinition
-    // Перевірити, що відпрацьовують помилки "UnsupportedScopeException"
 
     @Test
     void shouldReturnCorrectFilledComponentAnnotationBeanDefinition() {
@@ -106,7 +129,6 @@ class BeanDefinitionFactoryTest {
         assertThat(serviceDefinition.getScope()).isEqualTo(ApplicationContext.SCOPE_SINGLETON);
         assertThat(serviceDefinition.getCreationStatus()).isEqualTo(BeanDefinition.BeanCreationStatus.NOT_CREATED.name());
     }
-
 
     @Test
     void shouldThrowExceptionIfConstructorWithoutAutowire() {

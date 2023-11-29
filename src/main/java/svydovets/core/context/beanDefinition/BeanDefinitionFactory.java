@@ -39,6 +39,7 @@ public class BeanDefinitionFactory {
             registerBeanDefinition(configClass);
             beanDefinitionMap.putAll(createBeanDefinitionMapByConfigClass(configClass));
         }
+
         log.trace("Bean definition map has been created with keys: {}", beanDefinitionMap.keySet());
 
         return beanDefinitionMap;
@@ -86,6 +87,7 @@ public class BeanDefinitionFactory {
                 resolveBeanName(beanInitMethod),
                 beanInitMethod.getReturnType()
         );
+
         beanDefinition.setScope(resolveScopeName(beanInitMethod));
         beanDefinition.setPrimary(beanInitMethod.isAnnotationPresent(Primary.class));
         beanDefinition.setInitMethodOfBeanFromConfigClass(beanInitMethod);
@@ -93,7 +95,9 @@ public class BeanDefinitionFactory {
         beanDefinition.setCreationStatus(BeanDefinition.BeanCreationStatus.NOT_CREATED);
 
 
-        log.trace("Method base bean definition of class {} has been created: {}", beanInitMethod.getDeclaringClass(), beanDefinition);
+        log.trace("Method base bean definition of class {} has been created: {}",
+                beanInitMethod.getDeclaringClass(), beanDefinition);
+
         return beanDefinition;
     }
 
@@ -104,10 +108,12 @@ public class BeanDefinitionFactory {
                 .toList();
         if (constructors.isEmpty()) {
             log.trace("Constructor for autowiring is not specified explicitly. Try to get default constructor for {}", beanClass);
+
             return ReflectionsUtil.getPreparedNoArgsConstructor(beanClass);
         }
         if (constructors.size() == 1) {
             log.trace("Constructor for autowiring is specified explicitly for {}", beanClass);
+
             return Optional.of(constructors.get(0))
                     .map(ReflectionsUtil::prepareConstructor)
                     .orElseThrow();
@@ -118,18 +124,21 @@ public class BeanDefinitionFactory {
                 constructors.get(1).getName(),
                 constructors.get(0).getName());
         log.error(errorMessage);
+
         throw new BeanDefinitionCreateException(errorMessage);
     }
 
     private String resolveScopeName(Method beanInitMethod) {
         log.trace("Call resolveScopeName({})", beanInitMethod);
         Scope scopeAnnotation = beanInitMethod.getAnnotation(Scope.class);
+
         return doResolveScopeName(scopeAnnotation);
     }
 
     private String resolveScopeName(Class<?> beanClass) {
         log.trace("Call resolveScopeName({})", beanClass);
         Scope scopeAnnotation = beanClass.getAnnotation(Scope.class);
+
         return doResolveScopeName(scopeAnnotation);
     }
 
@@ -140,6 +149,7 @@ public class BeanDefinitionFactory {
             if (BeanFactory.SUPPORTED_SCOPES.contains(scopeValue)) {
                 return scopeValue;
             }
+
             String errorMessage = String.format(ErrorMessageConstants.UNSUPPORTED_SCOPE_TYPE, scopeValue);
             log.error(errorMessage);
 
