@@ -5,7 +5,7 @@ import svydovets.web.annotation.PathVariable;
 import svydovets.web.annotation.RequestMapping;
 import svydovets.web.annotation.RestController;
 
-@RestController
+@RestController("simpleContr")
 @RequestMapping("/simple")
 public class SimpleRestController {
 

@@ -4,32 +4,24 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
-    <artifactId>Bring-demo</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>war</packaging>
+<!--    <groupId>org.example</groupId>-->
+<!--    <artifactId>Bring-demo</artifactId>-->
+<!--    <version>1.0-SNAPSHOT</version>-->
+<!--    <packaging>jar</packaging>-->
 
+    <groupId>com.bobocode.ultimate</groupId>
+    <artifactId>bring-svydovets</artifactId>
+    <version>1.0</version>
+    <packaging>jar</packaging>
 
-    <!--    <repositories>-->
-    <!--        <repository>-->
-    <!--            <id>central</id>-->
-    <!--            <url>https://repo1.maven.org/maven2</url>-->
-    <!--        </repository>-->
-    <!--        <repository>-->
-    <!--            <id>github</id>-->
-    <!--            <url>https://maven.pkg.github.com/OWNER/REPOSITORY</url>-->
-    <!--            <snapshots>-->
-    <!--                <enabled>true</enabled>-->
-    <!--            </snapshots>-->
-    <!--        </repository>-->
-    <!--    </repositories>-->
+    <name>bring-svydovets</name>
+    <url>https://github.com/Svydovets-Bobocode-Java-Ultimate-3-0/Bring</url>
 
     <distributionManagement>
         <repository>
             <id>github</id>
             <name>GitHub OWNER Apache Maven Packages</name>
             <url>https://maven.pkg.github.com/JJJazl/Bring</url>
-            <!--            <url>https://maven.pkg.github.com/JJJazl/Svydovets-Bobocode-Java-Ultimate-3-0/Bring</url>-->
         </repository>
     </distributionManagement>
 
@@ -62,9 +54,24 @@
             <version>2.20.0</version>
         </dependency>
         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.9</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.5</version>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.30</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.15.3</version>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
@@ -86,7 +93,13 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-            <version>5.3.1</version>
+            <version>5.4.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.9.2</version>
             <scope>test</scope>
         </dependency>
 
@@ -118,25 +131,30 @@
             <version>${tomcat.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.15.3</version>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-war-plugin</artifactId>
+            <version>3.4.0</version>
         </dependency>
     </dependencies>
 
     <build>
+        <testResources>
+            <testResource>
+                <directory>src/test/java</directory>
+                <excludes>
+                    <exclude>**/*.java</exclude>
+                </excludes>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.10.1</version>
                 <configuration>
-                    <!--                    <source>8</source>-->
-                    <!--                    <target>8</target>-->
                     <encoding>UTF-8</encoding>
                     <showWarnings>true</showWarnings>
                     <compilerArgs>
                         <arg>-XDcompilePolicy=simple</arg>
-                        <!--                 doc: https://github.com/google/error-prone-->
                         <arg>-Xplugin:ErrorProne -Xep:DeadException:WARN -Xep:GuardedBy:OFF</arg>
                     </compilerArgs>
                     <annotationProcessorPaths>
@@ -145,15 +163,28 @@
                             <artifactId>error_prone_core</artifactId>
                             <version>2.9.0</version>
                         </path>
-                        <!-- Other annotation processors go here.
-
-                        If 'annotationProcessorPaths' is set, processors will no longer be
-                        discovered on the regular -classpath; see also 'Using Error Prone
-                        together with other annotation processors' below. -->
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+            </plugin>
 
 <!--            *****************WEB*********************-->
             <plugin>
@@ -165,12 +196,25 @@
                     <compilerArgument>-parameters</compilerArgument>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.platform</groupId>
+                        <artifactId>junit-platform-surefire-provider</artifactId>
+                        <version>1.3.2</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>5.10.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
         <resources>
-            <!--      <resource>-->
-            <!--        <directory>src/main/webapp</directory>-->
-            <!--        <targetPath>META-INF/resources</targetPath>-->
-            <!--      </resource>-->
         </resources>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
             <plugins>

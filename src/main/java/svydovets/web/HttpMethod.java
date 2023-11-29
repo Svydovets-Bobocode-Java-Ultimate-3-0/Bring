@@ -1,6 +1,6 @@
 package svydovets.web;
 
-public enum MethodNameEnum {
+public enum HttpMethod {
 
     GET, POST, PUT, DELETE, PATCH
 

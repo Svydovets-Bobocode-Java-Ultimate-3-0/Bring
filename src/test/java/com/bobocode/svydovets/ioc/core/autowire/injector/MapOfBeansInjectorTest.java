@@ -37,7 +37,7 @@ class MapOfBeansInjectorTest {
     }
 
     @Test
-    void shouldInjectMapOfBeans() {
+    void shouldInjectIntoUninitializedMapOfBeans() {
         MapHolderService mapHolderService = new MapHolderService();
 
         Field field = mapHolderService.getClass().getDeclaredFields()[0];

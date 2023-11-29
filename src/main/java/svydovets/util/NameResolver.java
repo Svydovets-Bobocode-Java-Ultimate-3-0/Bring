@@ -3,10 +3,11 @@ package svydovets.util;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svydovets.core.annotation.Bean;
 import svydovets.core.annotation.Component;
 import svydovets.core.annotation.Configuration;
-import svydovets.exception.NoSuchBeanException;
 import svydovets.web.annotation.PathVariable;
 import svydovets.web.annotation.RequestParam;
 import svydovets.web.annotation.RestController;
@@ -20,6 +21,8 @@ import svydovets.web.annotation.RestController;
  */
 public class NameResolver {
 
+    private static final Logger log = LoggerFactory.getLogger(NameResolver.class);
+
     /**
      * This method helps to define name of declared <strong>bean class</strong> by values from annotation
      *
@@ -31,6 +34,7 @@ public class NameResolver {
      * @see RestController
      */
     public static String resolveBeanName(Class<?> beanClass) {
+        log.trace("Call resolveBeanName({}) for class base bean", beanClass);
         if (beanClass.isAnnotationPresent(RestController.class)) {
             var beanValue = beanClass.getAnnotation(RestController.class).value();
             if (!beanValue.isEmpty()) {
@@ -52,7 +56,10 @@ public class NameResolver {
             }
         }
 
-        return setFirstCharacterToLowercase(beanClass.getSimpleName());
+        String beanName = setFirstCharacterToLowercase(beanClass.getSimpleName());
+        log.trace("Bean name is not specified explicitly, simple class name has been used {}", beanName);
+
+        return beanName;
     }
 
     /**
@@ -63,14 +70,17 @@ public class NameResolver {
      * @see Bean
      */
     public static String resolveBeanName(Method initMethod) {
-        String methodName = initMethod.getName();
-        if (initMethod.isAnnotationPresent(Bean.class)) {
-            var beanValue = initMethod.getAnnotation(Bean.class).value();
-            return beanValue.isEmpty() ?
-                methodName :
-                beanValue;
+        log.trace("Call resolveBeanName({}) for method base bean", initMethod);
+        var beanName= initMethod.getAnnotation(Bean.class).value();
+        if (beanName.isEmpty()) {
+            log.trace("Bean name is not specified explicitly, method name has been used {}", initMethod);
+
+            return initMethod.getName();
+        } else {
+            log.trace("Bean name is specified explicitly '{}'", beanName);
+
+            return beanName;
         }
-        throw new NoSuchBeanException(String.format("Method %s is not defined as a bean method", methodName));
     }
 
     /**

@@ -4,6 +4,13 @@ import com.bobocode.svydovets.source.autowire.method.TrimService;
 import com.bobocode.svydovets.source.base.CommonService;
 import com.bobocode.svydovets.source.base.MessageService;
 import com.bobocode.svydovets.source.base.NullService;
+import com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface.InjCandidate;
+import com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface.InjFirstCandidate;
+import com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface.InjFirstPrototypeCandidate;
+import com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface.InjPrototypeCandidate;
+import com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface.PrototypeCandidate;
+import com.bobocode.svydovets.source.beanFactoryTest.throwPrototypeCandidateByInterfaceMoreOnePrimary.InjPrototypeCandidateMoreOnePrimary;
+import com.bobocode.svydovets.source.beanFactoryTest.throwPrototypeCandidateByInterfaceWithoutPrimary.InjPrototypeCandidateWithoutPrimary;
 import com.bobocode.svydovets.source.config.BasePackageBeansConfig;
 import com.bobocode.svydovets.source.config.PrimaryPackageBeansConfig;
 import com.bobocode.svydovets.source.config.QualifierPackageBeansConfig;
@@ -17,12 +24,20 @@ import org.junit.jupiter.api.TestMethodOrder;
 import svydovets.core.context.AnnotationConfigApplicationContext;
 import svydovets.core.context.ApplicationContext;
 import svydovets.exception.NoSuchBeanDefinitionException;
+import svydovets.exception.NoUniqueBeanDefinitionException;
 import svydovets.exception.NoUniqueBeanException;
+
+import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
-import static svydovets.util.ErrorMessages.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
-import static svydovets.util.ErrorMessages.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static svydovets.util.ErrorMessageConstants.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
+import static svydovets.util.ErrorMessageConstants.NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE;
+import static svydovets.util.ErrorMessageConstants.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
 
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -139,10 +154,119 @@ public class ApplicationContextTest {
         assertThat(firstPrimaryServiceImpl).isNotNull();
     }
 
-    // todo: 1) Add tests for "getBean(String name, Class<T> requiredType)" method
-    // todo: 2) Add tests for "getBeansOfType(Class<T> requiredType)" method
-    // todo: 3) Add tests for "getPreparedNoArgsConstructor()" method.
-    //  3.1) Create a class with no default constructor.
-    //  Problem is that other tests failed, because this class is scanned by "Reflections" even if it is in nested package
+    @Test
+    @Order(12)
+    void shouldGetAllRegistersBeansWithoutPrototype() {
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        Map<String, Object> beans = context.getBeans();
+        assertEquals(2, beans.size());
+        assertTrue(beans.containsKey("injFirstCandidate"));
+        assertTrue(beans.containsKey("injSecondCandidate"));
+    }
+
+    @Test
+    @Order(13)
+    void shouldGetPrimaryCandidateByClasTypeForInterface() {
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        Map<String, Object> beans = context.getBeans();
+        var bean = context.getBean(InjCandidate.class);
+        assertEquals(bean, beans.get("injSecondCandidate"));
+    }
+
+    @Test
+    @Order(14)
+    void shouldGetPrimaryCandidateByClasTypeAndNameForInterface() {
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        Map<String, Object> beans = context.getBeans();
+        var bean = context.getBean("injSecondCandidate", InjCandidate.class);
+        assertEquals(bean, beans.get("injSecondCandidate"));
+    }
+
+    @Test
+    @Order(15)
+    void shouldGetPrototypeCandidateByClasType() {
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        var bean1 = context.getBean(PrototypeCandidate.class);
+        var bean2 = context.getBean(PrototypeCandidate.class);
+        assertNotEquals(bean1, bean2);
+    }
+
+    @Test
+    @Order(16)
+    void shouldGetPrototypeCandidateByClasTypeAndName() {
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        var bean1 = context.getBean("prototypeCandidate", PrototypeCandidate.class);
+        var bean2 = context.getBean("prototypeCandidate", PrototypeCandidate.class);
+        assertNotEquals(bean1, bean2);
+    }
+
+    @Test
+    @Order(17)
+    void shouldThrowNoSuchBeanDefinitionExceptionGetPrototypeCandidateByClasTypeAndName() {
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        String errorMessageFormat = "No bean definition found of type %s";
+        String errorMessage = String.format(errorMessageFormat, PrototypeCandidate.class.getName());
+        var exception = assertThrows(NoSuchBeanDefinitionException.class,
+                () -> context.getBean("prototypeSecondCandidate", PrototypeCandidate.class));
+        assertEquals(errorMessage, exception.getMessage());
+
+        errorMessageFormat = "No bean definition found of type %s";
+        errorMessage = String.format(errorMessageFormat, InjFirstCandidate.class.getName());
+        exception = assertThrows(NoSuchBeanDefinitionException.class,
+                () -> context.getBean("prototypeSecondCandidate", InjFirstCandidate.class));
+        assertEquals(errorMessage, exception.getMessage());
+    }
+
+    @Test
+    @Order(18)
+    void shouldGetBeansOfTypeByRequiredType() {
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        var expectedBeanMap = context.getBeans();
+        var actualBeanMap = context.getBeansOfType(InjCandidate.class);
+
+        assertEquals(expectedBeanMap.size(), actualBeanMap.size());
+        assertEquals(expectedBeanMap.get("injFirstCandidate"), actualBeanMap.get("injFirstCandidate"));
+        assertEquals(expectedBeanMap.get("injSecondCandidate"), actualBeanMap.get("injSecondCandidate"));
+    }
+
+    @Test
+    @Order(19)
+    void shouldGetPrototypeBeanOfTypeByRequiredTypeAndName() {
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        var actualBean = context.getBean("injFirstPrototypeCandidate", InjFirstPrototypeCandidate.class);
+
+        assertEquals(InjFirstPrototypeCandidate.class, actualBean.getClass());
+    }
+
+    @Test
+    @Order(20)
+    void shouldGetPrototypeBeanOfTypeByRequiredTypeAndName1() {
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        var actualBean = context.getBean(InjPrototypeCandidate.class);
+
+        assertEquals(InjFirstPrototypeCandidate.class, actualBean.getClass());
+    }
+
+    @Test
+    @Order(21)
+    void shouldThrowNoSuchBeanDefinitionExceptionWhenGetPrototypeBeanOfTypeWithoutPrimaryByRequiredType() {
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.beanFactoryTest.throwPrototypeCandidateByInterfaceWithoutPrimary");
+        String message = String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, InjPrototypeCandidateWithoutPrimary.class.getName());
+
+        assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
+                .isThrownBy(() -> context.getBean(InjPrototypeCandidateWithoutPrimary.class))
+                .withMessage(message);
+    }
+
+    @Test
+    @Order(22)
+    void shouldThrowNoUniqueBeanDefinitionExceptionWhenGetPrototypeBeanOfTypeMoreOnePrimaryByRequiredType() {
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.beanFactoryTest.throwPrototypeCandidateByInterfaceMoreOnePrimary");
+        String message = String.format(NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE, InjPrototypeCandidateMoreOnePrimary.class.getName());
+
+        assertThatExceptionOfType(NoUniqueBeanDefinitionException.class)
+                .isThrownBy(() -> context.getBean(InjPrototypeCandidateMoreOnePrimary.class))
+                .withMessage(message);
+    }
 
 }

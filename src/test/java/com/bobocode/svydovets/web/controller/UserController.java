@@ -3,6 +3,7 @@ package com.bobocode.svydovets.web.controller;
 import com.bobocode.svydovets.web.dto.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import svydovets.web.annotation.DeleteMapping;
 import svydovets.web.annotation.GetMapping;
 import svydovets.web.annotation.PathVariable;
 import svydovets.web.annotation.PostMapping;
@@ -11,8 +12,6 @@ import svydovets.web.annotation.RequestBody;
 import svydovets.web.annotation.RequestMapping;
 import svydovets.web.annotation.RequestParam;
 import svydovets.web.annotation.RestController;
-
-import java.lang.annotation.Annotation;
 
 import static com.bobocode.svydovets.web.factory.UserFactory.DEFAULT_FIRST_NAME;
 import static com.bobocode.svydovets.web.factory.UserFactory.DEFAULT_ID;
@@ -38,8 +37,13 @@ public class UserController {
         return user;
     }
 
-    @PutMapping
+    @PutMapping("/{id}")
     public User update(@PathVariable Long id, @RequestParam String status, @RequestBody User user) {
-        return new User(++id, user.getFirstName(), user.getLastName(), status);
+        Long newId = id + 1L;
+        return new User(newId, user.getFirstName(), user.getLastName(), status);
+    }
+
+    @DeleteMapping
+    public void removeWithServletRequestAndResponse(HttpServletRequest request, HttpServletResponse resp) {
     }
 }

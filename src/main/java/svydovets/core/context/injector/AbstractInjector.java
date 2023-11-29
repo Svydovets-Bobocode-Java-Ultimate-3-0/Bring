@@ -1,12 +1,18 @@
 package svydovets.core.context.injector;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svydovets.exception.AutowireBeanException;
 import svydovets.exception.BeanCreationException;
+import svydovets.exception.FieldValueIllegalAccessException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
+
+import static svydovets.util.ErrorMessageConstants.ERROR_AUTOWIRED_BEAN_EXCEPTION_MESSAGE;
+import static svydovets.util.ErrorMessageConstants.ERROR_NOT_SET_ACCESSIBLE_FOR_FIELD;
 
 /**
  * The {@code AbstractInjector} class serves as a base class for concrete implementations of the {@code Injector} interface.
@@ -32,6 +38,8 @@ import java.lang.reflect.WildcardType;
  */
 public abstract class AbstractInjector implements Injector {
 
+    private static final Logger log = LoggerFactory.getLogger(AbstractInjector.class);
+
     /**
      * Sets the provided dependency on the specified field of the target bean.
      *
@@ -41,11 +49,17 @@ public abstract class AbstractInjector implements Injector {
      * @throws AutowireBeanException if there is an issue setting the field due to illegal access.
      */
     protected void setDependency(Object bean, Field fieldForInjection, Object autowireCandidate) {
+        log.trace("Call setDependency({}, {}, {})", bean, fieldForInjection, autowireCandidate);
+
         try {
             fieldForInjection.setAccessible(true);
             fieldForInjection.set(bean, autowireCandidate);
-        } catch (IllegalAccessException e) {
-            throw new AutowireBeanException(String.format("There is access to %s field", fieldForInjection.getName()));
+        } catch (IllegalAccessException exception) {
+            log.error(ERROR_AUTOWIRED_BEAN_EXCEPTION_MESSAGE);
+            log.error(exception.getMessage());
+
+            throw new AutowireBeanException(String
+                    .format(ERROR_AUTOWIRED_BEAN_EXCEPTION_MESSAGE, fieldForInjection.getName()));
         }
     }
 
@@ -58,11 +72,14 @@ public abstract class AbstractInjector implements Injector {
      * @throws RuntimeException if there is an issue accessing the field.
      */
     protected Object retrieveFieldValue(Object targetBean, Field field) {
+        log.trace("Call retrieveFieldValue({}, {})", targetBean, field);
+
         try {
             field.setAccessible(true);
+
             return field.get(targetBean);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException();
+        } catch (IllegalAccessException exception) {
+            throw new FieldValueIllegalAccessException(String.format(ERROR_NOT_SET_ACCESSIBLE_FOR_FIELD, field));
         }
     }
 

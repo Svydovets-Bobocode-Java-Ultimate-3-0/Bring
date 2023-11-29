@@ -30,6 +30,7 @@ import java.util.function.Function;
 public class InjectorConfig {
 
   private final Object bean;
+
   private final Field beanField;
 
   private final Function<Class<?>, Object> beanReceiver;
@@ -44,11 +45,10 @@ public class InjectorConfig {
    * @param beanReceiver       The function to obtain a single bean for injection.
    * @param beanOfTypeReceiver The function to obtain a map of beans for injection, with keys representing bean names.
    */
-  public InjectorConfig(
-      Object bean,
-      Field beanField,
-      Function<Class<?>, Object> beanReceiver,
-      Function<Class<?>, Map<String, ?>> beanOfTypeReceiver) {
+  public InjectorConfig(Object bean,
+                        Field beanField,
+                        Function<Class<?>, Object> beanReceiver,
+                        Function<Class<?>, Map<String, ?>> beanOfTypeReceiver) {
     this.bean = bean;
     this.beanField = beanField;
     this.beanReceiver = beanReceiver;
@@ -86,6 +86,7 @@ public class InjectorConfig {
   public static class Builder {
 
     private Object bean;
+
     private Field beanField;
 
     private Function<Class<?>, Object> beanReceiver;
@@ -107,8 +108,7 @@ public class InjectorConfig {
       return this;
     }
 
-    public Builder withBeanOfTypeReceiver(
-        Function<Class<?>, Map<String, ?>> beanOfTypeReceiver) {
+    public Builder withBeanOfTypeReceiver(Function<Class<?>, Map<String, ?>> beanOfTypeReceiver) {
       this.beanOfTypeReceiver = beanOfTypeReceiver;
       return this;
     }

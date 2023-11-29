@@ -10,6 +10,8 @@ public abstract class AbstractBeanDefinition implements BeanDefinition {
 
     protected String scope;
 
+    protected String creationStatus;
+
     public AbstractBeanDefinition(String beanName, Class<?> beanClass) {
         this.beanName = beanName;
         this.beanClass = beanClass;
@@ -57,5 +59,15 @@ public abstract class AbstractBeanDefinition implements BeanDefinition {
     @Override
     public void setScope(String scope) {
         this.scope = scope;
+    }
+
+    @Override
+    public String getCreationStatus() {
+        return creationStatus;
+    }
+
+    @Override
+    public void setCreationStatus(BeanCreationStatus status) {
+        this.creationStatus = status.name();
     }
 }
