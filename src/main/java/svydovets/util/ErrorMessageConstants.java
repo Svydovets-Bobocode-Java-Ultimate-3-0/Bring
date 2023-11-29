@@ -11,6 +11,7 @@ public abstract class ErrorMessageConstants {
     public static final String NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE = "No unique bean definition found of type %s";
 
     public static final String ERROR_CREATING_BEAN_DEFINITION_FOR_BEAN_WITH_INVALID_CONSTRUCTORS = "Error creating bean definition for bean '%s': Invalid autowire-marked constructor: %s. Found constructor with 'required' Autowired annotation already: %s";
+    public static final String CIRCULAR_DEPENDENCY_DETECTED = "Circular dependency has been detected for %s";
 
     public static final String NO_MATCHING_PATTERN_FOUND_EXCEPTION = "No matching pattern found for the request path [%s]";
 

@@ -73,6 +73,7 @@ public class BeanDefinitionFactory {
         beanDefinition.setAutowiredFieldNames(findAutowiredFieldNames(beanClass));
         beanDefinition.setPrimary(beanClass.isAnnotationPresent(Primary.class));
         beanDefinition.setScope(resolveScopeName(beanClass));
+        beanDefinition.setCreationStatus(BeanDefinition.BeanCreationStatus.NOT_CREATED);
 
         log.trace("Bean definition of class {} has been created: {}", beanClass, beanDefinition);
         return beanDefinition;
@@ -88,6 +89,8 @@ public class BeanDefinitionFactory {
         beanDefinition.setPrimary(beanInitMethod.isAnnotationPresent(Primary.class));
         beanDefinition.setInitMethodOfBeanFromConfigClass(beanInitMethod);
         beanDefinition.setConfigClassName(resolveBeanName(beanInitMethod.getDeclaringClass()));
+        beanDefinition.setCreationStatus(BeanDefinition.BeanCreationStatus.NOT_CREATED);
+
 
         log.trace("Method base bean definition of class {} has been created: {}", beanInitMethod.getDeclaringClass(), beanDefinition);
         return beanDefinition;

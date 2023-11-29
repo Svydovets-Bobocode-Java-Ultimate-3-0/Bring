@@ -13,12 +13,7 @@ import svydovets.core.context.beanDefinition.BeanDefinitionFactory;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
 import svydovets.core.context.beanFactory.command.CommandFactory;
 import svydovets.core.context.beanFactory.command.CommandFunctionName;
-import svydovets.exception.BeanCreationException;
-import svydovets.exception.InvalidInvokePostConstructMethodException;
-import svydovets.exception.NoSuchBeanDefinitionException;
-import svydovets.exception.NoUniqueBeanDefinitionException;
-import svydovets.exception.NoUniqueBeanException;
-import svydovets.exception.NoUniquePostConstructException;
+import svydovets.exception.*;
 import svydovets.util.BeanNameResolver;
 import svydovets.util.ErrorMessageConstants;
 import svydovets.util.PackageScanner;
@@ -27,14 +22,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -53,13 +41,13 @@ import static svydovets.util.ReflectionsUtil.prepareMethod;
  * Public API
  */
 public class BeanFactory {
+    private static final Logger log = LoggerFactory.getLogger(BeanFactory.class);
 
     public static final Set<String> SUPPORTED_SCOPES = new HashSet<>(Arrays.asList(
             ApplicationContext.SCOPE_SINGLETON,
             ApplicationContext.SCOPE_PROTOTYPE
     ));
 
-    private static final Logger log = LoggerFactory.getLogger(BeanFactory.class);
 
     private final Map<String, Object> beanMap = new LinkedHashMap<>();
 
@@ -159,6 +147,7 @@ public class BeanFactory {
     private Object createBean(BeanDefinition beanDefinition) {
         log.trace("Call createBean({})", beanDefinition);
 
+        beanDefinition.setCreationStatus(BeanDefinition.BeanCreationStatus.IN_PROGRESS);
         try {
             if (beanDefinition instanceof ComponentAnnotationBeanDefinition componentBeanDefinition) {
                 return createComponent(componentBeanDefinition);
@@ -179,12 +168,13 @@ public class BeanFactory {
         var configClassBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName(configClassName);
         var configClass = beanMap.get(configClassBeanDefinition.getBeanName());
         if (configClass == null) {
-            configClass = saveBean(configClassName, configClassBeanDefinition);
+            configClass = createBeanBasedOnItScope(configClassName, configClassBeanDefinition);
         }
 
         var initMethod = beanDefinition.getInitMethodOfBeanFromConfigClass();
         Object[] args = retrieveBeanInitMethodArguments(initMethod);
 
+        // TODO: Можна винести в окремий метод, щоб опрацювати помилки InvocationTargetException, IllegalAccessException
         return prepareMethod(initMethod).invoke(configClass, args);
     }
 
@@ -193,17 +183,25 @@ public class BeanFactory {
         Object[] args = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
-            BeanDefinition parameterBeanDefinition = beanDefinitionFactory
-                    .getBeanDefinitionByBeanName(resolveBeanName(parameter.getType()));
-            Object parameterDependency = beanMap.get(parameterBeanDefinition.getBeanName());
-            if (parameterDependency == null) {
-                createBean(parameterBeanDefinition);
-            }
 
+            String beanName = resolveBeanName(parameter.getType());
+            BeanDefinition beanDefinition = beanDefinitionFactory
+                    .getBeanDefinitionByBeanName(beanName);
+            Object parameterDependency = beanMap.get(beanName);
+            if (parameterDependency == null) {
+                checkIfCircularDependencyExist(beanDefinition);
+                parameterDependency = createBeanBasedOnItScope(beanName, beanDefinition);
+            }
             args[i] = parameterDependency;
         }
 
         return args;
+    }
+
+    private Object createBeanBasedOnItScope(String beanName, BeanDefinition beanDefinition) {
+        return ApplicationContext.SCOPE_SINGLETON.equals(beanDefinition.getScope())
+                ? saveBean(beanName, beanDefinition)
+                : createBean(beanDefinition);
     }
 
     private Object createComponent(ComponentAnnotationBeanDefinition beanDefinition)
@@ -231,7 +229,8 @@ public class BeanFactory {
 
     public void registerBean(String beanName, BeanDefinition beanDefinition) {
         log.trace("Call registerBean({}, {})", beanName, beanDefinition);
-        if (beanDefinition.getScope().equals(ApplicationContext.SCOPE_SINGLETON)) {
+        if (beanDefinition.getScope().equals(ApplicationContext.SCOPE_SINGLETON)
+                && beanDefinition.getCreationStatus().equals(BeanDefinition.BeanCreationStatus.NOT_CREATED.name())) {
             saveBean(beanName, beanDefinition);
         }
     }
@@ -284,8 +283,11 @@ public class BeanFactory {
 
         Map<String, T> beansOfType = getBeansOfType(requiredType);
         if (beansOfType.isEmpty()) {
-            BeanDefinition beanDefinitionsOfType = getBeanDefinitionsOfType(requiredType, onlyPrototype);
-            Object bean = createBean(beanDefinitionsOfType);
+            BeanDefinition beanDefinitionOfType = getBeanDefinitionsOfType(requiredType, onlyPrototype);
+            checkIfCircularDependencyExist(beanDefinitionOfType);
+
+            String beanName = beanDefinitionOfType.getBeanName();
+            Object bean = createBeanBasedOnItScope(beanName, beanDefinitionOfType);
 
             return requiredType.cast(bean);
         }
@@ -295,6 +297,14 @@ public class BeanFactory {
         }
 
         return beansOfType.values().stream().findAny().orElseThrow();
+    }
+
+    private void checkIfCircularDependencyExist(BeanDefinition beanDefinition) {
+        if (BeanDefinition.BeanCreationStatus.IN_PROGRESS.name().equals(beanDefinition.getCreationStatus())) {
+            throw new UnresolvedCircularDependencyException(
+                    String.format(ErrorMessageConstants.CIRCULAR_DEPENDENCY_DETECTED, beanDefinition.getBeanClass().getName())
+            );
+        }
     }
 
     private BeanDefinition getBeanDefinitionsOfType(Class<?> requiredType, boolean onlyPrototype) {
@@ -412,4 +422,7 @@ public class BeanFactory {
         return Optional.empty();
     }
 
+    public BeanDefinitionFactory beanDefinitionFactory() {
+        return beanDefinitionFactory;
+    }
 }
