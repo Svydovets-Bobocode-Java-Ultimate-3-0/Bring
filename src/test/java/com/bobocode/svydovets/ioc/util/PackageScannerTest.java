@@ -8,7 +8,6 @@ import com.bobocode.svydovets.source.beansForTestScan.SomeBeanSecond;
 import com.bobocode.svydovets.source.config.BasePackageBeansConfig;
 import com.bobocode.svydovets.source.config.PackageScannerBeansConfig;
 import com.bobocode.svydovets.source.config.PostConstructBeansConfig;
-import com.bobocode.svydovets.source.interfaces.BeanInterface;
 import com.bobocode.svydovets.source.interfaces.NonInterfaceComponent;
 import com.bobocode.svydovets.source.interfaces.NonInterfaceConfiguration;
 import com.bobocode.svydovets.source.postconstruct.invalid.DuplicatePostConstructService;
