@@ -1,4 +1,4 @@
-package com.bobocode.svydovets.source.autowire.method;
+package com.bobocode.svydovets.source.autowire;
 
 import com.bobocode.svydovets.source.autowire.constructor.FirstInjectionCandidate;
 import com.bobocode.svydovets.source.autowire.constructor.SecondInjectionCandidate;
