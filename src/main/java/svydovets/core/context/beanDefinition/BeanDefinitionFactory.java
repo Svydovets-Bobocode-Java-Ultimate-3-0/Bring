@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static svydovets.core.context.ApplicationContext.SCOPE_PROTOTYPE;
 import static svydovets.core.context.ApplicationContext.SCOPE_SINGLETON;
 import static svydovets.util.BeanNameResolver.resolveBeanName;
 import static svydovets.util.ReflectionsUtil.findAutowiredFieldNames;
@@ -164,7 +165,7 @@ public class BeanDefinitionFactory {
 
     private boolean isFilteredBeanDefinition(Class<?> requiredType, BeanDefinition beanDefinition) {
         return requiredType.isAssignableFrom(beanDefinition.getBeanClass())
-                && SCOPE_SINGLETON.equals(beanDefinition.getScope());
+                && SCOPE_PROTOTYPE.equals(beanDefinition.getScope());
     }
 
     public boolean isBeanPrimary(Class<?> beanClass) {

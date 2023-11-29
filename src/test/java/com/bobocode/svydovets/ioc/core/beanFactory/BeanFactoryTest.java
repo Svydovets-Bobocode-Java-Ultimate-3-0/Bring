@@ -1,5 +1,8 @@
 package com.bobocode.svydovets.ioc.core.beanFactory;
 
+import com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface.InjCandidate;
+import com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface.InjFirstCandidate;
+import com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface.PrototypeCandidate;
 import com.bobocode.svydovets.source.autowire.constructor.FirstInjectionCandidate;
 import com.bobocode.svydovets.source.autowire.constructor.SecondInjectionCandidate;
 import com.bobocode.svydovets.source.autowire.constructor.ValidConstructorInjectionService;
@@ -11,6 +14,16 @@ import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import svydovets.core.context.AnnotationConfigApplicationContext;
+import svydovets.core.context.ApplicationContext;
+import svydovets.exception.NoSuchBeanDefinitionException;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import svydovets.core.context.beanFactory.BeanFactory;
 import svydovets.exception.UnresolvedCircularDependencyException;
 
