@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import svydovets.core.context.injector.BeanInjector;
 import svydovets.core.context.injector.InjectorConfig;
-import svydovets.exception.AutowireBeanException;
+import svydovets.core.exception.AutowireBeanException;
 
 class BeanInjectorTest {
 

@@ -85,8 +85,8 @@ public class CollectionInjector extends AbstractInjector {
         } else if (collectionType == Set.class || collectionType == Collection.class) {
             return new LinkedHashSet<>();
         } else {
-            throw new BeanCreationException(String
-                    .format(ERROR_NOT_SUPPORT_DEPENDENCY_INJECT_TO_COLLECTION, collectionType.getName())
+            throw new BeanCreationException(
+                String.format(ERROR_NOT_SUPPORT_DEPENDENCY_INJECT_TO_COLLECTION, collectionType.getName())
             );
         }
     }
