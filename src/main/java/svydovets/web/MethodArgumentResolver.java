@@ -1,5 +1,7 @@
 package svydovets.web;
 
+import static svydovets.util.NameResolver.resolveRequestParameterName;
+
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import svydovets.exception.UnsupportedTypeException;
@@ -66,7 +68,7 @@ public class MethodArgumentResolver {
 
     private Object handleAnnotation(Parameter parameter, Class<? extends Annotation> annotationType, ServletWebRequest servletWebRequest) {
         Class<?> parameterType = parameter.getType();
-        String parameterName = parameter.getName();
+        String parameterName = resolveRequestParameterName(parameter);
         if (annotationType == PathVariable.class) {
             String parameterValue = servletWebRequest.getPathVariableValue(parameterName);
             return convertRequestParameterValue(parameterType, parameterValue);

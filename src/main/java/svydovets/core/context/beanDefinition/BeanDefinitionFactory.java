@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 import static svydovets.core.context.ApplicationContext.SCOPE_PROTOTYPE;
 import static svydovets.core.context.ApplicationContext.SCOPE_SINGLETON;
-import static svydovets.util.BeanNameResolver.resolveBeanName;
+import static svydovets.util.NameResolver.resolveBeanName;
 import static svydovets.util.ReflectionsUtil.findAutowiredFieldNames;
 
 public class BeanDefinitionFactory {

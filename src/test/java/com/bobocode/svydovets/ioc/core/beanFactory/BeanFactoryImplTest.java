@@ -8,7 +8,7 @@ import com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface.P
 import com.bobocode.svydovets.source.autowire.constructor.FirstInjectionCandidate;
 import com.bobocode.svydovets.source.autowire.constructor.SecondInjectionCandidate;
 import com.bobocode.svydovets.source.autowire.constructor.ValidConstructorInjectionService;
-import com.bobocode.svydovets.source.autowire.method.ConfigMethodBasedBeanAutowiring;
+import com.bobocode.svydovets.source.autowire.ConfigMethodBasedBeanAutowiring;
 import com.bobocode.svydovets.source.beanFactoryTest.throwPrototypeCandidateByInterfaceMoreOnePrimary.InjPrototypeCandidateMoreOnePrimary;
 import com.bobocode.svydovets.source.beanFactoryTest.throwPrototypeCandidateByInterfaceWithoutPrimary.InjPrototypeCandidateWithoutPrimary;
 import com.bobocode.svydovets.source.circularDependency.CircularDependencyConfig;
