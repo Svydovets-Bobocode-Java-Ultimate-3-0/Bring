@@ -225,7 +225,6 @@ public class BeanFactoryImpl implements BeanFactory {
                 .forEach(this::registerBean);
 
         log.info("Beans post processing");
-
         beanMap.forEach(this::initializeBeanAfterRegistering);
     }
 

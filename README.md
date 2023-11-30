@@ -59,7 +59,6 @@ Follow these steps to get started with our project:
 4. **Run the application:**
     ```java
       public class DemoApp {
-        private static final Logger log = LoggerFactory.getLogger(DemoApp.class);
       
         public static void main(String[] args) {
           var context = BringApplication.run(DemoApp.class);
@@ -79,6 +78,7 @@ ___
 - **[@Configuration](#configuration)**
 - **[@Bean](#bean)**
 - **[@Component](#component)**
+- **[@Scope](#scope)**
 - **[@Qualifier](#qualifier)**
 - **[@Primary](#primary)**
 - **[@PostConstruct](#postConstruct)**
@@ -125,7 +125,28 @@ ___
 <summary>Example of code</summary> 
 
 ```java
+
 @Configuration
+@ComponentScan("com.example.bring_test.ioc.beans")
+public class TestConfig {
+}
+```
+
+</details>
+
+#### @Bean
+
+___
+
+Some description
+
+<details>
+<summary>Example of code</summary> 
+
+```java
+
+@Configuration
+@ComponentScan("com.example.bring_test.ioc.beans")
 public class TestConfig {
 
     @Bean
@@ -144,21 +165,6 @@ public class TestConfig {
 
 </details>
 
-#### @Bean
-
-___
-
-Some description
-
-<details>
-<summary>Example of code</summary> 
-
-```java
-
-```
-
-</details>
-
 #### @Component
 
 ___
@@ -169,9 +175,50 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
+@Component
+public class MessageService {
+
+    private String message;
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+}
 ```
 
 </details>
+
+#### @Scope
+
+___
+
+Some description
+
+<details>
+<summary>Example of code</summary> 
+
+```java
+
+@Component
+@Scope(ApplicationContext.SCOPE_SINGLETON)
+public class SingletonCandidate {
+
+}
+
+@Component
+@Scope(ApplicationContext.SCOPE_PROTOTYPE)
+public class PrototypeCandidate {
+
+}
+```
+
+</details>
+
 
 #### @Qualifier
 
@@ -183,6 +230,18 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
+@Component
+public class OrderService {
+
+    @Autowired
+    @Qualifier("storeItem")
+    private Item item;
+
+    public Item getItem() {
+        return item;
+    }
+}
 ```
 
 </details>
@@ -197,6 +256,11 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
+@Primary
+@Component
+public class PrimaryInjectionCandidate implements InjectionCandidate {
+}
 ```
 
 </details>
@@ -211,6 +275,21 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
+@Component
+public class ServiceWithPostConstruct {
+
+    private String message;
+
+    @PostConstruct
+    public void init() {
+        message = "Message loaded with @PostConstruct";
+    }
+
+    public String getMessage() {
+        return message;
+    }
+}
 ```
 
 </details>
@@ -225,6 +304,7 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
 @Component
 public class ServiceWithAutowiredConstructor {
 
@@ -273,6 +353,7 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
 @Configuration
 @ComponentScan("com.exmaple.bring_test.beans")
 public class ScanConfigTest {
@@ -291,6 +372,10 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
+@RestController
+public class UserController {
+}
 ```
 
 </details>
@@ -305,6 +390,11 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+}
 ```
 
 </details>
@@ -319,6 +409,19 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+    @GetMapping
+    public User getOneByFirstName(@RequestParam String firstName) {
+        return userMap.values()
+                .stream()
+                .filter(user -> user.getFirstName().equals(firstName))
+                .findAny()
+                .orElseThrow();
+    }
+}
 ```
 
 </details>
@@ -333,6 +436,20 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    private AtomicLong idGenerator = new AtomicLong(0L);
+    private Map<Long, User> userMap = new ConcurrentHashMap<>();
+
+    @GetMapping("/{id}")
+    public User getOneById(@PathVariable Long id) {
+        return userMap.get(id);
+    }
+}
+
 ```
 
 </details>
@@ -347,6 +464,27 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+    private AtomicLong idGenerator = new AtomicLong(0L);
+    private Map<Long, User> userMap = new ConcurrentHashMap<>();
+
+    @GetMapping
+    public User getOneByFirstName(@RequestParam String firstName) {
+        return userMap.values()
+                .stream()
+                .filter(user -> user.getFirstName().equals(firstName))
+                .findAny()
+                .orElseThrow();
+    }
+
+    @GetMapping("/{id}")
+    public User getOneById(@PathVariable Long id) {
+        return userMap.get(id);
+    }
+}
 ```
 
 </details>
@@ -361,6 +499,22 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+    private AtomicLong idGenerator = new AtomicLong(0L);
+    private Map<Long, User> userMap = new ConcurrentHashMap<>();
+
+    @PostMapping
+    public Long save(@RequestBody User user) {
+        Long generatedId = idGenerator.incrementAndGet();
+        user.setId(generatedId);
+        userMap.put(generatedId, user);
+
+        return generatedId;
+    }
+}
 ```
 
 </details>
@@ -375,6 +529,24 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+    private AtomicLong idGenerator = new AtomicLong(0L);
+    private Map<Long, User> userMap = new ConcurrentHashMap<>();
+
+    @PutMapping("/{id}")
+    public User update(@PathVariable Long id, @RequestBody User user) {
+        User savedUser = userMap.get(id);
+        savedUser.setFirstName(user.getFirstName());
+        savedUser.setLastName(user.getLastName());
+        savedUser.setStatus(user.getStatus());
+        userMap.put(id, savedUser);
+
+        return savedUser;
+    }
+}
 ```
 
 </details>
@@ -389,6 +561,19 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    private AtomicLong idGenerator = new AtomicLong(0L);
+    private Map<Long, User> userMap = new ConcurrentHashMap<>();
+
+    @DeleteMapping("/{id}")
+    public void removeWithServletRequestAndResponse(@PathVariable Long id) {
+        userMap.remove(id);
+    }
+}
 ```
 
 </details>
@@ -403,6 +588,23 @@ Some description
 <summary>Example of code</summary> 
 
 ```java
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    private AtomicLong idGenerator = new AtomicLong(0L);
+    private Map<Long, User> userMap = new ConcurrentHashMap<>();
+
+    @PatchMapping
+    public User updateUserFirstNameById(@PathVariable Long id, @RequestBody String firstName) {
+        User user = userMap.get(id);
+        user.setFirstName(firstName);
+        userMap.put(id, user);
+
+        return user;
+    }
+}
 ```
 
 </details>
