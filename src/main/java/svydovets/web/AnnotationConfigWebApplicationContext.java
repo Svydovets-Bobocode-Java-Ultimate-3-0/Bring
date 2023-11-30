@@ -28,7 +28,7 @@ public class AnnotationConfigWebApplicationContext extends AnnotationConfigAppli
     super(basePackage);
 
     RestMethodFiller methodFiller = new RestMethodFiller();
-    methodFiller.fill(beanFactory.getBeans());
+    methodFiller.fill(beanFactoryImpl.getBeans());
 
     getMethods = methodFiller.getGetMethods();
     postMethods = methodFiller.getPostMethods();

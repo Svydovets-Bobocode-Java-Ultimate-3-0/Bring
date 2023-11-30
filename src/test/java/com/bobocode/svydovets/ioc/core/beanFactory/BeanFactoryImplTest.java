@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import svydovets.core.context.beanFactory.BeanFactory;
+import svydovets.core.context.beanFactory.BeanFactoryImpl;
 import svydovets.exception.NoUniqueBeanDefinitionException;
 import svydovets.exception.UnresolvedCircularDependencyException;
 
@@ -38,13 +38,13 @@ import static svydovets.util.ErrorMessageConstants.CIRCULAR_DEPENDENCY_DETECTED;
 import static svydovets.util.ErrorMessageConstants.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
 import static svydovets.util.ErrorMessageConstants.NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE;
 
-class BeanFactoryTest {
+class BeanFactoryImplTest {
 
-    private BeanFactory beanFactory;
+    private BeanFactoryImpl beanFactoryImpl;
 
     @BeforeEach
     void setUp() {
-        this.beanFactory = new BeanFactory();
+        this.beanFactoryImpl = new BeanFactoryImpl();
     }
 
 
@@ -52,8 +52,8 @@ class BeanFactoryTest {
     void shouldRegisterBeanWhenConfigClassIsPassed() {
         registerBeanDefinitionsForConfigMethodBaseBeanAutowiring();
 
-        beanFactory.registerBeans(ConfigMethodBasedBeanAutowiring.class);
-        ConfigMethodBasedBeanAutowiring config = beanFactory.getBean(ConfigMethodBasedBeanAutowiring.class);
+        beanFactoryImpl.registerBeans(ConfigMethodBasedBeanAutowiring.class);
+        ConfigMethodBasedBeanAutowiring config = beanFactoryImpl.getBean(ConfigMethodBasedBeanAutowiring.class);
         assertThat(config).isNotNull();
     }
 
@@ -62,8 +62,8 @@ class BeanFactoryTest {
     void shouldRegisterMethodBasedBeanWhenConfigClassIsPassed() {
         registerBeanDefinitionsForConfigMethodBaseBeanAutowiring();
 
-        beanFactory.registerBeans(ConfigMethodBasedBeanAutowiring.class);
-        ValidConstructorInjectionService injectionService = beanFactory.getBean(ValidConstructorInjectionService.class);
+        beanFactoryImpl.registerBeans(ConfigMethodBasedBeanAutowiring.class);
+        ValidConstructorInjectionService injectionService = beanFactoryImpl.getBean(ValidConstructorInjectionService.class);
         assertThat(injectionService).isNotNull();
         assertThat(injectionService.getFirstInjectionCandidate()).isNotNull();
         assertThat(injectionService.getSecondInjectionCandidate()).isNotNull();
@@ -73,9 +73,9 @@ class BeanFactoryTest {
     void shouldRegisterMethodArgumentBeansWhenConfigClassIsPassed() {
         registerBeanDefinitionsForConfigMethodBaseBeanAutowiring();
 
-        beanFactory.registerBeans(ConfigMethodBasedBeanAutowiring.class);
-        FirstInjectionCandidate firstInjectionCandidate = beanFactory.getBean(FirstInjectionCandidate.class);
-        SecondInjectionCandidate secondInjectionCandidate = beanFactory.getBean(SecondInjectionCandidate.class);
+        beanFactoryImpl.registerBeans(ConfigMethodBasedBeanAutowiring.class);
+        FirstInjectionCandidate firstInjectionCandidate = beanFactoryImpl.getBean(FirstInjectionCandidate.class);
+        SecondInjectionCandidate secondInjectionCandidate = beanFactoryImpl.getBean(SecondInjectionCandidate.class);
         assertThat(firstInjectionCandidate).isNotNull();
         assertThat(secondInjectionCandidate).isNotNull();
     }
@@ -84,10 +84,10 @@ class BeanFactoryTest {
     void shouldRegisterMethodArgumentBeansAndPassThemToMethodBasedBean() {
         registerBeanDefinitionsForConfigMethodBaseBeanAutowiring();
 
-        beanFactory.registerBeans(ConfigMethodBasedBeanAutowiring.class);
-        ValidConstructorInjectionService injectionService = beanFactory.getBean(ValidConstructorInjectionService.class);
-        FirstInjectionCandidate firstInjectionCandidate = beanFactory.getBean(FirstInjectionCandidate.class);
-        SecondInjectionCandidate secondInjectionCandidate = beanFactory.getBean(SecondInjectionCandidate.class);
+        beanFactoryImpl.registerBeans(ConfigMethodBasedBeanAutowiring.class);
+        ValidConstructorInjectionService injectionService = beanFactoryImpl.getBean(ValidConstructorInjectionService.class);
+        FirstInjectionCandidate firstInjectionCandidate = beanFactoryImpl.getBean(FirstInjectionCandidate.class);
+        SecondInjectionCandidate secondInjectionCandidate = beanFactoryImpl.getBean(SecondInjectionCandidate.class);
         assertThat(injectionService.getFirstInjectionCandidate()).isEqualTo(firstInjectionCandidate);
         assertThat(injectionService.getSecondInjectionCandidate()).isEqualTo(secondInjectionCandidate);
     }
@@ -96,7 +96,7 @@ class BeanFactoryTest {
     @Disabled
     void shouldThrowExceptionIfCircularDependencyDetectedInClassBasedBeans() {
         AssertionsForClassTypes.assertThatExceptionOfType(UnresolvedCircularDependencyException.class)
-                .isThrownBy(() -> beanFactory.registerBeans(FirstCircularDependencyOwner.class, SecondCircularDependencyOwner.class))
+                .isThrownBy(() -> beanFactoryImpl.registerBeans(FirstCircularDependencyOwner.class, SecondCircularDependencyOwner.class))
                 .withMessage(CIRCULAR_DEPENDENCY_DETECTED, SecondCircularDependencyOwner.class.getName());
     }
 
@@ -104,14 +104,14 @@ class BeanFactoryTest {
     @Disabled
     void shouldThrowExceptionIfCircularDependencyDetectedInMethodBasedBeans() {
         AssertionsForClassTypes.assertThatExceptionOfType(UnresolvedCircularDependencyException.class)
-                .isThrownBy(() -> beanFactory.registerBeans(CircularDependencyConfig.class))
+                .isThrownBy(() -> beanFactoryImpl.registerBeans(CircularDependencyConfig.class))
                 .withMessage(CIRCULAR_DEPENDENCY_DETECTED, SecondCircularDependencyOwner.class.getName());
     }
 
     @Test
     void shouldGetAllRegistersBeansWithoutPrototype() {
-        beanFactory.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
-        Map<String, Object> beans = beanFactory.getBeans();
+        beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        Map<String, Object> beans = beanFactoryImpl.getBeans();
         assertEquals(2, beans.size());
         assertTrue(beans.containsKey("injFirstCandidate"));
         assertTrue(beans.containsKey("injSecondCandidate"));
@@ -119,57 +119,57 @@ class BeanFactoryTest {
 
     @Test
     void shouldGetPrimaryCandidateByClasTypeForInterface() {
-        beanFactory.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
-        Map<String, Object> beans = beanFactory.getBeans();
-        var bean = beanFactory.getBean(InjCandidate.class);
+        beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        Map<String, Object> beans = beanFactoryImpl.getBeans();
+        var bean = beanFactoryImpl.getBean(InjCandidate.class);
         assertEquals(beans.get("injSecondCandidate"), bean);
     }
 
     @Test
     void shouldGetPrimaryCandidateByClasTypeAndNameForInterface() {
-        beanFactory.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
-        Map<String, Object> beans = beanFactory.getBeans();
-        var bean = beanFactory.getBean("injSecondCandidate", InjCandidate.class);
+        beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        Map<String, Object> beans = beanFactoryImpl.getBeans();
+        var bean = beanFactoryImpl.getBean("injSecondCandidate", InjCandidate.class);
         assertEquals(beans.get("injSecondCandidate"), bean);
     }
 
     @Test
     void shouldGetPrototypeCandidateByClasType() {
-        beanFactory.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
-        var bean1 = beanFactory.getBean(PrototypeCandidate.class);
-        var bean2 = beanFactory.getBean(PrototypeCandidate.class);
+        beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        var bean1 = beanFactoryImpl.getBean(PrototypeCandidate.class);
+        var bean2 = beanFactoryImpl.getBean(PrototypeCandidate.class);
         assertNotEquals(bean1, bean2);
     }
 
     @Test
     void shouldGetPrototypeCandidateByClasTypeAndName() {
-        beanFactory.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
-        var bean1 = beanFactory.getBean("prototypeCandidate", PrototypeCandidate.class);
-        var bean2 = beanFactory.getBean("prototypeCandidate", PrototypeCandidate.class);
+        beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        var bean1 = beanFactoryImpl.getBean("prototypeCandidate", PrototypeCandidate.class);
+        var bean2 = beanFactoryImpl.getBean("prototypeCandidate", PrototypeCandidate.class);
         assertNotEquals(bean1, bean2);
     }
 
     @Test
     void shouldThrowNoSuchBeanDefinitionExceptionGetPrototypeCandidateByClasTypeAndName() {
-        beanFactory.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
         String errorMessageFormat = "No bean definition found of type %s";
         String errorMessage = String.format(errorMessageFormat, PrototypeCandidate.class.getName());
         var exception = assertThrows(NoSuchBeanDefinitionException.class,
-                () -> beanFactory.getBean("prototypeSecondCandidate", PrototypeCandidate.class));
+                () -> beanFactoryImpl.getBean("prototypeSecondCandidate", PrototypeCandidate.class));
         assertEquals(errorMessage, exception.getMessage());
 
         errorMessageFormat = "No bean definition found of type %s";
         errorMessage = String.format(errorMessageFormat, InjFirstCandidate.class.getName());
         exception = assertThrows(NoSuchBeanDefinitionException.class,
-                () -> beanFactory.getBean("prototypeSecondCandidate", InjFirstCandidate.class));
+                () -> beanFactoryImpl.getBean("prototypeSecondCandidate", InjFirstCandidate.class));
         assertEquals(errorMessage, exception.getMessage());
     }
 
     @Test
     void shouldGetBeansOfTypeByRequiredType() {
-        beanFactory.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
-        var expectedBeanMap = beanFactory.getBeans();
-        var actualBeanMap = beanFactory.getBeansOfType(InjCandidate.class);
+        beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        var expectedBeanMap = beanFactoryImpl.getBeans();
+        var actualBeanMap = beanFactoryImpl.getBeansOfType(InjCandidate.class);
 
         assertEquals(expectedBeanMap.size(), actualBeanMap.size());
         assertEquals(expectedBeanMap.get("injFirstCandidate"), actualBeanMap.get("injFirstCandidate"));
@@ -178,40 +178,40 @@ class BeanFactoryTest {
 
     @Test
     void shouldGetPrototypeBeanOfTypeByRequiredTypeAndName() {
-        beanFactory.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
-        var actualBean = beanFactory.getBean("injFirstPrototypeCandidate", InjFirstPrototypeCandidate.class);
+        beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        var actualBean = beanFactoryImpl.getBean("injFirstPrototypeCandidate", InjFirstPrototypeCandidate.class);
 
         assertEquals(InjFirstPrototypeCandidate.class, actualBean.getClass());
     }
 
     @Test
     void shouldGetPrototypeBeanOfTypeByRequiredTypeAndName1() {
-        beanFactory.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
-        assertEquals(InjFirstPrototypeCandidate.class, beanFactory.getBean(InjPrototypeCandidate.class).getClass());
+        beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
+        assertEquals(InjFirstPrototypeCandidate.class, beanFactoryImpl.getBean(InjPrototypeCandidate.class).getClass());
     }
 
     @Test
     void shouldThrowNoSuchBeanDefinitionExceptionWhenGetPrototypeBeanOfTypeWithoutPrimaryByRequiredType() {
-        beanFactory.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.throwPrototypeCandidateByInterfaceWithoutPrimary");
+        beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.throwPrototypeCandidateByInterfaceWithoutPrimary");
         String message = String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, InjPrototypeCandidateWithoutPrimary.class.getName());
 
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
-                .isThrownBy(() -> beanFactory.getBean(InjPrototypeCandidateWithoutPrimary.class))
+                .isThrownBy(() -> beanFactoryImpl.getBean(InjPrototypeCandidateWithoutPrimary.class))
                 .withMessage(message);
     }
 
     @Test
     void shouldThrowNoUniqueBeanDefinitionExceptionWhenGetPrototypeBeanOfTypeMoreOnePrimaryByRequiredType() {
-        beanFactory.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.throwPrototypeCandidateByInterfaceMoreOnePrimary");
+        beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.throwPrototypeCandidateByInterfaceMoreOnePrimary");
         String message = String.format(NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE, InjPrototypeCandidateMoreOnePrimary.class.getName());
 
         assertThatExceptionOfType(NoUniqueBeanDefinitionException.class)
-                .isThrownBy(() -> beanFactory.getBean(InjPrototypeCandidateMoreOnePrimary.class))
+                .isThrownBy(() -> beanFactoryImpl.getBean(InjPrototypeCandidateMoreOnePrimary.class))
                 .withMessage(message);
     }
 
     private void registerBeanDefinitionsForConfigMethodBaseBeanAutowiring() {
-        beanFactory.beanDefinitionFactory().registerBeanDefinitions(Set.of(
+        beanFactoryImpl.beanDefinitionFactory().registerBeanDefinitions(Set.of(
                         ConfigMethodBasedBeanAutowiring.class,
                         ValidConstructorInjectionService.class,
                         FirstInjectionCandidate.class,

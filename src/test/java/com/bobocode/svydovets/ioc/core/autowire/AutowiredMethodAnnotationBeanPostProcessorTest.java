@@ -1,7 +1,6 @@
 package com.bobocode.svydovets.ioc.core.autowire;
 
 import com.bobocode.svydovets.source.autowire.method.OrderService;
-import com.bobocode.svydovets.source.config.AutowireByFieldPackageBeansConfig;
 import com.bobocode.svydovets.source.config.AutowireByMethodPackageBeansConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
