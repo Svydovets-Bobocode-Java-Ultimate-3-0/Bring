@@ -20,11 +20,11 @@ public class ResponseEntity<T> {
         return body;
     }
 
-    public HttpStatus getStatus() {
+    public HttpStatus getHttpStatus() {
         return status;
     }
 
-    public HttpHeaders getHeaders() {
+    public HttpHeaders getHttpHeaders() {
         return headers;
     }
 

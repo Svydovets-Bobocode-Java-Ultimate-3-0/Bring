@@ -49,4 +49,5 @@ public abstract class ErrorMessageConstants {
 
     public static final String ERROR_NOT_UNIQUE_METHOD_THAT_ANNOTATED_POST_CONSTRUCT = "You cannot have more than one method that is annotated with @PostConstruct.";
 
+    public static final String ERROR_STARTING_EMBEDDED_TOMCAT = "Error starting embedded tomcat with passed based class: %s";
 }

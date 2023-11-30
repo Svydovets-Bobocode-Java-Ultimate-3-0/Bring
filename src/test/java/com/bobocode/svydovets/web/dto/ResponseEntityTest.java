@@ -29,13 +29,13 @@ public class ResponseEntityTest {
 
     @Test
     public void shouldReturnHeaderField() {
-        var headers = responseEntity.getHeaders();
+        var headers = responseEntity.getHttpHeaders();
         assertEquals(1, headers.getHeaders().size());
         assertEquals("test", headers.getHeaders().get("head"));
     }
 
     @Test
     public void shouldReturnStatusField() {
-        assertEquals(HttpStatus.OK, responseEntity.getStatus());
+        assertEquals(HttpStatus.OK, responseEntity.getHttpStatus());
     }
 }
