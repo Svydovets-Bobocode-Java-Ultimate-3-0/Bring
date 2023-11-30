@@ -20,7 +20,6 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
-import java.util.Map;
 
 import static com.bobocode.svydovets.web.factory.UserFactory.DEFAULT_FIRST_NAME;
 import static com.bobocode.svydovets.web.factory.UserFactory.DEFAULT_ID;

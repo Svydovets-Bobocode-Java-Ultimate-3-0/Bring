@@ -1,8 +1,8 @@
 package svydovets.core.context.beanFactory;
 
-import svydovets.core.context.beanDefinition.BeanDefinition;
-
 import java.util.Map;
+
+import svydovets.core.context.beanDefinition.BeanDefinition;
 
 /**
  * The {@code BeanFactory} interface is a central component of our custom Inversion of Control (IoC) framework,
