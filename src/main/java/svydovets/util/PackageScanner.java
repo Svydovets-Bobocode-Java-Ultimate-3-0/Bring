@@ -27,10 +27,6 @@ public class PackageScanner {
         return componentClasses;
     }
 
-    public Set<Class<?>> findComponentsByClass(Class<?> classType) {
-        return findComponentsByBasePackage(classType.getPackageName());
-    }
-
     public Set<Class<?>> findAllBeanCandidatesByBaseClass(Class<?>... classTypes) {
         log.trace("Call findAllBeanCandidatesByBaseClass({})", (Object[]) classTypes);
         Set<Class<?>> beanClasses = new HashSet<>();
@@ -45,7 +41,7 @@ public class PackageScanner {
             }
         }
 
-        log.trace("Found set beanClasses: {}", beanClasses);
+        log.trace("Found set of bean classes: {}", beanClasses);
 
         return beanClasses;
     }
