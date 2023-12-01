@@ -2,6 +2,9 @@ package svydovets.core.context.injector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import svydovets.core.annotation.Qualifier;
+
+import java.lang.reflect.Field;
 
 /**
  * Implementation of {@link Injector} that represents injection to beans.
@@ -33,10 +36,20 @@ public class BeanInjector extends AbstractInjector {
      */
     @Override
     public void inject(InjectorConfig config) {
-        log.trace("Call inject({})", config);
+        if(log.isTraceEnabled()) {
+            log.trace("Call inject({})", config);
+        }
 
-        var autowireCandidateType = config.getBeanField().getType();
-        Object autowireCandidate = config.getBeanReceiver().apply(autowireCandidateType);
+        Field field = config.getBeanField();
+        var autowireCandidateType = field.getType();
+
+        Object autowireCandidate;
+
+        if(field.isAnnotationPresent(Qualifier.class)) {
+            autowireCandidate = getQualifierCandidate(config, field, autowireCandidateType);
+        } else {
+            autowireCandidate = config.getBeanReceiver().apply(autowireCandidateType);
+        }
 
         setDependency(config.getBean(), config.getBeanField(), autowireCandidate);
     }

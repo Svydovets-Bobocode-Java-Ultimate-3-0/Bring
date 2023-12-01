@@ -3,7 +3,6 @@ package svydovets.core.context.beanFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import svydovets.core.annotation.PostConstruct;
-import svydovets.core.annotation.Qualifier;
 import svydovets.core.bpp.AutowiredAnnotationBeanPostProcessor;
 import svydovets.core.bpp.BeanPostProcessor;
 import svydovets.core.context.ApplicationContext;
@@ -413,7 +412,7 @@ public class BeanFactoryImpl implements BeanFactory {
         }
 
         if (beansOfType.size() > 1) {
-            return defineSpecificBean(requiredType, beansOfType);
+            return definePrimarySpecificBean(requiredType, beansOfType);
         }
 
         return beansOfType.values().stream().findAny().orElseThrow();
@@ -485,12 +484,6 @@ public class BeanFactoryImpl implements BeanFactory {
                 .count() > 1;
     }
 
-    private <T> T defineSpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
-        var defineQualifierSpecificBean = defineQualifierSpecificBean(requiredType, beansOfType);
-
-        return defineQualifierSpecificBean.orElseGet(() -> definePrimarySpecificBean(requiredType, beansOfType));
-    }
-
     private <T> T definePrimarySpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
         log.trace("Call definePrimarySpecificBean({}, {})", requiredType, beansOfType);
         List<T> beansOfRequiredType = beansOfType.values().stream()
@@ -508,20 +501,6 @@ public class BeanFactoryImpl implements BeanFactory {
         }
 
         return beansOfRequiredType.stream().findAny().orElseThrow();
-    }
-
-    private <T> Optional<T> defineQualifierSpecificBean(Class<T> requiredType, Map<String, T> beansOfType) {
-        log.trace("Call defineQualifierSpecificBean({}, {})", requiredType, beansOfType);
-
-        if (requiredType.isAnnotationPresent(Qualifier.class)) {
-            var qualifier = requiredType.getDeclaredAnnotation(Qualifier.class);
-
-            String beanName = qualifier.value();
-
-            return Optional.ofNullable(beansOfType.get(beanName));
-        }
-
-        return Optional.empty();
     }
 
     private <T> Optional<T> checkAndCreatePrototypeBean(String name, Class<T> requiredType) {
