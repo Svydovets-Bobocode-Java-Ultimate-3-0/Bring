@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
  * }
  * </pre>
  *
- * @author @Renat Safarov
+ * @author @Renat Safarov, @Oleksii Makieiev
  * @version 1.0
  * @see PathVariable
  * @see RequestParam

@@ -23,10 +23,7 @@ import java.lang.annotation.Target;
  * }
  * </pre>
  *
- * <p>Note: This annotation assumes the presence of a framework capable of processing HTTP requests and
- * routing them to methods annotated with {@code GetMapping}, similar to how the Spring Framework operates.
- *
- * @author @Renat Safarov
+ * @author @Renat Safarov, @Oleksii Makieiev
  * @version 1.0
  * @see PathVariable
  */

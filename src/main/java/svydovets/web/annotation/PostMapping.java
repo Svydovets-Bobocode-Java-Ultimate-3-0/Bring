@@ -24,9 +24,8 @@ import java.lang.annotation.Target;
  * }
  * </pre>
  *
- * @author [Your Name]
+ * @author @Safarov Renat, @Oleksii Makieiev
  * @version 1.0
- * @since [Version of your framework or the date of creation]
  * @see RequestBody
  */
 @Retention(RetentionPolicy.RUNTIME)
