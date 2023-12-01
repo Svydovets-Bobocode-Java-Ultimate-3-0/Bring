@@ -7,7 +7,7 @@ import svydovets.core.context.beanFactory.command.CommandFactory;
 import svydovets.core.context.beanFactory.command.CommandFunctionName;
 import svydovets.core.context.injector.InjectorConfig;
 import svydovets.core.context.injector.InjectorExecutor;
-import svydovets.exception.AutowireBeanException;
+import svydovets.core.exception.AutowireBeanException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -97,7 +97,7 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
         } catch (IllegalAccessException | InvocationTargetException exception) {
             log.error(ERROR_NO_ACCESS_TO_METHOD);
 
-            throw new AutowireBeanException(ERROR_NO_ACCESS_TO_METHOD);
+            throw new AutowireBeanException(ERROR_NO_ACCESS_TO_METHOD, exception);
         }
     }
 

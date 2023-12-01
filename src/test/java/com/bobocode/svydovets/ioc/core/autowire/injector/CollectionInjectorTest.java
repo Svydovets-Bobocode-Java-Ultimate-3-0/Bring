@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import svydovets.core.context.injector.CollectionInjector;
 import svydovets.core.context.injector.InjectorConfig;
-import svydovets.exception.BeanCreationException;
+import svydovets.core.exception.BeanCreationException;
 
 import java.lang.reflect.Field;
 import java.util.List;

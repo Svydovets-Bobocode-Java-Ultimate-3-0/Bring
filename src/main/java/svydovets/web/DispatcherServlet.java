@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import svydovets.exception.RequestProcessingException;
+import svydovets.web.exception.RequestProcessingException;
 import svydovets.util.ErrorMessageConstants;
 import svydovets.web.dto.RequestInfoHolder;
 import svydovets.web.dto.ResponseEntity;
