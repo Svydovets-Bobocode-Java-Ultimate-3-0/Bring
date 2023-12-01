@@ -17,10 +17,6 @@ public abstract class AbstractBeanDefinition implements BeanDefinition {
         this.beanClass = beanClass;
     }
 
-    public AbstractBeanDefinition() {
-        //empty constructor
-    }
-
     @Override
     public String getBeanName() {
         return beanName;

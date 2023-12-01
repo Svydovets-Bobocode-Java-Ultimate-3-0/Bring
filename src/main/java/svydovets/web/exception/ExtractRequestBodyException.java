@@ -1,4 +1,4 @@
-package svydovets.exception;
+package svydovets.web.exception;
 
 //Never used
 public class ExtractRequestBodyException extends RuntimeException {

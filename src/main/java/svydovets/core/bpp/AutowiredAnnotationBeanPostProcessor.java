@@ -23,11 +23,7 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
 
     private static final Logger log = LoggerFactory.getLogger(AutowiredAnnotationBeanPostProcessor.class);
 
-    private CommandFactory commandFactory;
-
-    public AutowiredAnnotationBeanPostProcessor() {
-        //empty constructor
-    }
+    private final CommandFactory commandFactory;
 
     public AutowiredAnnotationBeanPostProcessor(CommandFactory commandFactory) {
         this.commandFactory = commandFactory;
