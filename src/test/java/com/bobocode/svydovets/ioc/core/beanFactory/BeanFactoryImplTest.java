@@ -1,5 +1,6 @@
 package com.bobocode.svydovets.ioc.core.beanFactory;
 
+import com.bobocode.svydovets.source.base.MessageService;
 import com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface.InjCandidate;
 import com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface.InjFirstCandidate;
 import com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface.InjFirstPrototypeCandidate;
@@ -15,9 +16,8 @@ import com.bobocode.svydovets.source.circularDependency.CircularDependencyConfig
 import com.bobocode.svydovets.source.circularDependency.FirstCircularDependencyOwner;
 import com.bobocode.svydovets.source.circularDependency.SecondCircularDependencyOwner;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import svydovets.core.exception.BeanCreationException;
 import svydovets.core.exception.NoSuchBeanDefinitionException;
 
 import java.util.Map;
@@ -35,9 +35,11 @@ import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static svydovets.util.ErrorMessageConstants.CIRCULAR_DEPENDENCY_DETECTED;
+import static svydovets.util.ErrorMessageConstants.ERROR_CREATED_BEAN_OF_TYPE;
 import static svydovets.util.ErrorMessageConstants.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
 import static svydovets.util.ErrorMessageConstants.NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BeanFactoryImplTest {
 
     private BeanFactoryImpl beanFactoryImpl;
@@ -49,6 +51,7 @@ class BeanFactoryImplTest {
 
 
     @Test
+    @Order(1)
     void shouldRegisterBeanWhenConfigClassIsPassed() {
         registerBeanDefinitionsForConfigMethodBaseBeanAutowiring();
 
@@ -59,6 +62,7 @@ class BeanFactoryImplTest {
 
 
     @Test
+    @Order(2)
     void shouldRegisterMethodBasedBeanWhenConfigClassIsPassed() {
         registerBeanDefinitionsForConfigMethodBaseBeanAutowiring();
 
@@ -70,6 +74,7 @@ class BeanFactoryImplTest {
     }
 
     @Test
+    @Order(3)
     void shouldRegisterMethodArgumentBeansWhenConfigClassIsPassed() {
         registerBeanDefinitionsForConfigMethodBaseBeanAutowiring();
 
@@ -81,6 +86,7 @@ class BeanFactoryImplTest {
     }
 
     @Test
+    @Order(4)
     void shouldRegisterMethodArgumentBeansAndPassThemToMethodBasedBean() {
         registerBeanDefinitionsForConfigMethodBaseBeanAutowiring();
 
@@ -93,22 +99,22 @@ class BeanFactoryImplTest {
     }
 
     @Test
-    @Disabled
+    @Order(5)
     void shouldThrowExceptionIfCircularDependencyDetectedInClassBasedBeans() {
-        AssertionsForClassTypes.assertThatExceptionOfType(UnresolvedCircularDependencyException.class)
-                .isThrownBy(() -> beanFactoryImpl.registerBeans(FirstCircularDependencyOwner.class, SecondCircularDependencyOwner.class))
-                .withMessage(CIRCULAR_DEPENDENCY_DETECTED, SecondCircularDependencyOwner.class.getName());
+        AssertionsForClassTypes.assertThatExceptionOfType(BeanCreationException.class)
+                .isThrownBy(() -> beanFactoryImpl.registerBeans(FirstCircularDependencyOwner.class, SecondCircularDependencyOwner.class));
     }
 
     @Test
-    @Disabled
+    @Order(6)
     void shouldThrowExceptionIfCircularDependencyDetectedInMethodBasedBeans() {
-        AssertionsForClassTypes.assertThatExceptionOfType(UnresolvedCircularDependencyException.class)
+        AssertionsForClassTypes.assertThatExceptionOfType(BeanCreationException.class)
                 .isThrownBy(() -> beanFactoryImpl.registerBeans(CircularDependencyConfig.class))
-                .withMessage(CIRCULAR_DEPENDENCY_DETECTED, SecondCircularDependencyOwner.class.getName());
+                .withMessage(ERROR_CREATED_BEAN_OF_TYPE, MessageService.class.getName());
     }
 
     @Test
+    @Order(7)
     void shouldGetAllRegistersBeansWithoutPrototype() {
         beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
         Map<String, Object> beans = beanFactoryImpl.getBeans();
@@ -118,6 +124,7 @@ class BeanFactoryImplTest {
     }
 
     @Test
+    @Order(8)
     void shouldGetPrimaryCandidateByClasTypeForInterface() {
         beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
         Map<String, Object> beans = beanFactoryImpl.getBeans();
@@ -126,6 +133,7 @@ class BeanFactoryImplTest {
     }
 
     @Test
+    @Order(9)
     void shouldGetPrimaryCandidateByClasTypeAndNameForInterface() {
         beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
         Map<String, Object> beans = beanFactoryImpl.getBeans();
@@ -134,6 +142,7 @@ class BeanFactoryImplTest {
     }
 
     @Test
+    @Order(10)
     void shouldGetPrototypeCandidateByClasType() {
         beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
         var bean1 = beanFactoryImpl.getBean(PrototypeCandidate.class);
@@ -142,6 +151,7 @@ class BeanFactoryImplTest {
     }
 
     @Test
+    @Order(11)
     void shouldGetPrototypeCandidateByClasTypeAndName() {
         beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
         var bean1 = beanFactoryImpl.getBean("prototypeCandidate", PrototypeCandidate.class);
@@ -150,6 +160,7 @@ class BeanFactoryImplTest {
     }
 
     @Test
+    @Order(12)
     void shouldThrowNoSuchBeanDefinitionExceptionGetPrototypeCandidateByClasTypeAndName() {
         beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
         String errorMessageFormat = "No bean definition found of type %s";
@@ -166,6 +177,7 @@ class BeanFactoryImplTest {
     }
 
     @Test
+    @Order(13)
     void shouldGetBeansOfTypeByRequiredType() {
         beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
         var expectedBeanMap = beanFactoryImpl.getBeans();
@@ -177,6 +189,7 @@ class BeanFactoryImplTest {
     }
 
     @Test
+    @Order(14)
     void shouldGetPrototypeBeanOfTypeByRequiredTypeAndName() {
         beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
         var actualBean = beanFactoryImpl.getBean("injFirstPrototypeCandidate", InjFirstPrototypeCandidate.class);
@@ -185,12 +198,14 @@ class BeanFactoryImplTest {
     }
 
     @Test
+    @Order(15)
     void shouldGetPrototypeBeanOfTypeByRequiredTypeAndName1() {
         beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.foundCandidateByInterface");
         assertEquals(InjFirstPrototypeCandidate.class, beanFactoryImpl.getBean(InjPrototypeCandidate.class).getClass());
     }
 
     @Test
+    @Order(16)
     void shouldThrowNoSuchBeanDefinitionExceptionWhenGetPrototypeBeanOfTypeWithoutPrimaryByRequiredType() {
         beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.throwPrototypeCandidateByInterfaceWithoutPrimary");
         String message = String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, InjPrototypeCandidateWithoutPrimary.class.getName());
@@ -201,6 +216,7 @@ class BeanFactoryImplTest {
     }
 
     @Test
+    @Order(17)
     void shouldThrowNoUniqueBeanDefinitionExceptionWhenGetPrototypeBeanOfTypeMoreOnePrimaryByRequiredType() {
         beanFactoryImpl.registerBeans("com.bobocode.svydovets.source.beanFactoryTest.throwPrototypeCandidateByInterfaceMoreOnePrimary");
         String message = String.format(NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE, InjPrototypeCandidateMoreOnePrimary.class.getName());

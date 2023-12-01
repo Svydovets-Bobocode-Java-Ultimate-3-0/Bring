@@ -1,9 +1,6 @@
 package com.bobocode.svydovets.web.dto;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import svydovets.web.dto.HttpHeaders;
 import svydovets.web.dto.HttpStatus;
 import svydovets.web.dto.ResponseEntity;
@@ -23,11 +20,13 @@ public class ResponseEntityTest {
     }
 
     @Test
+    @Order(1)
     public void shouldReturnBodyField() {
         assertEquals("body", responseEntity.getBody());
     }
 
     @Test
+    @Order(2)
     public void shouldReturnHeaderField() {
         var headers = responseEntity.getHttpHeaders();
         assertEquals(1, headers.getHeaders().size());
@@ -35,6 +34,7 @@ public class ResponseEntityTest {
     }
 
     @Test
+    @Order(3)
     public void shouldReturnStatusField() {
         assertEquals(HttpStatus.OK, responseEntity.getHttpStatus());
     }

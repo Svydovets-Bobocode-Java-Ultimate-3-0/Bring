@@ -8,8 +8,11 @@ import svydovets.core.annotation.ComponentScan;
 import svydovets.core.annotation.Configuration;
 import svydovets.web.annotation.RestController;
 
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PackageScanner {
 

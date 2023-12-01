@@ -11,9 +11,7 @@ import com.bobocode.svydovets.source.base.MessageService;
 import com.bobocode.svydovets.source.config.BasePackageBeansConfig;
 import com.bobocode.svydovets.source.config.BasePackageWithAdditionalBeansConfig;
 import com.bobocode.svydovets.source.config.ConfigWithThrowScope;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import svydovets.core.context.ApplicationContext;
 import svydovets.core.context.beanDefinition.BeanAnnotationBeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinition;
@@ -30,6 +28,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOf
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static svydovets.util.NameResolver.resolveBeanName;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BeanDefinitionFactoryTest {
 
     private BeanDefinitionFactory beanDefinitionFactory;
@@ -39,11 +38,8 @@ class BeanDefinitionFactoryTest {
         beanDefinitionFactory = new BeanDefinitionFactory();
     }
 
-    @AfterEach
-    void tearDown() {
-    }
-
     @Test
+    @Order(1)
     void shouldRegisterComponentAnnotationBeanDefinitions() {
         beanDefinitionFactory.registerBeanDefinitions(Set.of(CommonService.class, MessageService.class));
         BeanDefinition commonServiceBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("commonService");
@@ -55,6 +51,7 @@ class BeanDefinitionFactoryTest {
     }
 
     @Test
+    @Order(2)
     void shouldRegisterConfigClassesAsComponentAnnotationBeanDefinitions() {
         beanDefinitionFactory.registerBeanDefinitions(Set.of(BasePackageBeansConfig.class, BasePackageWithAdditionalBeansConfig.class));
         BeanDefinition basePackageBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("basePackageBeansConfig");
@@ -66,6 +63,7 @@ class BeanDefinitionFactoryTest {
     }
 
     @Test
+    @Order(3)
     void shouldRegisterFilledBeanAnnotationSingletonBeanDefinition() {
         beanDefinitionFactory.registerBeanDefinitions(Set.of(BasePackageWithAdditionalBeansConfig.class));
         BeanDefinition beanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("copyService");
@@ -76,6 +74,7 @@ class BeanDefinitionFactoryTest {
     }
 
     @Test
+    @Order(4)
     void shouldRegisterFilledBeanAnnotationPrototypeBeanDefinition() {
         beanDefinitionFactory.registerBeanDefinitions(Set.of(BasePackageWithAdditionalBeansConfig.class));
         BeanDefinition beanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("printLnService");
@@ -86,6 +85,7 @@ class BeanDefinitionFactoryTest {
     }
 
     @Test
+    @Order(5)
     void shouldThrowUnsupportedScopeExceptionWithNotValidScope() {
         String errorMessage = String.format(ErrorMessageConstants.UNSUPPORTED_SCOPE_TYPE, "hernya");
         assertThatExceptionOfType(UnsupportedScopeException.class)
@@ -94,6 +94,7 @@ class BeanDefinitionFactoryTest {
     }
 
     @Test
+    @Order(6)
     void shouldRegisterComponentAnnotationBeanDefinition() {
         beanDefinitionFactory.registerBeanDefinition(CommonService.class);
         BeanDefinition commonServiceBeanDefinition = beanDefinitionFactory.getBeanDefinitionByBeanName("commonService");
@@ -102,6 +103,7 @@ class BeanDefinitionFactoryTest {
     }
 
     @Test
+    @Order(7)
     void shouldReturnCorrectFilledComponentAnnotationBeanDefinition() {
         beanDefinitionFactory.registerBeanDefinition(ValidConstructorInjectionService.class);
         ComponentAnnotationBeanDefinition serviceDefinition = (ComponentAnnotationBeanDefinition) beanDefinitionFactory.getBeanDefinitionByBeanName("validConstructorInjectionService");
@@ -113,6 +115,7 @@ class BeanDefinitionFactoryTest {
     }
 
     @Test
+    @Order(7)
     void shouldReturnCorrectFilledBeanAnnotationBeanDefinition() throws Exception {
         Class<?> configClass = BasePackageWithAdditionalBeansConfig.class;
         Class<?> beanClass = TrimService.class;
@@ -131,6 +134,7 @@ class BeanDefinitionFactoryTest {
     }
 
     @Test
+    @Order(8)
     void shouldThrowExceptionIfConstructorWithoutAutowire() {
         assertThrows(BeanDefinitionCreateException.class, () -> {
             beanDefinitionFactory.registerBeanDefinition(InvalidConstructorInjectionService.class);

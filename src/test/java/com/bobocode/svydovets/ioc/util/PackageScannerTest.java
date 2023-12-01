@@ -15,6 +15,7 @@ import com.bobocode.svydovets.source.postconstruct.valid.PostConstructService;
 import com.bobocode.svydovets.source.withoutAnnotation.NonAnnotatedClass;
 import com.bobocode.svydovets.source.withoutAnnotation.NonAnnotatedClassFirst;
 import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import svydovets.util.PackageScanner;
@@ -35,18 +36,15 @@ public class PackageScannerTest {
     private final Set<Class<?>> beansScannedClassesWithoutConfigs = Set.of(
             BasePackageBeansConfig.class,
             PostConstructBeansConfig.class,
-            // From BeanConfigBase
             CommonService.class,
             MessageService.class,
             NullService.class,
-            // From BeanConfigPostConstruct
             PostConstructService.class,
             DuplicatePostConstructService.class
     );
 
     private final Set<Class<?>> beansScannedByConfigClass = Set.of(
             BasePackageBeansConfig.class,
-            // From BeanConfigBase
             CommonService.class,
             MessageService.class,
             NullService.class
@@ -67,6 +65,7 @@ public class PackageScannerTest {
     );
 
     @Test
+    @Order(1)
     void shouldFindAllBeansExceptInterfaces() {
         Set<Class<?>> result = packageScanner.findAllBeanCandidatesByBasePackage("com.bobocode.svydovets.source.interfaces");
 
@@ -75,6 +74,7 @@ public class PackageScannerTest {
     }
 
     @Test
+    @Order(2)
     void testScanAllBeansByConfigClass() {
         Set<Class<?>> result = packageScanner.findAllBeanCandidatesByClassTypes(
                 BasePackageBeansConfig.class,
@@ -86,6 +86,7 @@ public class PackageScannerTest {
     }
 
     @Test
+    @Order(3)
     void testFindAllBeanByBaseClass() {
         Set<Class<?>> result = packageScanner.findAllBeanCandidatesByClassTypes(BasePackageBeansConfig.class);
 
@@ -94,6 +95,7 @@ public class PackageScannerTest {
     }
 
     @Test
+    @Order(4)
     void testFindAllBeanByBaseClassOuterPackage() {
         Set<Class<?>> result = packageScanner.findAllBeanCandidatesByClassTypes(PackageScannerBeansConfig.class);
 
@@ -102,6 +104,7 @@ public class PackageScannerTest {
     }
 
     @Test
+    @Order(5)
     void testFindAllBeanByBaseClassShouldReturnEmptySet() {
         Set<Class<?>> result = packageScanner.findAllBeanCandidatesByClassTypes(NonAnnotatedClass.class);
 
@@ -109,6 +112,7 @@ public class PackageScannerTest {
     }
 
     @Test
+    @Order(6)
     void shouldFindAllBeanFromBeanConfigBaseClassWithAdditionalSpecifiedComponents() {
         Set<Class<?>> result = packageScanner.findAllBeanCandidatesByClassTypes(
                 BasePackageBeansConfig.class,

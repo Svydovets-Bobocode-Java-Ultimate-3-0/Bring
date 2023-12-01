@@ -3,6 +3,7 @@ package com.bobocode.svydovets.ioc.util;
 import com.bobocode.svydovets.source.base.CommonService;
 import com.bobocode.svydovets.source.base.MessageService;
 import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import svydovets.core.annotation.Autowired;
@@ -21,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class ReflectionUtilTest {
 
     @Test
+    @Order(1)
     public void findAutowiredFieldNamesTest() {
         List<String> fieldNames = ReflectionsUtil.findAutowiredFieldNames(PersonService.class);
         assertEquals(2, fieldNames.size());
@@ -29,12 +31,14 @@ public class ReflectionUtilTest {
     }
 
     @Test
+    @Order(2)
     public void notFoundAutowiredFieldNamesTest() {
         List<String> fieldNames = ReflectionsUtil.findAutowiredFieldNames(EditService.class);
         assertEquals(0, fieldNames.size());
     }
 
     @Test
+    @Order(3)
     public void findPreparedNoArgsConstructorTest() throws NoSuchMethodException {
         Constructor<EditService> constructor = ReflectionsUtil.getPreparedNoArgsConstructor(EditService.class);
         var targetType = EditService.class;
@@ -43,6 +47,7 @@ public class ReflectionUtilTest {
     }
 
     @Test
+    @Order(4)
     public void notFoundPreparedNoArgsConstructorWithNoDefaultConstructorThrowTest() {
         var exception = assertThrows(NoDefaultConstructorException.class,
                 () -> ReflectionsUtil.getPreparedNoArgsConstructor(UserService.class));

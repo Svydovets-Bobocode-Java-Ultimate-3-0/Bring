@@ -2,10 +2,7 @@ package com.bobocode.svydovets.ioc.core.autowire;
 
 import com.bobocode.svydovets.source.autowire.method.OrderService;
 import com.bobocode.svydovets.source.config.AutowireByMethodPackageBeansConfig;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import svydovets.core.context.AnnotationConfigApplicationContext;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -21,6 +18,7 @@ public class AutowiredMethodAnnotationBeanPostProcessorTest {
     }
 
     @Test
+    @Order(1)
     void shouldNotNullWhenFieldIsInjectedViaSetter() {
         OrderService orderService = context.getBean(OrderService.class);
         assertThat(orderService.getMessageService()).isNotNull();
@@ -29,6 +27,7 @@ public class AutowiredMethodAnnotationBeanPostProcessorTest {
 
 
     @Test
+    @Order(2)
     void shouldBeNullWhenFieldIsInjectedViaSetter() {
         OrderService orderService = context.getBean(OrderService.class);
         assertThat(orderService.getNullService()).isNull();

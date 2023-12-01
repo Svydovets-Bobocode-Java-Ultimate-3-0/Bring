@@ -4,10 +4,7 @@ import com.bobocode.svydovets.web.controller.UserController;
 import com.bobocode.svydovets.web.dto.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -46,6 +43,7 @@ public class MethodArgumentResolverTest {
     }
 
     @Test
+    @Order(1)
     public void shouldExtractValueFromPathVariable() throws Exception {
         Object[] expectedArgs = new Object[]{DEFAULT_ID};
         String methodName = "getOneById";
@@ -61,6 +59,7 @@ public class MethodArgumentResolverTest {
     }
 
     @Test
+    @Order(2)
     public void shouldExtractValueFromRequestParam() throws Exception {
         Object[] expectedArgs = new Object[]{DEFAULT_FIRST_NAME};
         String methodName = "getOneByFirstName";
@@ -75,6 +74,7 @@ public class MethodArgumentResolverTest {
     }
 
     @Test
+    @Order(3)
     public void shouldExtractValueFromRequestBody() throws Exception {
         User defaultUser = createDefaultUser();
         Object[] expectedArgs = new Object[]{defaultUser};
@@ -92,6 +92,7 @@ public class MethodArgumentResolverTest {
     }
 
     @Test
+    @Order(4)
     public void shouldExtractAllRequestInfo() throws Exception {
         Long id = 100L;
         String status = "UPDATED";
@@ -119,6 +120,7 @@ public class MethodArgumentResolverTest {
     }
 
     @Test
+    @Order(5)
     public void shouldExtractHttpServletRequestAndHttpServletResponse() throws Exception {
         Object[] expectedArgs = new Object[]{request, response};
         Method methodToInvoke = UserController.class.getDeclaredMethod("removeWithServletRequestAndResponse", HttpServletRequest.class, HttpServletResponse.class);

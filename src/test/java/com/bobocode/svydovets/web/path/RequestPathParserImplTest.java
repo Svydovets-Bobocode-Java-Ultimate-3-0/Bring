@@ -1,9 +1,6 @@
 package com.bobocode.svydovets.web.path;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import svydovets.web.exception.NoSuchPathVariableException;
 import svydovets.web.path.RequestPathParser;
 import svydovets.web.path.RequestPathParserImpl;
@@ -34,6 +31,7 @@ class RequestPathParserImplTest {
     }
 
     @Test
+    @Order(1)
     public void shouldThrowNoSuchPathVariableExceptionWhenParseRequestPath() {
         String parsErrMsg = "Request path [%s] parsing error from pattern path [%s]";
         var exception = assertThrows(NoSuchPathVariableException.class,
@@ -46,6 +44,7 @@ class RequestPathParserImplTest {
     }
 
     @Test
+    @Order(2)
     public void shouldCreatePathVariableMapFromRequestPath() {
         Map<String, String> resultMap = requestPathParser.parse(REQUEST_PATH_1, PATTERN_PATH_1);
         Map<String, String> expectedMap = new HashMap<>();

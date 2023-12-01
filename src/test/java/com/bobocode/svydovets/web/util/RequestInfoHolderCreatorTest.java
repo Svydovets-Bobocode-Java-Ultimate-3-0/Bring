@@ -14,11 +14,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RequestInfoHolderCreatorTest {
 
   @Test
-  void shouldCreateRequestInfoHolder() {
-    Method[] methods = SimpleRestController.class.getDeclaredMethods();
+  void shouldCreateRequestInfoHolder() throws Exception {
+    Class<SimpleRestController> simpleRestControllerClass = SimpleRestController.class;
+    Method[] methods = simpleRestControllerClass.getDeclaredMethods();
     assertEquals(4, methods.length);
 
-    Method firstMethod = methods[0];
+    Method firstMethod = simpleRestControllerClass.getDeclaredMethod("helloPath", String.class);
     assertTrue(firstMethod.isAnnotationPresent(GetMapping.class));
 
     RequestInfoHolder requestInfoHolder = RequestInfoHolderCreator
