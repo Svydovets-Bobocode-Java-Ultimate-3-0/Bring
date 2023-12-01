@@ -8,6 +8,8 @@ import com.bobocode.svydovets.source.beansForTestScan.SomeBeanSecond;
 import com.bobocode.svydovets.source.config.BasePackageBeansConfig;
 import com.bobocode.svydovets.source.config.PackageScannerBeansConfig;
 import com.bobocode.svydovets.source.config.PostConstructBeansConfig;
+import com.bobocode.svydovets.source.interfaces.NonInterfaceComponent;
+import com.bobocode.svydovets.source.interfaces.NonInterfaceConfiguration;
 import com.bobocode.svydovets.source.postconstruct.invalid.DuplicatePostConstructService;
 import com.bobocode.svydovets.source.postconstruct.valid.PostConstructService;
 import com.bobocode.svydovets.source.withoutAnnotation.NonAnnotatedClass;
@@ -24,6 +26,11 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PackageScannerTest {
     private final PackageScanner packageScanner = new PackageScanner();
+
+    private final Set<Class<?>> beansScannedClassesWithoutInterfaces = Set.of(
+        NonInterfaceConfiguration.class,
+        NonInterfaceComponent.class
+    );
 
     private final Set<Class<?>> beansScannedClassesWithoutConfigs = Set.of(
             BasePackageBeansConfig.class,
@@ -59,6 +66,13 @@ public class PackageScannerTest {
             SomeBeanSecond.class
     );
 
+    @Test
+    void shouldFindAllBeansExceptInterfaces() {
+        Set<Class<?>> result = packageScanner.findComponentsByBasePackage("com.bobocode.svydovets.source.interfaces");
+
+        assertThat(result.size()).isEqualTo(beansScannedClassesWithoutInterfaces.size());
+        assertThat(result).isEqualTo(beansScannedClassesWithoutInterfaces);
+    }
 
     @Test
     void testScanAllBeansByConfigClass() {

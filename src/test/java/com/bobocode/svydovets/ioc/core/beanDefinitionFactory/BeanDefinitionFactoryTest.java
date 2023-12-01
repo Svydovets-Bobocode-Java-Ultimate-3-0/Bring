@@ -21,7 +21,6 @@ import svydovets.core.context.beanDefinition.BeanDefinitionFactory;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
 import svydovets.exception.BeanDefinitionCreateException;
 import svydovets.exception.UnsupportedScopeException;
-import svydovets.util.BeanNameResolver;
 import svydovets.util.ErrorMessageConstants;
 
 import java.util.Set;
@@ -29,6 +28,7 @@ import java.util.Set;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static svydovets.util.NameResolver.resolveBeanName;
 
 class BeanDefinitionFactoryTest {
 
@@ -124,7 +124,7 @@ class BeanDefinitionFactoryTest {
         assertThat(serviceDefinition).isNotNull();
         assertThat(serviceDefinition.getBeanClass()).isEqualTo(beanClass);
         assertThat(serviceDefinition.getBeanName()).isEqualTo(beanName);
-        assertThat(serviceDefinition.getConfigClassName()).isEqualTo(BeanNameResolver.resolveBeanName(configClass));
+        assertThat(serviceDefinition.getConfigClassName()).isEqualTo(resolveBeanName(configClass));
         assertThat(serviceDefinition.getInitMethodOfBeanFromConfigClass()).isEqualTo(configClass.getDeclaredMethod("trimService"));
         assertThat(serviceDefinition.getScope()).isEqualTo(ApplicationContext.SCOPE_SINGLETON);
         assertThat(serviceDefinition.getCreationStatus()).isEqualTo(BeanDefinition.BeanCreationStatus.NOT_CREATED.name());

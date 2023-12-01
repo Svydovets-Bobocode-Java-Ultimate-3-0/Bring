@@ -14,7 +14,6 @@ import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
 import svydovets.core.context.beanFactory.command.CommandFactory;
 import svydovets.core.context.beanFactory.command.CommandFunctionName;
 import svydovets.exception.*;
-import svydovets.util.BeanNameResolver;
 import svydovets.util.ErrorMessageConstants;
 import svydovets.util.PackageScanner;
 
@@ -26,7 +25,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static svydovets.util.BeanNameResolver.resolveBeanName;
+import static svydovets.util.NameResolver.resolveBeanName;
 import static svydovets.util.ErrorMessageConstants.ERROR_CREATED_BEAN_OF_TYPE;
 import static svydovets.util.ErrorMessageConstants.ERROR_NOT_UNIQUE_METHOD_THAT_ANNOTATED_POST_CONSTRUCT;
 import static svydovets.util.ErrorMessageConstants.ERROR_THE_METHOD_THAT_WAS_ANNOTATED_WITH_POST_CONSTRUCT;
@@ -184,7 +183,7 @@ public class BeanFactoryImpl implements BeanFactory {
             return createBeanIfNotPresent(requiredType, true);
         }
 
-        String beanName = BeanNameResolver.resolveBeanName(requiredType);
+        String beanName = resolveBeanName(requiredType);
 
         return getBean(beanName, requiredType);
     }
@@ -225,7 +224,6 @@ public class BeanFactoryImpl implements BeanFactory {
                 .forEach(this::registerBean);
 
         log.info("Beans post processing");
-
         beanMap.forEach(this::initializeBeanAfterRegistering);
     }
 

@@ -18,17 +18,11 @@ public class PackageScanner {
     public Set<Class<?>> findComponentsByBasePackage(String basePackage) {
         log.trace("Call findComponentsByBasePackage({})", basePackage);
         Reflections reflections = new Reflections((Object) basePackage);
-        Set<Class<?>> componentClasses = reflections.getTypesAnnotatedWith(Component.class);
-        Set<Class<?>> controllerClasses = reflections.getTypesAnnotatedWith(RestController.class);
-        componentClasses.addAll(controllerClasses);
-        // todo: Remove all interfaces from set
-//        classes.remove(RestController.class); // todo: REMOVE THIS SHIT!
-//        log.trace("Finish findComponentsByBasePackage() with result: {}", classes);
-        return componentClasses;
-    }
-
-    public Set<Class<?>> findComponentsByClass(Class<?> classType) {
-        return findComponentsByBasePackage(classType.getPackageName());
+        Set<Class<?>> beanClasses = reflections.getTypesAnnotatedWith(Component.class);
+        beanClasses.addAll(reflections.getTypesAnnotatedWith(Configuration.class));
+        beanClasses.addAll(reflections.getTypesAnnotatedWith(RestController.class));
+        beanClasses.removeIf(Class::isInterface);
+        return beanClasses;
     }
 
     public Set<Class<?>> findAllBeanCandidatesByBaseClass(Class<?>... classTypes) {
@@ -45,7 +39,7 @@ public class PackageScanner {
             }
         }
 
-        log.trace("Found set beanClasses: {}", beanClasses);
+        log.trace("Found set of bean classes: {}", beanClasses);
 
         return beanClasses;
     }

@@ -3,7 +3,6 @@ package svydovets.core.context.injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import svydovets.exception.NoSuchBeanDefinitionException;
-import svydovets.exception.NoSuchBeanException;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -54,7 +53,6 @@ public class InjectorExecutor {
    *
    * @param injectorConfig The configuration specifying the target bean, its field, and the strategy
    *                       to obtain the dependency.
-   * @throws NoSuchBeanException         if no suitable injector is found for the given field type.
    * @throws NoSuchBeanDefinitionException if no bean definition is available for the given field type.
    */
   public static void execute(InjectorConfig injectorConfig) {
@@ -64,7 +62,7 @@ public class InjectorExecutor {
 
     try {
       beanInjector.inject(injectorConfig);
-    } catch (NoSuchBeanException | NoSuchBeanDefinitionException exception) {
+    } catch (NoSuchBeanDefinitionException exception) {
       Set<Class<?>> keys = injectors.keySet();
 
       Class<?> foundKey = keys.stream()
