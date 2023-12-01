@@ -1,4 +1,4 @@
-package svydovets.exception;
+package svydovets.core.exception;
 
 public class BeanCreationException extends RuntimeException {
     public BeanCreationException(String message) {

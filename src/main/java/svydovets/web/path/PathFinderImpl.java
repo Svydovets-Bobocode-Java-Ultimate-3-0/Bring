@@ -2,8 +2,8 @@ package svydovets.web.path;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import svydovets.exception.NoMatchingPatternFoundException;
-import svydovets.exception.NoUniquePatternFoundException;
+import svydovets.web.exception.NoMatchingPatternFoundException;
+import svydovets.web.exception.NoUniquePatternFoundException;
 import svydovets.util.ErrorMessageConstants;
 
 import java.util.List;
@@ -36,9 +36,11 @@ public class PathFinderImpl implements PathFinder {
         List<String> patternPathList = findAll(fullRequestPath, patternPaths);
 
         if (patternPathList == null || patternPathList.isEmpty()) {
-            throw new NoMatchingPatternFoundException(String.format(ErrorMessageConstants.NO_MATCHING_PATTERN_FOUND_EXCEPTION, requestPath));
+            throw new NoMatchingPatternFoundException(
+                String.format(ErrorMessageConstants.NO_MATCHING_PATTERN_FOUND_EXCEPTION, requestPath));
         } else if (patternPathList.size() > 1) {
-            throw new NoUniquePatternFoundException(String.format(ErrorMessageConstants.NO_UNIQUE_PATTERN_FOUND_EXCEPTION, patternPathList));
+            throw new NoUniquePatternFoundException(
+                String.format(ErrorMessageConstants.NO_UNIQUE_PATTERN_FOUND_EXCEPTION, patternPathList));
         }
 
         String patternPath = patternPathList.get(0);

@@ -5,7 +5,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import svydovets.core.context.AnnotationConfigApplicationContext;
 import svydovets.core.context.ApplicationContext;
-import svydovets.exception.NoUniquePostConstructException;
+import svydovets.core.exception.NoUniquePostConstructException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
