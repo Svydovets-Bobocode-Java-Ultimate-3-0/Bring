@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import svydovets.core.context.injector.InjectorConfig;
 import svydovets.core.context.injector.MapOfBeansInjector;
-import svydovets.exception.BeanCreationException;
+import svydovets.core.exception.BeanCreationException;
 
 import java.lang.reflect.Field;
 import java.util.List;

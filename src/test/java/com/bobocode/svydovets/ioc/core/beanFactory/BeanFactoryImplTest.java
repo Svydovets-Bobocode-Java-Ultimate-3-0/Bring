@@ -18,7 +18,7 @@ import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import svydovets.exception.NoSuchBeanDefinitionException;
+import svydovets.core.exception.NoSuchBeanDefinitionException;
 
 import java.util.Map;
 
@@ -28,8 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import svydovets.core.context.beanFactory.BeanFactoryImpl;
-import svydovets.exception.NoUniqueBeanDefinitionException;
-import svydovets.exception.UnresolvedCircularDependencyException;
+import svydovets.core.exception.NoUniqueBeanDefinitionException;
+import svydovets.core.exception.UnresolvedCircularDependencyException;
 
 import java.util.Set;
 

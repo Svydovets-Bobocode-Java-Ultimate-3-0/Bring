@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import svydovets.core.annotation.Autowired;
 import svydovets.core.annotation.Component;
-import svydovets.exception.NoDefaultConstructorException;
+import svydovets.util.exception.NoDefaultConstructorException;
 import svydovets.util.ErrorMessageConstants;
 import svydovets.util.ReflectionsUtil;
 

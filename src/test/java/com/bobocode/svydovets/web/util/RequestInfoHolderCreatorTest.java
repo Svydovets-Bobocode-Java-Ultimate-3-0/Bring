@@ -16,7 +16,7 @@ class RequestInfoHolderCreatorTest {
   @Test
   void shouldCreateRequestInfoHolder() {
     Method[] methods = SimpleRestController.class.getDeclaredMethods();
-    assertEquals(1, methods.length);
+    assertEquals(4, methods.length);
 
     Method firstMethod = methods[0];
     assertTrue(firstMethod.isAnnotationPresent(GetMapping.class));
@@ -27,6 +27,6 @@ class RequestInfoHolderCreatorTest {
     assertEquals(SimpleRestController.class.getSimpleName(), requestInfoHolder.getClassName());
     assertEquals(1, requestInfoHolder.getParameterNames().length);
     assertEquals(1, requestInfoHolder.getParameterTypes().length);
-    assertEquals("hello", requestInfoHolder.getMethodName());
+    assertEquals("helloPath", requestInfoHolder.getMethodName());
   }
 }

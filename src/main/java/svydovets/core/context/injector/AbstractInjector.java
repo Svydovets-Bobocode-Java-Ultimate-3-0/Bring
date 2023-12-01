@@ -1,6 +1,5 @@
 package svydovets.core.context.injector;
 
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import svydovets.core.annotation.Qualifier;
@@ -63,7 +62,7 @@ public abstract class AbstractInjector implements Injector {
             log.error(ERROR_AUTOWIRED_BEAN_EXCEPTION_MESSAGE);
             log.error(exception.getMessage());
 
-            throw new AutowireBeanException(format(ERROR_AUTOWIRED_BEAN_EXCEPTION_MESSAGE, fieldForInjection.getName()));
+            throw new AutowireBeanException(format(ERROR_AUTOWIRED_BEAN_EXCEPTION_MESSAGE, fieldForInjection.getName()), exception);
         }
     }
 
@@ -83,7 +82,7 @@ public abstract class AbstractInjector implements Injector {
 
             return field.get(targetBean);
         } catch (IllegalAccessException exception) {
-            throw new FieldValueIllegalAccessException(format(ERROR_NOT_SET_ACCESSIBLE_FOR_FIELD, field));
+            throw new FieldValueIllegalAccessException(format(ERROR_NOT_SET_ACCESSIBLE_FOR_FIELD, field), exception);
         }
     }
 
@@ -105,7 +104,8 @@ public abstract class AbstractInjector implements Injector {
             // Exception thrown by "Class.forName()"
             throw new BeanCreationException(format(
                     "Error creating bean of class %s. Please make sure the class is present in the classpath",
-                    fieldForInjection.getDeclaringClass().getName())
+                    fieldForInjection.getDeclaringClass().getName()),
+                e
             );
         }
     }
