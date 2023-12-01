@@ -1,10 +1,7 @@
 package com.bobocode.svydovets.web.path;
 
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import svydovets.web.exception.NoMatchingPatternFoundException;
 import svydovets.web.exception.NoUniquePatternFoundException;
 import svydovets.web.path.PathFinder;
@@ -42,6 +39,7 @@ public class PathFinderTest {
     }
 
     @Test
+    @Order(1)
     public void shouldThrowNoMatchingPatternFoundExceptionWhenNotFoundRequestPath() {
         Set<String> controllerPathMap = getDefaultControllerPaths();
 
@@ -51,6 +49,7 @@ public class PathFinderTest {
     }
 
     @Test
+    @Order(2)
     public void shouldThrowNoUniquePatternFoundExceptionWhenFoundSeveralRequestPath() {
         Set<String> controllerPathMap = new HashSet<>();
         controllerPathMap.add("/users/{id}");
@@ -72,6 +71,7 @@ public class PathFinderTest {
     }
 
     @Test
+    @Order(3)
     public void shouldMatchingPatternFoundForRequestPath() {
         Set<String> controllerPathMap = getDefaultControllerPaths();
         controllerPathMap.add("/users/{id}/notes/{noteId}");
@@ -95,7 +95,6 @@ public class PathFinderTest {
         return path.split("/");
     }
 
-    @NotNull
     private static Set<String> getDefaultControllerPaths() {
         Set<String> controllerPathMap = new HashSet<>();
 

@@ -2,10 +2,7 @@ package com.bobocode.svydovets.ioc.core.autowire;
 
 import com.bobocode.svydovets.source.autowire.field.EditService;
 import com.bobocode.svydovets.source.config.AutowireByFieldPackageBeansConfig;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import svydovets.core.context.AnnotationConfigApplicationContext;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -21,12 +18,14 @@ public class AutowiredFieldAnnotationBeanPostProcessorTest {
     }
 
     @Test
+    @Order(1)
     void shouldNotNullWhenFieldIsInjected() {
         EditService editService = context.getBean(EditService.class);
         assertThat(editService.getMessageService()).isNotNull();
     }
 
     @Test
+    @Order(2)
     void shouldReturnNullIfFieldNotInjected() {
         EditService editService = context.getBean(EditService.class);
         assertThat(editService.getCommonService()).isNull();
