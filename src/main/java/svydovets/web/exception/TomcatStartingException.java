@@ -1,4 +1,4 @@
-package svydovets.exception;
+package svydovets.web.exception;
 
 public class TomcatStartingException extends RuntimeException {
 
