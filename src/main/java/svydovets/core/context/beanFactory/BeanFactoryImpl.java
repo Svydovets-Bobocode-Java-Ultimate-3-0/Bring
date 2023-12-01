@@ -13,7 +13,13 @@ import svydovets.core.context.beanDefinition.BeanDefinitionFactory;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
 import svydovets.core.context.beanFactory.command.CommandFactory;
 import svydovets.core.context.beanFactory.command.CommandFunctionName;
-import svydovets.exception.*;
+import svydovets.core.exception.BeanCreationException;
+import svydovets.core.exception.InvalidInvokePostConstructMethodException;
+import svydovets.core.exception.NoSuchBeanDefinitionException;
+import svydovets.core.exception.NoUniqueBeanDefinitionException;
+import svydovets.core.exception.NoUniqueBeanException;
+import svydovets.core.exception.NoUniquePostConstructException;
+import svydovets.core.exception.UnresolvedCircularDependencyException;
 import svydovets.util.ErrorMessageConstants;
 import svydovets.util.PackageScanner;
 
@@ -21,7 +27,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -515,7 +528,8 @@ public class BeanFactoryImpl implements BeanFactory {
         Optional<BeanDefinition> beanDefinitionOptional = Optional
                 .ofNullable(beanDefinitionFactory.getBeanDefinitionByBeanName(name));
         if (beanDefinitionOptional.isEmpty()) {
-            throw new NoSuchBeanDefinitionException(String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName()));
+            throw new NoSuchBeanDefinitionException(
+                String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName()));
         }
 
         BeanDefinition beanDefinition = beanDefinitionOptional.orElseThrow();

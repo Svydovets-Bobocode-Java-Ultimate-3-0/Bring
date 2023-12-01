@@ -3,7 +3,7 @@ package svydovets.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import svydovets.core.annotation.Autowired;
-import svydovets.exception.NoDefaultConstructorException;
+import svydovets.util.exception.NoDefaultConstructorException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -39,7 +39,7 @@ public class ReflectionsUtil {
         } catch (NoSuchMethodException exception) {
             String errorMessage = String.format(NO_DEFAULT_CONSTRUCTOR_FOUND_OF_TYPE, beanType.getName());
             log.error(errorMessage);
-            throw new NoDefaultConstructorException(errorMessage);
+            throw new NoDefaultConstructorException(errorMessage, exception);
         }
     }
 

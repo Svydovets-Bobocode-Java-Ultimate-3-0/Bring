@@ -19,8 +19,8 @@ import svydovets.core.context.beanDefinition.BeanAnnotationBeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinition;
 import svydovets.core.context.beanDefinition.BeanDefinitionFactory;
 import svydovets.core.context.beanDefinition.ComponentAnnotationBeanDefinition;
-import svydovets.exception.BeanDefinitionCreateException;
-import svydovets.exception.UnsupportedScopeException;
+import svydovets.core.exception.BeanDefinitionCreateException;
+import svydovets.core.exception.UnsupportedScopeException;
 import svydovets.util.ErrorMessageConstants;
 
 import java.util.Set;

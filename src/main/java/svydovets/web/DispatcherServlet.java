@@ -5,7 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import svydovets.exception.RequestProcessingException;
+import svydovets.web.exception.RequestProcessingException;
 import svydovets.util.ErrorMessageConstants;
 import svydovets.web.dto.RequestInfoHolder;
 import svydovets.web.dto.ResponseEntity;
@@ -92,8 +92,8 @@ public class DispatcherServlet extends HttpServlet {
             }
         } catch (Exception e) {
             throw new RequestProcessingException(
-                    String.format(ErrorMessageConstants.REQUEST_PROCESSING_ERROR, httpMethod.name(), req.getServletPath()),
-                    e
+                String.format(ErrorMessageConstants.REQUEST_PROCESSING_ERROR, httpMethod.name(), req.getServletPath()),
+                e
             );
         }
     }

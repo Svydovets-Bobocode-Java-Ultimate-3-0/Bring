@@ -3,8 +3,8 @@ package svydovets.core.context.injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import svydovets.core.exception.AutowireBeanException;
-import svydovets.exception.BeanCreationException;
-import svydovets.exception.FieldValueIllegalAccessException;
+import svydovets.core.exception.BeanCreationException;
+import svydovets.core.exception.FieldValueIllegalAccessException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -79,7 +79,8 @@ public abstract class AbstractInjector implements Injector {
 
             return field.get(targetBean);
         } catch (IllegalAccessException exception) {
-            throw new FieldValueIllegalAccessException(String.format(ERROR_NOT_SET_ACCESSIBLE_FOR_FIELD, field));
+            throw new FieldValueIllegalAccessException(
+                String.format(ERROR_NOT_SET_ACCESSIBLE_FOR_FIELD, field), exception);
         }
     }
 
@@ -98,10 +99,11 @@ public abstract class AbstractInjector implements Injector {
             Type autowireCandidateGenericType = resolveAutowireCandidateGenericType(fieldForInjection);
             return Class.forName(autowireCandidateGenericType.getTypeName());
         } catch (ClassNotFoundException e) {
-            // Exception thrown by "Class.forName()"
-            throw new BeanCreationException(String.format(
+            throw new BeanCreationException(
+                String.format(
                     "Error creating bean of class %s. Please make sure the class is present in the classpath",
-                    fieldForInjection.getDeclaringClass().getName())
+                    fieldForInjection.getDeclaringClass().getName()),
+                e
             );
         }
     }

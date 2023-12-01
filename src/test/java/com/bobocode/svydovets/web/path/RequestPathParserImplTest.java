@@ -4,7 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import svydovets.exception.NoSuchPathVariableException;
+import svydovets.web.exception.NoSuchPathVariableException;
 import svydovets.web.path.RequestPathParser;
 import svydovets.web.path.RequestPathParserImpl;
 

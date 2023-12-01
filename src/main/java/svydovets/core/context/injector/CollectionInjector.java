@@ -2,8 +2,8 @@ package svydovets.core.context.injector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import svydovets.exception.BeanCreationException;
-import svydovets.exception.InjectCollectionFieldException;
+import svydovets.core.exception.BeanCreationException;
+import svydovets.core.exception.InjectCollectionFieldException;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -75,7 +75,7 @@ public class CollectionInjector extends AbstractInjector {
             collectionOfBeans.addAll((Collection) collectionOfBeansToInject);
             fieldForInjection.set(bean, collectionOfBeans);
         } catch (IllegalAccessException exception) {
-            throw new InjectCollectionFieldException(exception.getMessage());
+            throw new InjectCollectionFieldException(exception.getMessage(), exception);
         }
     }
 

@@ -1,6 +1,6 @@
 package svydovets.web.path;
 
-import svydovets.exception.NoSuchPathVariableException;
+import svydovets.web.exception.NoSuchPathVariableException;
 import svydovets.util.ErrorMessageConstants;
 
 import java.util.HashMap;

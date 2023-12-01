@@ -1,12 +1,8 @@
-package svydovets.exception;
+package svydovets.core.exception;
 
 public class UnsupportedScopeException extends RuntimeException {
 
     public UnsupportedScopeException(String message) {
         super(message);
-    }
-
-    public UnsupportedScopeException(String message, Throwable cause) {
-        super(message, cause);
     }
 }
