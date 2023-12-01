@@ -48,12 +48,12 @@ Follow these steps to get started with our project:
     mvn clean install
     ```
 
-3. **Add the Project as a dependency:**
+3. **To test Bring Application, create new Maven Project and add dependency:**
    ```xml
     <dependency>
-      <groupId>org.example</groupId>
-      <artifactId>Bring-demo</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <groupId>com.bobocode.ultimate</groupId>
+      <artifactId>bring-svydovets</artifactId>
+      <version>1.0</version>
     </dependency>
     ```
 4. **Run the application:**
