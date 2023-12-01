@@ -3,18 +3,18 @@ package svydovets.core.bpp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import svydovets.core.annotation.Autowired;
+import svydovets.core.annotation.Qualifier;
 import svydovets.core.context.beanFactory.command.CommandFactory;
 import svydovets.core.context.beanFactory.command.CommandFunctionName;
 import svydovets.core.context.injector.InjectorConfig;
 import svydovets.core.context.injector.InjectorExecutor;
 import svydovets.exception.AutowireBeanException;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static svydovets.util.ErrorMessageConstants.ERROR_NO_ACCESS_TO_METHOD;
@@ -55,20 +55,23 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
         log.trace("Call doSetterInjection({})", bean);
         Method[] declaredMethods = bean.getClass().getDeclaredMethods();
 
-        List<Method> targetMethod = Arrays.stream(declaredMethods)
+        List<Method> targetMethods = Arrays.stream(declaredMethods)
                 .filter(method -> method.isAnnotationPresent(Autowired.class))
                 .toList();
 
-        Object[] injectBeans = targetMethod.stream()
-                .map(Method::getParameterTypes)
+        Object[] injectBeans = targetMethods.stream()
+                .map(Executable::getParameters)
+                .flatMap(this::getParameterTypes)
                 .flatMap(this::getBeanForSetterMethod)
                 .toArray();
 
-        invokeSetterMethod(targetMethod, bean, injectBeans);
+        invokeSetterMethod(targetMethods, bean, injectBeans);
     }
 
     private void doFieldInjection(Object bean) {
-        log.trace("Call doFieldInjection({})", bean);
+        if(log.isTraceEnabled()) {
+            log.trace("Call doFieldInjection({})", bean);
+        }
 
         Field[] beanFields = bean.getClass().getDeclaredFields();
         for (Field beanField : beanFields) {
@@ -101,9 +104,29 @@ public class AutowiredAnnotationBeanPostProcessor implements BeanPostProcessor {
         }
     }
 
-    private Stream<Object> getBeanForSetterMethod(Class<?>[] parameterTypes) {
-        return Arrays.stream(parameterTypes)
-                .map(clazz -> commandFactory.execute(CommandFunctionName.FC_GET_BEAN).apply(clazz));
+    private Stream<Class<?>> getParameterTypes(Parameter[] parameters) {
+        return Arrays.stream(parameters)
+                .map(this::defineSpecificTypeFromParameter);
+    }
+
+    private Class<?> defineSpecificTypeFromParameter(Parameter parameter) {
+        if(parameter.isAnnotationPresent(Qualifier.class)) {
+            var qualifier = parameter.getDeclaredAnnotation(Qualifier.class);
+
+            String beanName = qualifier.value();
+
+            Map<String, ?> beans = (Map<String, ?>) commandFactory.execute(CommandFunctionName.FC_GET_BEANS_OF_TYPE)
+                    .apply(parameter.getType());
+            Optional<?> foundBean = Optional.ofNullable(beans.get(beanName));
+
+            return foundBean.orElseThrow().getClass();
+        }
+
+        return parameter.getType();
+    }
+
+    private Stream<Object> getBeanForSetterMethod(Class<?> parameterType) {
+        return Stream.of(commandFactory.execute(CommandFunctionName.FC_GET_BEAN).apply(parameterType));
     }
 
 }
