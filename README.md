@@ -6,9 +6,8 @@ of
 both worlds, offering a comprehensive framework that simplifies web application development while promoting loose
 coupling and code organization through Dependency Injection.
 
-# Key Features
-
 ___
+# Key Features
 
 ## Dependency Injection
 
@@ -24,17 +23,17 @@ built-in support for
 routing, request handling, and response generation, you can focus on implementing your application's logic without the
 hassle of low-level details.
 
+___
 # Requirements
 
-___
 
 - **Java**: Version 17 or later.
 - **Maven**: Make sure Maven is installed on your system. You can download it
   from [here](https://maven.apache.org/download.cgi).
 
+___
 # Getting Started
 
-___
 Follow these steps to get started with our project:
 
 1. **Clone the Repository:**
@@ -56,7 +55,8 @@ Follow these steps to get started with our project:
       <version>1.0</version>
     </dependency>
     ```
-4. **Run the application:**
+4. **You can download the Bring demo project to simplify setup:** [DEMO Project](https://github.com/Svydovets-Bobocode-Java-Ultimate-3-0/Bring-Demo)
+5. **Run the application:**
     ```java
       public class DemoApp {
       
@@ -66,7 +66,7 @@ Follow these steps to get started with our project:
       }
     ```
 
-5. **Enjoy :)**
+6. **Enjoy :)**
 
 # Svydovets features
 
@@ -101,7 +101,9 @@ ___
 
 #### Application context
 
-___
+ApplicationContext - main part of the IoC container. ApplicationContext - a magic box that helps application run smoothly.
+When application starts, it tells the ApplicationContext about all different beans it has. Each bean has responsibilities, like being saving data.
+The ApplicationContext keeps track of all these beans and makes sure they are ready to do their job when it needed.
 
 <details>
 <summary>Example of code</summary> 
@@ -117,9 +119,11 @@ public class Application {
 
 </details>
 
+___
 #### @Configuration
 
-___
+The @Configuration annotation is used to indicate that a class declares one or more @Bean methods, and define user's custom beans.
+The @Configuration annotation is an integral part of the creating application context.
 
 <details>
 <summary>Example of code</summary> 
@@ -134,11 +138,12 @@ public class TestConfig {
 
 </details>
 
+___
 #### @Bean
 
-___
-
-Some description
+Bean is object that is instantiated, assembled, and managed by the IoC container
+The Bean annotation is a custom annotation that you can use in your own implementation of the Bring framework.
+It is used to mark methods in code that produce bean that should be managed.
 
 <details>
 <summary>Example of code</summary> 
@@ -165,11 +170,12 @@ public class TestConfig {
 
 </details>
 
+___
 #### @Component
 
-___
-
-Some description
+The @Component annotation is used to indicate that a class is component of context. 
+It is a generic annotation that designates a class as bean, allowing IoC container to manage its lifecycle.
+Components are typically Java classes that encapsulate business logic or other processing capabilities within a user application.
 
 <details>
 <summary>Example of code</summary> 
@@ -193,38 +199,43 @@ public class MessageService {
 
 </details>
 
+___
 #### @Scope
 
-___
+The **@Scope** annotation in Java is used to specify the lifecycle of a bean within the application context.
+It enables developers to define whether a bean should be a singleton, with a single shared instance across the entire
+application, or a prototype, with a new instance created for each request or reference.
 
-Some description
-
+**Singleton scope**
 <details>
-<summary>Example of code</summary> 
+<summary>Example of code with the Singleton scope</summary> 
 
 ```java
-
 @Component
 @Scope(ApplicationContext.SCOPE_SINGLETON)
 public class SingletonCandidate {
 
 }
+```
+</details>
 
+**Prototype scope**
+<details>
+<summary>Example of code with the Prototype scope</summary> 
+
+```java
 @Component
 @Scope(ApplicationContext.SCOPE_PROTOTYPE)
 public class PrototypeCandidate {
-
 }
 ```
-
 </details>
 
-
+___
 #### @Qualifier
 
-___
-
-Some description
+The **@Qualifier** annotation in Java is utilized to enhance bean injection by providing a means to disambiguate and
+specify a particular bean when there are multiple candidates of the same type within the application context.
 
 <details>
 <summary>Example of code</summary> 
@@ -246,11 +257,11 @@ public class OrderService {
 
 </details>
 
+___
 #### @Primary
 
-___
-
-Some description
+@Primary is an effective way to use autowiring by type with several instances when one primary candidate can be determined.
+When marked with @Primary, a bean is designated as the primary candidate for autowiring within a specific type, meaning it takes precedence over other candidates of the same type.
 
 <details>
 <summary>Example of code</summary> 
@@ -265,11 +276,13 @@ public class PrimaryInjectionCandidate implements InjectionCandidate {
 
 </details>
 
+___
 #### @PostConstruct
 
-___
-
-Some description
+The **@PostConstruct** annotation in Java as a marker for methods that should be executed
+immediately after an object has been instantiated and its dependencies have been injected or initialized.
+This annotation allows developers to define post-construction logic for objects without relying on any specific
+framework or container.
 
 <details>
 <summary>Example of code</summary> 
@@ -294,14 +307,17 @@ public class ServiceWithPostConstruct {
 
 </details>
 
+___
 #### @Autowired
 
-___
+The **@Autowired** annotation in Java is employed to facilitate automatic dependency injection, allowing developers
+to inject dependencies into beans without explicit instantiation. This annotation can be applied to fields, methods,
+or constructors to signal the container to automatically resolve and provide the necessary dependencies.
 
-Some description
+**Example of the constructor autowired**
 
 <details>
-<summary>Example of code</summary> 
+<summary>Example of code with the constructor inject</summary>
 
 ```java
 
@@ -315,6 +331,16 @@ public class ServiceWithAutowiredConstructor {
         this.messageService = messageService;
     }
 }
+```
+
+</details>
+
+**Example of the method autowired**
+
+<details>
+<summary>Example of code with the method inject</summary>
+
+```java
 
 @Component
 public class TrimService {
@@ -330,6 +356,17 @@ public class TrimService {
     }
 }
 
+```
+
+</details>
+
+**Example of the field autowired**
+
+<details>
+<summary>Example of code with the field inject</summary>
+
+````java
+
 @Component
 public class EditService {
 
@@ -339,15 +376,17 @@ public class EditService {
     @Autowired
     private InjectionCandidate injectionCandidate;
 }
-```
+
+````
 
 </details>
 
+___
 #### @ComponentScan
 
-___
-
-Some description
+The custom **@CustomComponentScan** annotation in Java serves as a marker for configuration classes that enable
+the automatic detection and registration of custom components within specified base packages. This annotation provides
+a mechanism for developers to implement component scanning functionality without relying on any specific framework.
 
 <details>
 <summary>Example of code</summary> 
@@ -362,11 +401,12 @@ public class ScanConfigTest {
 
 </details>
 
+___
 #### @RestController
 
-___
-
-Some description
+The **@RestController** annotation handles HTTP requests and generate responses. This annotation designates a class as a controller specifically
+focused on building REST APIs, where methods within the class are responsible for processing requests and producing
+responses in a JSON format.
 
 <details>
 <summary>Example of code</summary> 
@@ -380,11 +420,11 @@ public class UserController {
 
 </details>
 
+___
 #### @RequestMapping
 
-___
-
-Some description
+The **@RequestMapping** annotation is used to establish the base URL for the class 
+that was marked with the **@RestController** annotation.
 
 <details>
 <summary>Example of code</summary> 
@@ -399,11 +439,12 @@ public class UserController {
 
 </details>
 
+___
 #### @RequestParam
 
-___
-
-Some description
+The **@RequestParam** annotation is used to extract and bind query parameters from the URL of an HTTP request
+to the parameters of a method. This annotation simplifies the process of handling request parameters
+and allows developers to easily access and use them within their methods.
 
 <details>
 <summary>Example of code</summary> 
@@ -426,11 +467,12 @@ public class UserController {
 
 </details>
 
+___
 #### @PathVariable
 
-___
-
-Some description
+The **@PathVariable** annotation is utilized to extract values from the URI path of an HTTP request
+and bind them to the parameters of a method. This annotation simplifies the process of
+handling path variables, allowing developers to access and utilize them within their methods.
 
 <details>
 <summary>Example of code</summary> 
@@ -454,11 +496,10 @@ public class UserController {
 
 </details>
 
+___
 #### @GetMapping
 
-___
-
-Some description
+The **@GetMapping** annotation is designed for handling HTTP GET requests.
 
 <details>
 <summary>Example of code</summary> 
@@ -489,11 +530,10 @@ public class UserController {
 
 </details>
 
+___
 #### @PostMapping
 
-___
-
-Some description
+The **@PostMapping** annotation is designed for handling HTTP POST requests.
 
 <details>
 <summary>Example of code</summary> 
@@ -519,11 +559,10 @@ public class UserController {
 
 </details>
 
+___
 #### @PutMapping
 
-___
-
-Some description
+The **@PutMapping** annotation is designed for handling HTTP PUT requests.
 
 <details>
 <summary>Example of code</summary> 
@@ -551,11 +590,10 @@ public class UserController {
 
 </details>
 
+___
 #### @DeleteMapping
 
-___
-
-Some description
+The **@DeleteMapping** annotation is designed for handling HTTP DELETE requests.
 
 <details>
 <summary>Example of code</summary> 
@@ -578,11 +616,10 @@ public class UserController {
 
 </details>
 
+___
 #### @PatchMapping
 
-___
-
-Some description
+The **@PatchMapping** annotation is designed for handling HTTP PATCH requests.
 
 <details>
 <summary>Example of code</summary> 

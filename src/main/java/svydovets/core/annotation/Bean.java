@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * <p>
  *     Bean is object that is instantiated, assembled, and managed by the IoC container
- *     The Bean annotation is a custom annotation that you can use in your own implementation of the Spring framework.
+ *     The Bean annotation is a custom annotation that you can use in your own implementation of the Bring framework.
  *     It is used to mark methods in code that produce bean that should be managed.
  * </p>
  *
