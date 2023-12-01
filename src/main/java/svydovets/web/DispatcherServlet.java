@@ -7,10 +7,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import svydovets.exception.RequestProcessingException;
 import svydovets.util.ErrorMessageConstants;
 import svydovets.web.dto.RequestInfoHolder;
 import svydovets.web.dto.ResponseEntity;
+import svydovets.web.exception.RequestProcessingException;
 import svydovets.web.path.PathFinder;
 import svydovets.web.path.PathFinderImpl;
 
@@ -40,7 +40,6 @@ import java.util.Set;
  *   <li>Utilizes annotations for configuring the base package of controller classes.</li>
  *   <li>Handles request processing, method invocation, and response generation.</li>
  * </ul>
- *
  *
  * @author Safarov Renat
  * @author Alexandr Navozenko

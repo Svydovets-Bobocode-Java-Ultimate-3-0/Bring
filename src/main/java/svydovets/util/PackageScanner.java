@@ -15,7 +15,7 @@ public class PackageScanner {
 
     private static final Logger log = LoggerFactory.getLogger(PackageScanner.class);
 
-    public Set<Class<?>> findComponentsByBasePackage(String basePackage) {
+    public Set<Class<?>> findAllBeanCandidatesByBasePackage(String basePackage) {
         log.trace("Call findComponentsByBasePackage({})", basePackage);
         Reflections reflections = new Reflections((Object) basePackage);
         Set<Class<?>> beanClasses = reflections.getTypesAnnotatedWith(Component.class);
@@ -25,17 +25,19 @@ public class PackageScanner {
         return beanClasses;
     }
 
-    public Set<Class<?>> findAllBeanCandidatesByBaseClass(Class<?>... classTypes) {
+    public Set<Class<?>> findAllBeanCandidatesByClassTypes(Class<?>... classTypes) {
         log.trace("Call findAllBeanCandidatesByBaseClass({})", (Object[]) classTypes);
         Set<Class<?>> beanClasses = new HashSet<>();
         for (Class<?> beanClass : classTypes) {
-            if (beanClass.isAnnotationPresent(Configuration.class) || beanClass.isAnnotationPresent(Component.class)) {
+            if (beanClass.isAnnotationPresent(Configuration.class)
+                    || beanClass.isAnnotationPresent(Component.class)
+                    || beanClass.isAnnotationPresent(RestController.class)) {
                 beanClasses.add(beanClass);
             }
 
             ComponentScan componentScan = beanClass.getAnnotation(ComponentScan.class);
             if (componentScan != null) {
-                beanClasses.addAll(findComponentsByBasePackage(componentScan.value()));
+                beanClasses.addAll(findAllBeanCandidatesByBasePackage(componentScan.value()));
             }
         }
 

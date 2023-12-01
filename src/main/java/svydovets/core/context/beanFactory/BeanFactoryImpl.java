@@ -168,14 +168,14 @@ public class BeanFactoryImpl implements BeanFactory {
     @Override
     public void registerBeans(String basePackage) {
         log.info("Scanning package: {}", basePackage);
-        Set<Class<?>> beanClasses = packageScanner.findComponentsByBasePackage(basePackage);  //TODO why dont search Components + Configurations ? (like below)
+        Set<Class<?>> beanClasses = packageScanner.findAllBeanCandidatesByBasePackage(basePackage);
         log.info("Registering beans");
         doRegisterBeans(beanClasses);
     }
 
     @Override
     public void registerBeans(Class<?>... classes) {
-        Set<Class<?>> beanClasses = packageScanner.findAllBeanCandidatesByBaseClass(classes);
+        Set<Class<?>> beanClasses = packageScanner.findAllBeanCandidatesByClassTypes(classes);
         doRegisterBeans(beanClasses);
     }
 
@@ -204,15 +204,12 @@ public class BeanFactoryImpl implements BeanFactory {
     @Override
     public <T> T getBean(String name, Class<T> requiredType) {
         log.trace("Call getBean({}, {})", name, requiredType);
-        Optional<Object> bean = Optional.ofNullable(beanMap.get(name));
-        if (bean.isEmpty()) {
-            Object createdPrototypeBean = checkAndCreatePrototypeBean(name, requiredType)
-                    .orElseThrow(() -> new NoSuchBeanDefinitionException(String
-                            .format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName())));
-            return requiredType.cast(createdPrototypeBean);
-        }
+        Object bean = Optional.ofNullable(beanMap.get(name))
+                .or(() -> checkAndCreatePrototypeBean(name, requiredType))
+                .orElseThrow(() -> new NoSuchBeanDefinitionException(String
+                        .format(NO_BEAN_FOUND_OF_TYPE, requiredType.getName())));
 
-        return requiredType.cast(bean.orElseThrow());
+        return requiredType.cast(bean);
     }
 
     @Override
@@ -228,6 +225,10 @@ public class BeanFactoryImpl implements BeanFactory {
         log.trace("Call getBeans()");
 
         return beanMap;
+    }
+
+    public BeanDefinitionFactory beanDefinitionFactory() {
+        return beanDefinitionFactory;
     }
 
     private void doRegisterBeans(Set<Class<?>> beanClasses) {
@@ -270,17 +271,16 @@ public class BeanFactoryImpl implements BeanFactory {
         Method[] declaredMethods = beanType.getDeclaredMethods();
         Predicate<Method> isAnnotatedMethod = method -> method.isAnnotationPresent(PostConstruct.class);
 
-        // todo: Refactor a little bit. Collect methods to list to avoid second filtering
-        boolean isNotUniqueMethod = Arrays.stream(declaredMethods).filter(isAnnotatedMethod).count() > 1;
-        if (isNotUniqueMethod) {
+        List<Method> methodsAnnotatedWithPostConstruct = Arrays.stream(declaredMethods)
+                .filter(isAnnotatedMethod)
+                .toList();
+        if (methodsAnnotatedWithPostConstruct.size() > 1) {
             log.error(ERROR_NOT_UNIQUE_METHOD_THAT_ANNOTATED_POST_CONSTRUCT);
 
             throw new NoUniquePostConstructException(ERROR_NOT_UNIQUE_METHOD_THAT_ANNOTATED_POST_CONSTRUCT);
         }
 
-        // todo: Refactor a little bit
-        Arrays.stream(declaredMethods)
-                .filter(isAnnotatedMethod)
+        methodsAnnotatedWithPostConstruct.stream()
                 .findFirst()
                 .ifPresent(method -> invokePostConstructMethod(bean, method));
     }
@@ -457,8 +457,10 @@ public class BeanFactoryImpl implements BeanFactory {
         }
 
         if (primaryBeanDefinitions.size() > 1) {
-            String message = String
-                    .format(ErrorMessageConstants.NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName());
+            String message = String.format(
+                    ErrorMessageConstants.NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE,
+                    requiredType.getName()
+            );
             log.error(message);
 
             throw new NoUniqueBeanDefinitionException(message);
@@ -525,22 +527,15 @@ public class BeanFactoryImpl implements BeanFactory {
     }
 
     private <T> Optional<T> checkAndCreatePrototypeBean(String name, Class<T> requiredType) {
-        Optional<BeanDefinition> beanDefinitionOptional = Optional
-                .ofNullable(beanDefinitionFactory.getBeanDefinitionByBeanName(name));
-        if (beanDefinitionOptional.isEmpty()) {
-            throw new NoSuchBeanDefinitionException(
-                String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName()));
-        }
+        BeanDefinition beanDefinition = Optional
+                .ofNullable(beanDefinitionFactory.getBeanDefinitionByBeanName(name))
+                .orElseThrow(() -> new NoSuchBeanDefinitionException(
+                        String.format(NO_BEAN_DEFINITION_FOUND_OF_TYPE, requiredType.getName())));
 
-        BeanDefinition beanDefinition = beanDefinitionOptional.orElseThrow();
         if (beanDefinition.getScope().equals(ApplicationContext.SCOPE_PROTOTYPE)) {
             return Optional.of(requiredType.cast(createBean(beanDefinition)));
         }
 
         return Optional.empty();
-    }
-
-    public BeanDefinitionFactory beanDefinitionFactory() {
-        return beanDefinitionFactory;
     }
 }

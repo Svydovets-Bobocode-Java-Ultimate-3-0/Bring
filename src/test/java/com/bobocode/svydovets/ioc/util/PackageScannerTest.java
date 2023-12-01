@@ -68,7 +68,7 @@ public class PackageScannerTest {
 
     @Test
     void shouldFindAllBeansExceptInterfaces() {
-        Set<Class<?>> result = packageScanner.findComponentsByBasePackage("com.bobocode.svydovets.source.interfaces");
+        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByBasePackage("com.bobocode.svydovets.source.interfaces");
 
         assertThat(result.size()).isEqualTo(beansScannedClassesWithoutInterfaces.size());
         assertThat(result).isEqualTo(beansScannedClassesWithoutInterfaces);
@@ -76,7 +76,7 @@ public class PackageScannerTest {
 
     @Test
     void testScanAllBeansByConfigClass() {
-        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByBaseClass(
+        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByClassTypes(
                 BasePackageBeansConfig.class,
                 PostConstructBeansConfig.class
         );
@@ -87,7 +87,7 @@ public class PackageScannerTest {
 
     @Test
     void testFindAllBeanByBaseClass() {
-        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByBaseClass(BasePackageBeansConfig.class);
+        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByClassTypes(BasePackageBeansConfig.class);
 
         assertThat(result.size()).isEqualTo(beansScannedByConfigClass.size());
         assertThat(result).isEqualTo(beansScannedByConfigClass);
@@ -95,7 +95,7 @@ public class PackageScannerTest {
 
     @Test
     void testFindAllBeanByBaseClassOuterPackage() {
-        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByBaseClass(PackageScannerBeansConfig.class);
+        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByClassTypes(PackageScannerBeansConfig.class);
 
         assertThat(result.size()).isEqualTo(beansScannedClasses2.size());
         assertThat(result).isEqualTo(beansScannedClasses2);
@@ -103,14 +103,14 @@ public class PackageScannerTest {
 
     @Test
     void testFindAllBeanByBaseClassShouldReturnEmptySet() {
-        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByBaseClass(NonAnnotatedClass.class);
+        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByClassTypes(NonAnnotatedClass.class);
 
         assertThat(result.isEmpty()).isTrue();
     }
 
     @Test
     void shouldFindAllBeanFromBeanConfigBaseClassWithAdditionalSpecifiedComponents() {
-        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByBaseClass(
+        Set<Class<?>> result = packageScanner.findAllBeanCandidatesByClassTypes(
                 BasePackageBeansConfig.class,
                 SomeBean.class,
                 PostConstructService.class,
