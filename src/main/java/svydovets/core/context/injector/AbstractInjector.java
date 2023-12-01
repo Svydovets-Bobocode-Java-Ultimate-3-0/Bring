@@ -1,18 +1,23 @@
 package svydovets.core.context.injector;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import svydovets.core.annotation.Qualifier;
 import svydovets.exception.AutowireBeanException;
 import svydovets.exception.BeanCreationException;
 import svydovets.exception.FieldValueIllegalAccessException;
+import svydovets.exception.NoSuchBeanDefinitionException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
+import java.util.Map;
+import java.util.Optional;
 
-import static svydovets.util.ErrorMessageConstants.ERROR_AUTOWIRED_BEAN_EXCEPTION_MESSAGE;
-import static svydovets.util.ErrorMessageConstants.ERROR_NOT_SET_ACCESSIBLE_FOR_FIELD;
+import static java.lang.String.format;
+import static svydovets.util.ErrorMessageConstants.*;
 
 /**
  * The {@code AbstractInjector} class serves as a base class for concrete implementations of the {@code Injector} interface.
@@ -58,8 +63,7 @@ public abstract class AbstractInjector implements Injector {
             log.error(ERROR_AUTOWIRED_BEAN_EXCEPTION_MESSAGE);
             log.error(exception.getMessage());
 
-            throw new AutowireBeanException(String
-                    .format(ERROR_AUTOWIRED_BEAN_EXCEPTION_MESSAGE, fieldForInjection.getName()));
+            throw new AutowireBeanException(format(ERROR_AUTOWIRED_BEAN_EXCEPTION_MESSAGE, fieldForInjection.getName()));
         }
     }
 
@@ -79,7 +83,7 @@ public abstract class AbstractInjector implements Injector {
 
             return field.get(targetBean);
         } catch (IllegalAccessException exception) {
-            throw new FieldValueIllegalAccessException(String.format(ERROR_NOT_SET_ACCESSIBLE_FOR_FIELD, field));
+            throw new FieldValueIllegalAccessException(format(ERROR_NOT_SET_ACCESSIBLE_FOR_FIELD, field));
         }
     }
 
@@ -99,18 +103,35 @@ public abstract class AbstractInjector implements Injector {
             return Class.forName(autowireCandidateGenericType.getTypeName());
         } catch (ClassNotFoundException e) {
             // Exception thrown by "Class.forName()"
-            throw new BeanCreationException(String.format(
+            throw new BeanCreationException(format(
                     "Error creating bean of class %s. Please make sure the class is present in the classpath",
                     fieldForInjection.getDeclaringClass().getName())
             );
         }
     }
 
+    protected Object getQualifierCandidate(InjectorConfig config, Field field, Class<?> autowireCandidateType) {
+        var qualifier = field.getDeclaredAnnotation(Qualifier.class);
+        Map<String, ?> beans = config.getBeanOfTypeReceiver().apply(autowireCandidateType);
+
+        String beanName = qualifier.value();
+
+        Optional<?> foundBean = Optional.ofNullable(beans.get(beanName));
+
+        if(foundBean.isPresent()) {
+            return foundBean.orElseThrow();
+        }
+
+        String errorMessage = format(NO_BEAN_FOUND_OF_TYPE_BY_NAME, autowireCandidateType, beanName);
+        log.error(errorMessage);
+        throw new NoSuchBeanDefinitionException(errorMessage);
+    }
+
     private Type resolveAutowireCandidateGenericType(Field fieldForInjection) {
         Type autowireCandidateGenericType = fieldForInjection.getGenericType();
         if (!(autowireCandidateGenericType instanceof ParameterizedType autowireCandidateParameterizedType)) {
             // Raw map processing
-            throw new BeanCreationException(String.format(
+            throw new BeanCreationException(format(
                     "Don't use raw types for collections. Raw type founded for field %s of %s class",
                     fieldForInjection.getName(),
                     fieldForInjection.getDeclaringClass())
@@ -123,7 +144,7 @@ public abstract class AbstractInjector implements Injector {
         if (size == 1) {
             Type singleGenericType = genericTypes[0];
             if (singleGenericType instanceof WildcardType) {
-                throw new BeanCreationException(String.format(
+                throw new BeanCreationException(format(
                         "Don't use wildcard for collections. Wildcard found for bean of type %s",
                         autowireCandidateParameterizedType.getOwnerType())
                 );
@@ -136,7 +157,7 @@ public abstract class AbstractInjector implements Injector {
             }
             return genericTypes[1];
         } else {
-            throw new UnsupportedOperationException(String.format(
+            throw new UnsupportedOperationException(format(
                     "Field %s in %s required a bean of type '%s' that could not be found",
                     fieldForInjection.getName(),
                     fieldForInjection.getDeclaringClass().getName(),
