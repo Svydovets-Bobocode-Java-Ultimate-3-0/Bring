@@ -1,4 +1,4 @@
-package svydovets.exception;
+package svydovets.web.exception;
 
 /**
  * Exception thrown when no matching pattern is found for a given request path
@@ -8,9 +8,5 @@ public class NoMatchingPatternFoundException extends RuntimeException {
 
     public NoMatchingPatternFoundException(String message) {
         super(message);
-    }
-
-    public NoMatchingPatternFoundException(String message, Throwable cause) {
-        super(message, cause);
     }
 }

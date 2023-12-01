@@ -2,7 +2,7 @@ package svydovets.core.context.injector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import svydovets.exception.NoSuchBeanDefinitionException;
+import svydovets.core.exception.NoSuchBeanDefinitionException;
 
 import java.util.Collection;
 import java.util.HashMap;

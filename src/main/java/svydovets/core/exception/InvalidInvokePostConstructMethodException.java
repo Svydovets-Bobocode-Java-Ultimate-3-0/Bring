@@ -1,4 +1,4 @@
-package svydovets.exception;
+package svydovets.core.exception;
 
 public class InvalidInvokePostConstructMethodException extends RuntimeException  {
 

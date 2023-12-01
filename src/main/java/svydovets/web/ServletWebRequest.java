@@ -5,7 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import svydovets.exception.ParseRequestBodyException;
+import svydovets.web.exception.ParseRequestBodyException;
 import svydovets.web.path.RequestPathParser;
 import svydovets.web.path.RequestPathParserImpl;
 

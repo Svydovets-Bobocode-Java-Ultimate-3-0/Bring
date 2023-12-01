@@ -4,7 +4,7 @@ import static svydovets.util.NameResolver.resolveRequestParameterName;
 
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import svydovets.exception.UnsupportedTypeException;
+import svydovets.web.exception.UnsupportedTypeException;
 import svydovets.util.ErrorMessageConstants;
 import svydovets.web.annotation.PathVariable;
 import svydovets.web.annotation.RequestBody;
@@ -60,9 +60,8 @@ public class MethodArgumentResolver {
         }
 
         // todo: LOG ERROR
-        throw new UnsupportedTypeException(String.format(
-                ErrorMessageConstants.UNSUPPORTED_TYPE_ERROR_MESSAGE,
-                parameterType)
+        throw new UnsupportedTypeException(
+            String.format(ErrorMessageConstants.UNSUPPORTED_TYPE_ERROR_MESSAGE, parameterType)
         );
     }
 
@@ -93,9 +92,8 @@ public class MethodArgumentResolver {
             }
         }
         // todo: LOG ERROR
-        throw new UnsupportedTypeException(String.format(
-                ErrorMessageConstants.UNSUPPORTED_TYPE_ERROR_MESSAGE,
-                parameterType)
+        throw new UnsupportedTypeException(
+            String.format(ErrorMessageConstants.UNSUPPORTED_TYPE_ERROR_MESSAGE, parameterType)
         );
     }
 
@@ -121,9 +119,8 @@ public class MethodArgumentResolver {
             return Float.valueOf(requestParameterValue);
         }
         // todo: LOG ERROR
-        throw new UnsupportedTypeException(String.format(
-                ErrorMessageConstants.UNSUPPORTED_NUMBER_TYPE_ERROR_MESSAGE,
-                parameterType)
+        throw new UnsupportedTypeException(
+            String.format(ErrorMessageConstants.UNSUPPORTED_NUMBER_TYPE_ERROR_MESSAGE, parameterType)
         );
     }
 }

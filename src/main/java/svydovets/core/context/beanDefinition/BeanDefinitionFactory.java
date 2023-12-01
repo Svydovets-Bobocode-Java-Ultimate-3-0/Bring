@@ -7,8 +7,8 @@ import svydovets.core.annotation.Bean;
 import svydovets.core.annotation.Primary;
 import svydovets.core.annotation.Scope;
 import svydovets.core.context.beanFactory.BeanFactoryImpl;
-import svydovets.exception.BeanDefinitionCreateException;
-import svydovets.exception.UnsupportedScopeException;
+import svydovets.core.exception.BeanDefinitionCreateException;
+import svydovets.core.exception.UnsupportedScopeException;
 import svydovets.util.ErrorMessageConstants;
 import svydovets.util.ReflectionsUtil;
 

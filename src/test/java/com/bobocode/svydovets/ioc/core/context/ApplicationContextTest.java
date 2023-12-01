@@ -23,9 +23,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import svydovets.core.context.AnnotationConfigApplicationContext;
 import svydovets.core.context.ApplicationContext;
-import svydovets.exception.NoSuchBeanDefinitionException;
-import svydovets.exception.NoUniqueBeanDefinitionException;
-import svydovets.exception.NoUniqueBeanException;
+import svydovets.core.exception.NoSuchBeanDefinitionException;
+import svydovets.core.exception.NoUniqueBeanDefinitionException;
+import svydovets.core.exception.NoUniqueBeanException;
 
 import java.util.Map;
 
