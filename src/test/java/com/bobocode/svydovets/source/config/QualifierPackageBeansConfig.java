@@ -4,6 +4,6 @@ import svydovets.core.annotation.ComponentScan;
 import svydovets.core.annotation.Configuration;
 
 @Configuration
-@ComponentScan("com.bobocode.svydovets.source.qualifier")
+@ComponentScan("com.bobocode.svydovets.source.qualifier.withoutPrimary")
 public class QualifierPackageBeansConfig {
 }

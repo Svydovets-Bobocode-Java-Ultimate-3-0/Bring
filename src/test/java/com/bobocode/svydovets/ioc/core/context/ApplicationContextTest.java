@@ -15,6 +15,9 @@ import com.bobocode.svydovets.source.config.BasePackageBeansConfig;
 import com.bobocode.svydovets.source.config.PrimaryPackageBeansConfig;
 import com.bobocode.svydovets.source.config.QualifierPackageBeansConfig;
 import com.bobocode.svydovets.source.primary.PrimaryService;
+import com.bobocode.svydovets.source.qualifier.valid.GroceryItem;
+import com.bobocode.svydovets.source.qualifier.valid.OrderService;
+import com.bobocode.svydovets.source.qualifier.valid.StoreItem;
 import com.bobocode.svydovets.source.qualifier.withoutPrimary.PaymentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
@@ -31,10 +34,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static svydovets.util.ErrorMessageConstants.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
 import static svydovets.util.ErrorMessageConstants.NO_UNIQUE_BEAN_DEFINITION_FOUND_OF_TYPE;
 import static svydovets.util.ErrorMessageConstants.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
@@ -267,6 +267,38 @@ public class ApplicationContextTest {
         assertThatExceptionOfType(NoUniqueBeanDefinitionException.class)
                 .isThrownBy(() -> context.getBean(InjPrototypeCandidateMoreOnePrimary.class))
                 .withMessage(message);
+    }
+
+    @Test
+    @Order(23)
+    void shouldInjectFieldThatIsAnnotatedQualifier() {
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.qualifier.valid");
+
+        OrderService orderService = context.getBean(OrderService.class);
+
+        assertNotNull(orderService.getItem());
+        assertEquals(StoreItem.class, orderService.getItem().getClass());
+    }
+
+    @Test
+    @Order(24)
+    void shouldInjectFieldToMethodThatIsAnnotatedQualifier() {
+        ApplicationContext context = new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.qualifier.valid");
+
+        OrderService orderService = context.getBean(OrderService.class);
+
+        assertNotNull(orderService.getSecondItem());
+        assertEquals(GroceryItem.class, orderService.getSecondItem().getClass());
+    }
+
+    @Test
+    @Order(25)
+    void shouldThrowExceptionIfNameInQualifierIsNotCorrect() {
+        String expectedMessage = "No bean found of type interface com.bobocode.svydovets.source.qualifier.invalid.InvalidItem by name storeItem";
+
+        assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
+                .isThrownBy(() ->  new AnnotationConfigApplicationContext("com.bobocode.svydovets.source.qualifier.invalid"))
+                .withMessage(expectedMessage);
     }
 
 }
