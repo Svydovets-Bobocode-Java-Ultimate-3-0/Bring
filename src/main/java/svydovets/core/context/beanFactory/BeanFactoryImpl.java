@@ -38,13 +38,13 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static svydovets.util.NameResolver.resolveBeanName;
 import static svydovets.util.ErrorMessageConstants.ERROR_CREATED_BEAN_OF_TYPE;
 import static svydovets.util.ErrorMessageConstants.ERROR_NOT_UNIQUE_METHOD_THAT_ANNOTATED_POST_CONSTRUCT;
 import static svydovets.util.ErrorMessageConstants.ERROR_THE_METHOD_THAT_WAS_ANNOTATED_WITH_POST_CONSTRUCT;
 import static svydovets.util.ErrorMessageConstants.NO_BEAN_DEFINITION_FOUND_OF_TYPE;
 import static svydovets.util.ErrorMessageConstants.NO_BEAN_FOUND_OF_TYPE;
 import static svydovets.util.ErrorMessageConstants.NO_UNIQUE_BEAN_FOUND_OF_TYPE;
+import static svydovets.util.NameResolver.resolveBeanName;
 import static svydovets.util.ReflectionsUtil.prepareConstructor;
 import static svydovets.util.ReflectionsUtil.prepareMethod;
 

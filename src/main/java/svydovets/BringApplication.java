@@ -6,6 +6,8 @@ import org.apache.catalina.startup.Tomcat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import svydovets.core.context.ApplicationContext;
+import svydovets.exception.TomcatStartingException;
+import svydovets.util.ErrorMessageConstants;
 import svydovets.web.DispatcherServlet;
 
 import java.io.File;
@@ -15,9 +17,12 @@ public class BringApplication {
 
     public static ApplicationContext run(Class<?> baseClass) {
         try {
-           return configureTomcat(baseClass);
+            return configureTomcat(baseClass);
         } catch (LifecycleException e) {
-            throw new RuntimeException(e);
+            String errorMessage = String.format(ErrorMessageConstants.ERROR_STARTING_EMBEDDED_TOMCAT, baseClass.getName());
+            log.error(errorMessage);
+
+            throw new TomcatStartingException(errorMessage, e);
         }
     }
 
