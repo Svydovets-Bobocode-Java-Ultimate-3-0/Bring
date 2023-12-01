@@ -3,10 +3,10 @@ package svydovets.core.context.injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import svydovets.core.annotation.Qualifier;
-import svydovets.exception.AutowireBeanException;
-import svydovets.exception.BeanCreationException;
-import svydovets.exception.FieldValueIllegalAccessException;
-import svydovets.exception.NoSuchBeanDefinitionException;
+import svydovets.core.exception.AutowireBeanException;
+import svydovets.core.exception.BeanCreationException;
+import svydovets.core.exception.FieldValueIllegalAccessException;
+import svydovets.core.exception.NoSuchBeanDefinitionException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -59,7 +59,6 @@ public abstract class AbstractInjector implements Injector {
             fieldForInjection.setAccessible(true);
             fieldForInjection.set(bean, autowireCandidate);
         } catch (IllegalAccessException exception) {
-            log.error(ERROR_AUTOWIRED_BEAN_EXCEPTION_MESSAGE);
             log.error(exception.getMessage());
 
             throw new AutowireBeanException(format(ERROR_AUTOWIRED_BEAN_EXCEPTION_MESSAGE, fieldForInjection.getName()), exception);
