@@ -3,6 +3,7 @@ package svydovets.core.context.beanFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import svydovets.core.annotation.PostConstruct;
+import svydovets.core.annotation.Qualifier;
 import svydovets.core.bpp.AutowiredAnnotationBeanPostProcessor;
 import svydovets.core.bpp.BeanPostProcessor;
 import svydovets.core.context.ApplicationContext;
@@ -24,7 +25,6 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static svydovets.util.ErrorMessageConstants.CIRCULAR_DEPENDENCY_DETECTED;
 import static svydovets.util.ErrorMessageConstants.ERROR_CREATED_BEAN_OF_TYPE;
 import static svydovets.util.ErrorMessageConstants.ERROR_NOT_UNIQUE_METHOD_THAT_ANNOTATED_POST_CONSTRUCT;
 import static svydovets.util.ErrorMessageConstants.ERROR_THE_METHOD_THAT_WAS_ANNOTATED_WITH_POST_CONSTRUCT;
@@ -355,7 +355,10 @@ public class BeanFactoryImpl implements BeanFactory {
     private Object[] retrieveAutowireCandidates(Constructor<?> initializationConstructor) {
         log.trace("Call retrieveAutowireCandidates({})", initializationConstructor);
 
-        Class<?>[] autowireCandidateTypes = initializationConstructor.getParameterTypes();
+        Class<?>[] autowireCandidateTypes = Arrays.stream(initializationConstructor.getParameters())
+                .map(this::defineSpecificTypeFromParameter)
+                .toArray(Class[]::new);
+
         Object[] autowireCandidates = new Object[autowireCandidateTypes.length];
         for (int i = 0; i < autowireCandidateTypes.length; i++) {
             Class<?> autowireCandidateType = autowireCandidateTypes[i];
@@ -365,11 +368,34 @@ public class BeanFactoryImpl implements BeanFactory {
         return autowireCandidates;
     }
 
+    private Class<?> defineSpecificTypeFromParameter(Parameter parameter) {
+        if (parameter.isAnnotationPresent(Qualifier.class)) {
+            var qualifier = parameter.getDeclaredAnnotation(Qualifier.class);
+
+            String beanName = qualifier.value();
+
+            BeanDefinition beanDefinition = Optional.ofNullable(beanDefinitionFactory.getBeanDefinitionByBeanName(beanName)).orElseThrow();
+
+            checkIfCircularDependencyExist(beanDefinition);
+
+            if(beanDefinition.getCreationStatus().equals(BeanDefinition.BeanCreationStatus.NOT_CREATED.name())) {
+                createBeanBasedOnItScope(beanName, beanDefinition);
+            }
+
+            return beanDefinition.getBeanClass();
+        }
+
+        return parameter.getType();
+    }
+
 
     private Object saveBean(String beanName, BeanDefinition beanDefinition) {
         log.trace("Call saveBean({}, {})", beanName, beanDefinition);
 
         Object bean = createBean(beanDefinition);
+
+        beanDefinition.setCreationStatus(BeanDefinition.BeanCreationStatus.CREATED);
+
         beanMap.put(beanName, bean);
         log.trace("Bean has been saved: {}", bean);
 
@@ -389,7 +415,7 @@ public class BeanFactoryImpl implements BeanFactory {
 
         Map<String, T> beansOfType = getBeansOfType(requiredType);
         if (beansOfType.isEmpty()) {
-            BeanDefinition beanDefinitionOfType = getBeanDefinitionsOfType(requiredType, onlyPrototype);
+            BeanDefinition beanDefinitionOfType = getBeanDefinitionOfType(requiredType, onlyPrototype);
             checkIfCircularDependencyExist(beanDefinitionOfType);
 
             String beanName = beanDefinitionOfType.getBeanName();
@@ -414,7 +440,7 @@ public class BeanFactoryImpl implements BeanFactory {
         }
     }
 
-    private BeanDefinition getBeanDefinitionsOfType(Class<?> requiredType, boolean onlyPrototype) {
+    private BeanDefinition getBeanDefinitionOfType(Class<?> requiredType, boolean onlyPrototype) {
         log.trace("Call getBeanDefinitionsOfType({})", requiredType);
 
         Map<String, BeanDefinition> beanDefinitions = onlyPrototype
