@@ -91,6 +91,7 @@ ___
 - **[@RequestMapping](#requestMapping)**
 - **[@RequestParam](#requestParam)**
 - **[@PathVariable](#pathVariable)**
+- **[@RequestBody](#requestBody)**
 - **[@GetMapping](#getMapping)**
 - **[@PostMapping](#postMapping)**
 - **[@PutMapping](#putMapping)**
@@ -493,6 +494,36 @@ public class UserController {
 }
 
 ```
+
+</details>
+
+___
+#### @RequestBody
+
+The **@RequestBody** annotation is used to bind HTTP request body with method parameter in controller.  When the method parameter is annotated with @RequestBody, 
+it converts body of HTTP request to type of method parameter.
+
+<details>
+<summary>Example of code</summary> 
+
+````java
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    @PutMapping("/{id}")
+    public User update(@PathVariable Long id, @RequestBody User user) {
+        User savedUser = userMap.get(id);
+        savedUser.setFirstName(user.getFirstName());
+        savedUser.setLastName(user.getLastName());
+        savedUser.setStatus(user.getStatus());
+        userMap.put(id, savedUser);
+        return savedUser;
+    }
+}
+
+````
 
 </details>
 

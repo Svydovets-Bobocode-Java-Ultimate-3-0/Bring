@@ -96,6 +96,17 @@ public class DispatcherServlet extends HttpServlet {
         config.getServletContext().setAttribute(WEB_APPLICATION_CONTEXT, webApplicationContext);
     }
 
+    @Override
+    public void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String method = req.getMethod();
+
+        if (!PATCH_METHOD.equals(method)) {
+            super.service(req, resp);
+        } else {
+            doPatch(req, resp);
+        }
+    }
+
     /**
      * Handles GET requests by processing the request and invoking the appropriate controller method.
      *
@@ -106,6 +117,8 @@ public class DispatcherServlet extends HttpServlet {
      */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        log.trace("The GET method was invoked");
+
         processRequest(req, resp, HttpMethod.GET);
     }
 
@@ -119,6 +132,8 @@ public class DispatcherServlet extends HttpServlet {
      */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        log.trace("The POST method was invoked");
+
         processRequest(req, resp, HttpMethod.POST);
     }
 
@@ -132,6 +147,8 @@ public class DispatcherServlet extends HttpServlet {
      */
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        log.trace("The PUT method was invoked");
+
         processRequest(req, resp, HttpMethod.PUT);
     }
 
@@ -145,7 +162,23 @@ public class DispatcherServlet extends HttpServlet {
      */
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        log.trace("The DELETE method was invoked");
+
         processRequest(req, resp, HttpMethod.DELETE);
+    }
+
+    /**
+     * Handles PATCH requests by processing the request and invoking the appropriate controller method.
+     *
+     * @param req  the HttpServletRequest object representing the client request
+     * @param resp the HttpServletResponse object representing the response to be sent
+     * @throws ServletException if an error occurs during request processing
+     * @throws IOException      if an I/O error occurs
+     */
+    protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        log.trace("The PATCH method was invoked");
+
+        processRequest(req, resp, HttpMethod.PATCH);
     }
 
     /**
