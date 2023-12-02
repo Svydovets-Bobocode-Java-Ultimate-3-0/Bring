@@ -41,11 +41,6 @@ import java.util.Set;
  *   <li>Handles request processing, method invocation, and response generation.</li>
  * </ul>
  *
- *
- * @author Safarov Renat
- * @author Alexandr Navozenko
- * @author Oleksii Makieiev
- * @author Ivan Bolshak
  * @see WebApplicationContext
  * @see PathFinder
  * @see MethodArgumentResolver
@@ -73,6 +68,7 @@ public class DispatcherServlet extends HttpServlet {
      * Used for creating the web application context
      */
     private static final String FAVICON_PATH = "/favicon.ico";
+    private static final String PATCH_METHOD = "PATCH";
     private final WebApplicationContext webApplicationContext;
 
 

@@ -1,14 +1,14 @@
 package svydovets.web;
 
-import static svydovets.util.NameResolver.resolveRequestParameterName;
-
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import svydovets.web.exception.UnsupportedTypeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import svydovets.util.ErrorMessageConstants;
 import svydovets.web.annotation.PathVariable;
 import svydovets.web.annotation.RequestBody;
 import svydovets.web.annotation.RequestParam;
+import svydovets.web.exception.UnsupportedTypeException;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -17,8 +17,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import static svydovets.util.NameResolver.resolveRequestParameterName;
+
 public class MethodArgumentResolver {
 
+    private static final Logger log = LoggerFactory.getLogger(MethodArgumentResolver.class);
     private static final Set<Class<? extends Annotation>> SUPPORTED_ANNOTATIONS = new HashSet<>(Arrays.asList(
             PathVariable.class,
             RequestParam.class,
@@ -59,10 +62,10 @@ public class MethodArgumentResolver {
             return servletWebRequest.getResponse();
         }
 
-        // todo: LOG ERROR
-        throw new UnsupportedTypeException(
-            String.format(ErrorMessageConstants.UNSUPPORTED_TYPE_ERROR_MESSAGE, parameterType)
-        );
+        String errorMessage = String.format(ErrorMessageConstants.UNSUPPORTED_TYPE_ERROR_MESSAGE, parameterType);
+        log.error(errorMessage);
+
+        throw new UnsupportedTypeException(errorMessage);
     }
 
     private Object handleAnnotation(Parameter parameter, Class<? extends Annotation> annotationType, ServletWebRequest servletWebRequest) {
@@ -91,10 +94,10 @@ public class MethodArgumentResolver {
                 return requestParameterValue.charAt(0);
             }
         }
-        // todo: LOG ERROR
-        throw new UnsupportedTypeException(
-            String.format(ErrorMessageConstants.UNSUPPORTED_TYPE_ERROR_MESSAGE, parameterType)
-        );
+        String errorMessage = String.format(ErrorMessageConstants.UNSUPPORTED_TYPE_ERROR_MESSAGE, parameterType);
+        log.error(errorMessage);
+
+        throw new UnsupportedTypeException(errorMessage);
     }
 
     private boolean isNumeric(Class<?> parameterType) {
@@ -118,9 +121,9 @@ public class MethodArgumentResolver {
         } else if (parameterType == float.class || parameterType == Float.class) {
             return Float.valueOf(requestParameterValue);
         }
-        // todo: LOG ERROR
-        throw new UnsupportedTypeException(
-            String.format(ErrorMessageConstants.UNSUPPORTED_NUMBER_TYPE_ERROR_MESSAGE, parameterType)
-        );
+        String errorMessage = String.format(ErrorMessageConstants.UNSUPPORTED_NUMBER_TYPE_ERROR_MESSAGE, parameterType);
+        log.error(errorMessage);
+
+        throw new UnsupportedTypeException(errorMessage);
     }
 }

@@ -21,9 +21,6 @@ import java.lang.annotation.Target;
  *     }
  * }
  * </pre>
- *
- * @author @Safarov Renat, Oleksii Makieiev
- * @version 1.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

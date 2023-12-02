@@ -28,13 +28,9 @@ public abstract class ErrorMessageConstants {
 
     public static final String UNSUPPORTED_TYPE_ERROR_MESSAGE = "Unsupported parameter type: %s";
 
-    public static final String UNSUPPORTED_ANNOTATION_ERROR_MESSAGE = "Unsupported annotation: %s";
-
     public static final String UNSUPPORTED_NUMBER_TYPE_ERROR_MESSAGE = "Unsupported number type: %s";
 
     public static final String ERROR_PROCESSING_JSON_REQUEST_BODY = "Error processing JSON request body";
-
-    public static final String ERROR_READING_JSON_REQUEST_BODY = "Error reading JSON request body";
 
     public static final String NO_DEFAULT_CONSTRUCTOR_FOUND_OF_TYPE = "No default constructor found of type %s";
 

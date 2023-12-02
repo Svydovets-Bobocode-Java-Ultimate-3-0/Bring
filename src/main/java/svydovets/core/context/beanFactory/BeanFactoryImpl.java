@@ -313,7 +313,6 @@ public class BeanFactoryImpl implements BeanFactory {
         var initMethod = beanDefinition.getInitMethodOfBeanFromConfigClass();
         Object[] args = retrieveBeanInitMethodArguments(initMethod);
 
-        // TODO: Можна винести в окремий метод, щоб опрацювати помилки InvocationTargetException, IllegalAccessException
         return prepareMethod(initMethod).invoke(configClass, args);
     }
 
