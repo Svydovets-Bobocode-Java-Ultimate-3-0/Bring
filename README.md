@@ -97,6 +97,7 @@ ___
 - **[@PutMapping](#putMapping)**
 - **[@DeleteMapping](#deleteMapping)**
 - **[@PatchMapping](#patchMapping)**
+- **[ResponseEntity](#responseEntity)**
 
 ___
 
@@ -676,3 +677,27 @@ public class UserController {
 ```
 
 </details>
+
+___
+#### ResponseEntity
+
+The **ResponseEntity** responsible for handling the status code, body, http headers. You can use it to wrap your DTO.
+
+<details>
+<summary>Example of code</summary> 
+
+````java
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+  @GetMapping("/{id}")
+  public ResponseEntity<User> getOneById(@PathVariable Long id) {
+    return ResponseEntity.ok().body(userMap.get(id));
+  }
+}
+
+````
+
+</details>
+
