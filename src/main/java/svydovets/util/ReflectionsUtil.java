@@ -18,20 +18,17 @@ public class ReflectionsUtil {
     private static final Logger log = LoggerFactory.getLogger(ReflectionsUtil.class);
 
     public static List<String> findAutowiredFieldNames(Class<?> beanClass) {
-        log.trace("Call findAutowiredFieldNames({})", beanClass);
         var fields = beanClass.getDeclaredFields();
 
         List<String> autowireFieldNames = Arrays.stream(fields)
                 .filter(field -> field.isAnnotationPresent(Autowired.class))
                 .map(Field::getName)
                 .toList();
-        log.trace("Founded autowire field names: {}", autowireFieldNames);
 
         return autowireFieldNames;
     }
 
     public static <T> Constructor<T> getPreparedNoArgsConstructor(Class<T> beanType) {
-        log.trace("Call getPreparedNoArgsConstructor({})", beanType);
         try {
             Constructor<T> constructor = beanType.getDeclaredConstructor();
 
@@ -44,14 +41,12 @@ public class ReflectionsUtil {
     }
 
     public static <T> Constructor<T> prepareConstructor(Constructor<T> constructor) {
-        log.trace("Call prepareConstructor({})", constructor);
         constructor.setAccessible(true);
 
         return constructor;
     }
 
     public static Method prepareMethod(Method method) {
-        log.trace("Call prepareMethod({})", method);
         method.setAccessible(true);
 
         return method;

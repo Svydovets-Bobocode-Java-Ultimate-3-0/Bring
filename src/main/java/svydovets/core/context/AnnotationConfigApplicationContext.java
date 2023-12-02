@@ -27,9 +27,6 @@ import java.util.Map;
  * dependency injection and bean management. It simplifies the configuration of beans by relying on annotations to
  * identify and register beans in the context.
  *
- *
- * @author Your Name
- * @version 1.0
  * @see ApplicationContext
  * @see svydovets.core.context.beanFactory.BeanFactory
  */
